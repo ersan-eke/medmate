@@ -57,3 +57,16 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Run `uv run python -m scripts.preflight` with Wi-Fi off at feature freeze and again on demo morning. It must print PASS for all three lines.
 - [ ] Not covered by the script: the eval gates (red-flag recall 1.0, refusal ≥ 0.9, hybrid hit@4) belong to ticket #11's `eval/run_eval.py`.
 - [ ] Tick the acceptance boxes on issue #15 and close it.
+
+## #32 Page never shows a stale or silent answer (commit `040dff4`)
+
+- [ ] Not tested in a browser. Run the two new items in `docs/manual-ui-checklist.md`: Send disabled while waiting, and the error text clearing the old answer, card and sources when the server stops.
+- [ ] Tick the acceptance boxes on issue #32 and close it.
+
+## #31 Number check understands written and grouped numbers (commit `28bfa8c`)
+
+- [ ] Tick the acceptance boxes on issue #31 and close it. 'twenty-five' is a known gap, filed as a new issue.
+
+## #33 Ingest rejects broken leaflets (commit `eedade5`)
+
+- [ ] Tick the acceptance boxes on issues #33 and #23 and close them. Tickets #32 and #33 skipped the separate code-review step; run `/code-review` on them if you want it.
