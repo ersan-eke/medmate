@@ -3,7 +3,17 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from backend.kb import MAX_CHUNK_CHARS, build_index, chunk_leaflet, load_index, parse_leaflet, save_index
+from backend.kb import (
+    MAX_CHUNK_CHARS,
+    Interaction,
+    build_index,
+    chunk_leaflet,
+    load_index,
+    load_interactions,
+    parse_leaflet,
+    save_index,
+    validate_interactions,
+)
 
 LEAFLETS = Path(__file__).parent / "fixtures" / "leaflets"
 
@@ -59,3 +69,19 @@ def test_duplicate_section_headings_raise():
     text = (LEAFLETS / "warfarin.md").read_text() + "\n## Side effects\nAgain.\n"
     with pytest.raises(ValueError, match="warfarin#side-effects"):
         chunk_leaflet(text)
+
+
+def test_load_interactions(tmp_path):
+    csv = tmp_path / "interactions.csv"
+    csv.write_text("medicine_a,medicine_b,warning,source_chunk\nWarfarin,Metformin,\"Ask, first.\",warfarin#other-medicines\n")
+    assert load_interactions(csv) == [Interaction("Warfarin", "Metformin", "Ask, first.", "warfarin#other-medicines")]
+
+
+@pytest.mark.parametrize("row, message", [
+    (Interaction("Warfarin", "Metformin", "w", "warfarin#nope"), "warfarin#nope"),
+    (Interaction("Warfarin", "Aspirin", "w", "warfarin#other-medicines"), "Aspirin"),
+    (Interaction("Warfarin", "Metformin", "w", "warfarin#side-effects"), "does not name"),
+])
+def test_interaction_source_must_exist(tiny_index, row, message):
+    with pytest.raises(ValueError, match=message):
+        validate_interactions([row], tiny_index)

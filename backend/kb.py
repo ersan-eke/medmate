@@ -1,3 +1,4 @@
+import csv
 import json
 import re
 from collections.abc import Callable
@@ -21,6 +22,14 @@ class Chunk:
     section: str
     text: str
     source_url: str
+
+
+@dataclass(frozen=True)
+class Interaction:
+    medicine_a: str
+    medicine_b: str
+    warning: str
+    source_chunk: str
 
 
 @dataclass
@@ -93,6 +102,28 @@ def save_index(index: Index, out_dir: Path) -> None:
 def load_index(out_dir: Path) -> Index:
     chunks = [Chunk(**c) for c in json.loads((out_dir / "chunks.json").read_text())]
     return Index(chunks, np.load(out_dir / "vectors.npy"))
+
+
+def load_interactions(path: Path) -> list[Interaction]:
+    with path.open(encoding="utf-8", newline="") as f:
+        return [Interaction(**row) for row in csv.DictReader(f)]
+
+
+def validate_interactions(interactions: list[Interaction], index: Index) -> None:
+    chunks = {c.id: c for c in index.chunks}
+    medicines = {c.medicine for c in index.chunks}
+    for row in interactions:
+        for name in (row.medicine_a, row.medicine_b):
+            if name not in medicines:
+                raise ValueError(f"interaction names unknown medicine '{name}'")
+        chunk = chunks.get(row.source_chunk)
+        if chunk is None:
+            raise ValueError(f"interaction source '{row.source_chunk}' is not a chunk")
+        # The cited passage must itself mention the pair, so every warning traces to leaflet text.
+        if chunk.medicine not in (row.medicine_a, row.medicine_b) or not all(
+            re.search(rf"\b{re.escape(n)}\b", chunk.text, re.IGNORECASE) for n in (row.medicine_a, row.medicine_b)
+        ):
+            raise ValueError(f"'{row.source_chunk}' does not name both {row.medicine_a} and {row.medicine_b}")
 
 
 def ollama_embed(model: str = "nomic-embed-text") -> Embed:

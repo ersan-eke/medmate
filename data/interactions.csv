@@ -1,0 +1,14 @@
+medicine_a,medicine_b,warning,source_chunk
+Warfarin,Ibuprofen,"Ibuprofen and other anti-inflammatory painkillers (NSAIDs) may not mix well with warfarin. Speak to your doctor before taking them together.",warfarin#taking-warfarin-with-other-medicines-food-and-drink
+Warfarin,Aspirin,"Aspirin and other anti-inflammatory painkillers (NSAIDs) may not mix well with warfarin. Speak to your doctor before taking them together.",warfarin#taking-warfarin-with-other-medicines-food-and-drink
+Ibuprofen,Aspirin,"Do not take ibuprofen at the same time as aspirin. This can increase the risk of serious side effects like stomach ulcers.",ibuprofen#taking-ibuprofen-with-other-medicines-food-and-drink
+Metformin,Ibuprofen,"Anti-inflammatory painkillers (NSAIDs) such as ibuprofen may not mix well with metformin. Tell your doctor or pharmacist if you take both.",metformin#taking-metformin-with-other-medicines-food-and-drink
+Atorvastatin,Warfarin,"Warfarin may not mix well with atorvastatin. Tell your doctor if you take both.",atorvastatin#taking-atorvastatin-with-other-medicines-food-and-drink
+Levothyroxine,Omeprazole,"Medicines that reduce stomach acid, such as omeprazole, may not mix well with levothyroxine. Tell your doctor if you take both.",levothyroxine#taking-levothyroxine-with-other-medicines-food-and-drink
+Levothyroxine,Sertraline,"Antidepressants such as sertraline may not mix well with levothyroxine. Tell your doctor if you take both.",levothyroxine#taking-levothyroxine-with-other-medicines-food-and-drink
+Omeprazole,Warfarin,"Omeprazole may not mix well with some medicines that prevent blood clots, such as warfarin. Tell your doctor or a pharmacist if you take both.",omeprazole#taking-omeprazole-with-other-medicines-food-and-drink
+Paracetamol,Warfarin,"Paracetamol may not mix well with medicines that help prevent blood clots, such as warfarin. Speak to a pharmacist or doctor if you're not sure you can take it.",paracetamol#taking-paracetamol-with-other-medicines-food-and-drink
+Ramipril,Ibuprofen,"Anti-inflammatory painkillers (NSAIDs) such as ibuprofen may affect the way ramipril works. Tell your doctor if you take both.",ramipril#taking-ramipril-with-other-medicines-and-herbal-supplements
+Sertraline,Warfarin,"Anticoagulants such as warfarin may not mix well with sertraline. Tell your doctor if you take both.",sertraline#taking-sertraline-with-other-medicines-food-and-drink
+Sertraline,Aspirin,"Anti-inflammatory painkillers (NSAIDs) such as aspirin may not mix well with sertraline. Tell your doctor if you take both.",sertraline#taking-sertraline-with-other-medicines-food-and-drink
+Sertraline,Ibuprofen,"Anti-inflammatory painkillers (NSAIDs) such as ibuprofen may not mix well with sertraline. Tell your doctor if you take both.",sertraline#taking-sertraline-with-other-medicines-food-and-drink
