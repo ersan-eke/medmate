@@ -1,6 +1,9 @@
 import json
 
-from backend.llm import MedicineEntry, build_messages, validate
+from types import SimpleNamespace
+
+from backend.llm import (ANSWER_SCHEMA, TIMEOUT_SECONDS, TRIAGE_SCHEMA, TRIAGE_TIMEOUT_SECONDS, MedicineEntry,
+                         build_messages, ollama_generate, validate)
 from backend.kb import Chunk
 from backend.retrieval import Hit
 
@@ -111,3 +114,18 @@ def test_number_in_card_rejected():
     assert isinstance(reason, str) and "4000" in reason
     card["summary"] = "Take 500 mg."
     assert not isinstance(validate(raw(answer="Take 500 mg.", card=card), {ID: "Take 500 mg."}, ""), str)
+
+
+def test_triage_gets_a_shorter_timeout_than_the_answer(monkeypatch):
+    class FakeClient:
+        def __init__(self, timeout):
+            self.timeout = timeout
+
+        def chat(self, **kwargs):
+            return SimpleNamespace(message=SimpleNamespace(content=str(self.timeout)))
+
+    monkeypatch.setattr("ollama.Client", FakeClient)
+    generate = ollama_generate("m")
+    assert generate([], TRIAGE_SCHEMA) == str(TRIAGE_TIMEOUT_SECONDS)
+    assert generate([], ANSWER_SCHEMA) == str(TIMEOUT_SECONDS)
+    assert TRIAGE_TIMEOUT_SECONDS < TIMEOUT_SECONDS

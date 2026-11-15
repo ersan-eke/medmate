@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from . import messages
 from .kb import Embed, Index, Interaction, load_index, load_interactions, ollama_embed
-from .llm import Generate, ollama_generate, triage
+from .llm import ANSWER_SCHEMA, Generate, ollama_generate
 from .pipeline import ChatRequest, ChatResponse, Source, answer_question
 from .retrieval import Retriever
 from .speech import Engine, kokoro_engine, say_engine, synthesize, transcribe, warm_speech
@@ -76,7 +76,7 @@ def default_app() -> FastAPI:
     embed, generate, engines = ollama_embed(), ollama_generate(CHAT_MODEL), [kokoro_engine(), say_engine()]
     # Load every model now so the first answer doesn't stall. A failure only means a slower first request.
     for name, warm in [("embedder", lambda: embed(["warm up"], "query")),
-                       ("chat model", lambda: triage("warm up", generate)),
+                       ("chat model", lambda: generate([{"role": "user", "content": "warm up"}], ANSWER_SCHEMA)),
                        ("speech", lambda: warm_speech(engines))]:
         try:
             warm()
