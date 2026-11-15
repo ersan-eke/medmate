@@ -35,6 +35,8 @@ Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
 - [ ] Hold the mic and say nothing: the "didn't catch that" reply is shown and spoken
 - [ ] Deny microphone permission: "Microphone not available. Please type your question." shows and the text box has focus; typing still works
 - [ ] Press Send twice quickly: only one `/api/chat` request is made (devtools Network)
+- [ ] Press Send twice quickly: the Send button is disabled while the request waits
+- [ ] Ask a question, then stop the server (or go offline in devtools) and ask again: the error text shows and the old answer, card and sources are gone
 - [ ] Press the mic while the avatar speaks: the audio stops
 
 ## Avatar portrait
