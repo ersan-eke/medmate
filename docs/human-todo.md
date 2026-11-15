@@ -86,7 +86,7 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 
 ## #29 Server starts warm and rejects a bad index (commit `381740a`, closed)
 
-- [ ] **Gate failing:** `tests/test_demo_live.py::test_step3_first_answer_is_fast_and_cites_metformin` takes about 13 s against the 10 s limit. It fails the same way without this ticket's changes. Ollama here lists `llama3.1:8b`, while the app defaults to `llama3.2:3b`. Try `ollama pull llama3.2:3b` or set `MEDMATE_CHAT_MODEL`, then re-run `pytest -m slow tests/test_demo_live.py`. The "live smoke test still passes" box on #29 is not met until then.
+- [ ] **Gate failing:** `tests/test_demo_live.py::test_step3_first_answer_is_fast_and_cites_metformin` takes 12.6-13 s against the 10 s limit, after the warm-up. It fails the same way without this ticket's changes. `llama3.2:3b` and `nomic-embed-text` are installed, and so are `llama3.1:8b` and `qwen2.5:7b`. Not diagnosed: try with the other models unloaded (`ollama ps`, `ollama stop <model>`) and the laptop idle, then re-run `pytest -m slow tests/test_demo_live.py`. The "live smoke test still passes" box on #29 is not met until it does.
 - [ ] A missing `chunks.json` or `vectors.npy` still gives a raw `FileNotFoundError` at startup, not a friendly message. Only an empty index has one.
 
 ## #30 Not-covered check uses every passage (commit `53f3ab3`)
