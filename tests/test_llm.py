@@ -49,3 +49,7 @@ def test_bad_json_invalid():
 def test_bracketed_citation_accepted():
     answer = validate(raw(citations=["[metformin#how-and-when-to-take-it]"]), {h.chunk.id for h in HITS})
     assert answer.citations == ["metformin#how-and-when-to-take-it"]
+
+
+def test_covered_blank_answer_invalid():
+    assert validate(raw(answer="  "), {h.chunk.id for h in HITS}) is None

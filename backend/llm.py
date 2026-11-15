@@ -56,7 +56,9 @@ def validate(raw: str, sent_ids: set[str]) -> LlmAnswer | None:
         answer = LlmAnswer.model_validate_json(raw)
     except ValidationError:
         return None
-    if answer.in_scope and answer.covered and not (answer.citations and set(answer.citations) <= sent_ids):
+    if answer.in_scope and answer.covered and not (
+        answer.answer.strip() and answer.citations and set(answer.citations) <= sent_ids
+    ):
         return None
     return answer
 
