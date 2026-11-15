@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from . import messages
 from .kb import Embed, Index, load_index, ollama_embed
 from .llm import Generate, ollama_generate
 from .pipeline import ChatRequest, ChatResponse, answer_question
@@ -19,6 +20,10 @@ def create_app(index: Index, embed: Embed, generate: Generate) -> FastAPI:
     @app.post("/api/chat")
     def chat(req: ChatRequest) -> ChatResponse:
         return answer_question(req, retriever, generate)
+
+    @app.get("/api/meta")
+    def meta() -> dict:
+        return {"medicines": sorted(set(retriever.medicines.values())), "attribution": messages.ATTRIBUTION}
 
     # Mounted last so it never shadows the API routes.
     app.mount("/", StaticFiles(directory=ROOT / "web", html=True))

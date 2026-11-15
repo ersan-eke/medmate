@@ -9,6 +9,7 @@ from .retrieval import MIN_SIMILARITY, Retriever
 from .safety import check_red_flags
 
 log = logging.getLogger(__name__)
+MAX_MEDICINES = 20
 
 
 class ChatRequest(BaseModel):
@@ -32,16 +33,26 @@ class ChatResponse(BaseModel):
     llm_called: bool = False
 
 
+def known_medicines(entries: list[MedicineEntry], names: dict[str, str]) -> list[MedicineEntry]:
+    """Entries naming a leaflet medicine, renamed to its spelling, first of each, at most MAX_MEDICINES."""
+    kept: dict[str, MedicineEntry] = {}
+    for m in entries:
+        if (name := names.get(m.name.strip().lower())) and name not in kept:
+            kept[name] = m.model_copy(update={"name": name})
+    return list(kept.values())[:MAX_MEDICINES]
+
+
 def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate) -> ChatResponse:
     question = req.question.strip()
     if not question:
         return ChatResponse(kind="not_heard", answer=messages.NOT_HEARD)
     if flag := check_red_flags(question):
         return ChatResponse(kind="emergency", answer=messages.EMERGENCY, red_flag=flag.id)
-    result = retriever.search(question, [m.name for m in req.medicines])
+    medicines = known_medicines(req.medicines, retriever.medicines)
+    result = retriever.search(question, [m.name for m in medicines])
     if result.max_similarity < MIN_SIMILARITY:
         return ChatResponse(kind="not_covered", answer=messages.NOT_COVERED)
-    llm = ask_llm(question, req.medicines, result.hits, generate)
+    llm = ask_llm(question, medicines, result.hits, generate)
     if llm is None:
         return ChatResponse(kind="fallback", answer=messages.FALLBACK, llm_called=True)
     if not (llm.in_scope and llm.covered):
