@@ -1,4 +1,6 @@
 import json
+import logging
+import threading
 
 import pytest
 from fastapi.testclient import TestClient
@@ -154,3 +156,54 @@ def test_invented_number_retried_with_it_named(client, spies, monkeypatch):
     assert body["kind"] == "answer" and "987654" in sent[1][-1]["content"]
     spies[1].fn = lambda m, s: reply(answer="Take 987654 tablets.")
     assert chat(client, "Should I take metformin before or after dinner?").json()["kind"] == "fallback"
+
+
+Q = "Should I take metformin before or after dinner?"
+
+
+def test_timeout_gives_fallback_after_one_call(client, spies, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+
+    def hang(messages, schema):
+        raise TimeoutError("timed out")
+
+    spies[1].fn = hang
+    r = chat(client, Q)
+    assert r.status_code == 200 and r.json()["kind"] == "fallback"
+    assert spies[1].calls == 1  # a dead model is not retried
+
+
+def test_emergency_answered_while_model_call_waits(client, spies, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    started, release = threading.Event(), threading.Event()
+
+    def slow(messages, schema):
+        started.set()
+        release.wait(5)
+        return reply()
+
+    spies[1].fn = slow
+    slow_call = threading.Thread(target=chat, args=(client, Q))
+    slow_call.start()
+    assert started.wait(5)
+    try:
+        assert chat(client, "Now my chest feels tight.").json()["kind"] == "emergency"
+    finally:
+        release.set()
+        slow_call.join()
+
+
+def test_failures_and_refusals_are_logged(client, spies, monkeypatch, caplog):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    caplog.set_level(logging.INFO)
+    spies[1].fn = lambda m, s: (_ for _ in ()).throw(ConnectionError("ollama down"))
+    chat(client, Q)
+    assert any("ollama down" in (r.exc_text or "") for r in caplog.records if r.levelno == logging.WARNING)
+    caplog.clear()
+    spies[1].fn = lambda m, s: reply(citations=["made#up"])
+    chat(client, Q)
+    assert any("made#up" in r.getMessage() for r in caplog.records if r.levelno == logging.WARNING)
+    caplog.clear()
+    spies[1].fn = lambda m, s: reply(covered=False, citations=[])
+    chat(client, Q)
+    assert any(r.levelno == logging.INFO and Q in r.getMessage() for r in caplog.records)

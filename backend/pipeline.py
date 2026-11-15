@@ -1,3 +1,4 @@
+import logging
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -6,6 +7,8 @@ from . import messages
 from .llm import Card, Generate, MedicineEntry, ask_llm
 from .retrieval import MIN_SIMILARITY, Retriever
 from .safety import check_red_flags
+
+log = logging.getLogger(__name__)
 
 
 class ChatRequest(BaseModel):
@@ -41,6 +44,8 @@ def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate) 
     llm = ask_llm(question, req.medicines, result.hits, generate)
     if llm is None:
         return ChatResponse(kind="fallback", answer=messages.FALLBACK, llm_called=True)
+    if not (llm.in_scope and llm.covered):
+        log.info("model refused (in_scope=%s, covered=%s): %s", llm.in_scope, llm.covered, question)
     if not llm.in_scope:
         return ChatResponse(kind="off_topic", answer=messages.OFF_TOPIC, llm_called=True)
     if not llm.covered:

@@ -1,3 +1,4 @@
+import logging
 import re
 from collections.abc import Callable
 from pathlib import Path
@@ -12,6 +13,8 @@ Generate = Callable[[list[dict], dict], str]
 
 SYSTEM_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "system.txt").read_text()
 ATTEMPTS = 2
+TIMEOUT_SECONDS = 20  # a warm 3B answer takes a few seconds; the first-answer gate is 10 s
+log = logging.getLogger(__name__)
 WORD_NUMBERS = {w: str(n) for n, w in enumerate(
     "one two three four five six seven eight nine ten eleven twelve".split(), start=1)} | {"twice": "2"}
 NUMBER = re.compile(r"\d+(?:\.\d+)?|\b(?:" + "|".join(WORD_NUMBERS) + r")\b", re.IGNORECASE)
@@ -84,11 +87,13 @@ def ask_llm(question: str, medicines: list[MedicineEntry], hits: list[Hit], gene
     for _ in range(ATTEMPTS):
         try:
             raw = generate(messages, ANSWER_SCHEMA)
-        except Exception:  # Ollama down or model missing: the page must still get an answer
+        except Exception:  # Ollama down, slow or model missing: the page must still get an answer
+            log.warning("chat call failed", exc_info=True)
             return None
         result = validate(raw, sent, doses)
         if isinstance(result, LlmAnswer):
             return result
+        log.warning("answer rejected: %s", result)
         # At temperature 0 a repeat would return the same reply, so say what was wrong.
         messages = messages[:2] + [{"role": "assistant", "content": raw}, {"role": "user", "content": result}]
     return None
@@ -97,8 +102,10 @@ def ask_llm(question: str, medicines: list[MedicineEntry], hits: list[Hit], gene
 def ollama_generate(model: str) -> Generate:
     import ollama
 
+    client = ollama.Client(timeout=TIMEOUT_SECONDS)
+
     def generate(messages: list[dict], schema: dict) -> str:
-        response = ollama.chat(
+        response = client.chat(
             model=model, messages=messages, format=schema, options={"temperature": 0}, keep_alive="30m"
         )
         return response.message.content
