@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildSchedule, loadMedicines, saveMedicines } from "./logic.js";
+import { buildSchedule, findInteractions, loadMedicines, saveMedicines } from "./logic.js";
 
 const KEY = "medmate.medicines";
 const fakeStorage = (init = {}) => {
@@ -51,4 +51,11 @@ test("malformed entries are dropped or repaired, not passed on", () => {
   assert.deepEqual(loadMedicines(fakeStorage({ [KEY]: JSON.stringify(saved) })), [
     { name: "Metformin", dose: "", times: ["morning"], note: "" },
   ]);
+});
+
+test("interactions match either order, ignoring case", () => {
+  const row = { a: "Warfarin", b: "Ibuprofen", warning: "w", source: {} };
+  assert.deepEqual(findInteractions([{ name: "warfarin" }, { name: "Ibuprofen" }], [row]), [row]);
+  assert.deepEqual(findInteractions([{ name: "IBUPROFEN" }, { name: "Warfarin" }], [row]), [row]);
+  assert.deepEqual(findInteractions([{ name: "Metformin" }], [row]), []);
 });

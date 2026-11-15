@@ -29,3 +29,8 @@ export function buildSchedule(list) {
     TIMES.map((t) => [t, list.filter((m) => m.times?.includes(t)).map((m) => `${m.name} ${m.dose}`.trim())]),
   );
 }
+
+export function findInteractions(list, interactions) {
+  const have = new Set(list.map((m) => m.name.toLowerCase()));
+  return interactions.filter((i) => have.has(i.a.toLowerCase()) && have.has(i.b.toLowerCase()));
+}

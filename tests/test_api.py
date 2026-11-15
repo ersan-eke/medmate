@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
+from backend.kb import Interaction
 from backend.llm import MedicineEntry
 from backend.pipeline import known_medicines
 from backend.messages import ATTRIBUTION, EMERGENCY, FALLBACK, NOT_COVERED, NOT_HEARD, OFF_TOPIC
@@ -13,6 +14,7 @@ from backend.messages import ATTRIBUTION, EMERGENCY, FALLBACK, NOT_COVERED, NOT_
 
 METFORMIN = "metformin#how-and-when-to-take-it"
 SIDE_EFFECTS = "metformin#side-effects"
+INTERACTIONS = [Interaction("Warfarin", "Metformin", "Ask first.", "warfarin#other-medicines")]
 CARD = {"summary": "Take it with food.", "what_to_do": ["Eat first."], "get_help_if": ["You feel very unwell."]}
 
 
@@ -42,7 +44,7 @@ def spies(fake_embed):
 @pytest.fixture
 def client(spies, tiny_index):
     embed, generate = spies
-    return TestClient(create_app(tiny_index, embed, generate))
+    return TestClient(create_app(tiny_index, embed, generate, INTERACTIONS))
 
 
 def chat(client, q, medicines=()):
@@ -249,6 +251,11 @@ def test_medicine_list_sanitised(client, spies, monkeypatch):
 def test_meta(client):
     body = client.get("/api/meta").json()
     assert body["medicines"] == ["Metformin", "Warfarin"] and body["attribution"] == ATTRIBUTION
+    assert body["interactions"] == [{
+        "a": "Warfarin", "b": "Metformin", "warning": "Ask first.",
+        "source": {"id": "warfarin#other-medicines", "medicine": "Warfarin", "section": "Other medicines",
+                   "url": "https://www.nhs.uk/medicines/warfarin/"},
+    }]
 
 
 def test_medicine_list_capped_at_20():
