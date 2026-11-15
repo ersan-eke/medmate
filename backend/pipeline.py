@@ -61,11 +61,11 @@ def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate) 
     llm = ask_llm(question, medicines, result.hits, generate)
     if llm is None:
         return ChatResponse(kind="fallback", answer=messages.FALLBACK, llm_called=True)
-    if not (llm.in_scope and llm.covered):
-        log.info("model refused (in_scope=%s, covered=%s): %s", llm.in_scope, llm.covered, question)
     if not llm.in_scope:
+        log.info("model refused: off_topic")
         return ChatResponse(kind="off_topic", answer=messages.OFF_TOPIC, llm_called=True)
     if not llm.covered:
+        log.info("model refused: not_covered")
         return ChatResponse(kind="not_covered", answer=messages.NOT_COVERED, llm_called=True)
     by_id = {h.chunk.id: h.chunk for h in result.hits}
     sources = [

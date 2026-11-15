@@ -282,7 +282,26 @@ def test_failures_and_refusals_are_logged(client, spies, monkeypatch, caplog):
     caplog.clear()
     spies[1].fn = lambda m, s: reply(covered=False, citations=[])
     chat(client, Q)
-    assert any(r.levelno == logging.INFO and Q in r.getMessage() for r in caplog.records)
+    refusals = [r.getMessage() for r in caplog.records if r.levelno == logging.INFO]
+    assert any("not_covered" in m for m in refusals) and not any(Q in m for m in refusals)
+
+
+@pytest.mark.parametrize("flags,kind", [({"covered": False}, "not_covered"), ({"in_scope": False, "covered": False}, "off_topic")])
+def test_bare_refusal_is_a_refusal_after_one_call(client, spies, monkeypatch, flags, kind):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    spies[1].fn = lambda m, s: json.dumps({"in_scope": True, "covered": True} | flags)
+    assert chat(client, Q).json()["kind"] == kind
+    assert spies[1].calls == 1
+
+
+@pytest.mark.parametrize("missing", ["answer", "citations", "card"])
+def test_covered_reply_missing_a_field_is_rejected_and_retried(client, spies, monkeypatch, missing):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    body = json.loads(reply())
+    del body[missing]
+    spies[1].fn = lambda m, s: json.dumps(body)
+    assert chat(client, Q).json()["kind"] == "fallback"
+    assert spies[1].calls == 2
 
 
 def test_medicine_names_reach_the_prompt_as_one_plain_line(client, spies, monkeypatch):

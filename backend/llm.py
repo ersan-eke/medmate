@@ -40,9 +40,10 @@ class Card(BaseModel):
 class LlmAnswer(BaseModel):
     in_scope: bool
     covered: bool
-    answer: str
-    citations: list[str]
-    card: Card
+    # A refusal needs only the two flags; validate() requires the rest of a covered answer.
+    answer: str = ""
+    citations: list[str] = []
+    card: Card | None = None
 
     @field_validator("citations")
     @classmethod
@@ -79,6 +80,7 @@ def numbers(text: str) -> set[str]:
 
 def shown_text(answer: LlmAnswer) -> str:
     card = answer.card
+    assert card  # only called on covered answers, which validate() has checked have a card
     return " ".join([answer.answer, card.summary, *card.what_to_do, *card.get_help_if])
 
 
@@ -91,6 +93,8 @@ def validate(raw: str, sent: dict[str, str], doses: str) -> LlmAnswer | str:
     if answer.in_scope and answer.covered:
         if not answer.answer.strip():
             return "Your answer text was empty."
+        if answer.card is None:
+            return "You gave no card."
         if not answer.citations:
             return "You gave no citations. Cite the ids of the passages you used."
         if unsent := [i for i in answer.citations if i not in sent]:
