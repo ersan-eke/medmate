@@ -224,9 +224,13 @@
 
   const mic = document.getElementById("mic");
   let stopRecording = null;
+  let starting = false;   // waiting for getUserMedia
+  let released = false;   // the button came up while starting
   const startMic = async () => {
-    if (busy || stopRecording) { avatar.stop(); return; }
     avatar.stop();
+    if (busy || stopRecording || starting) return;
+    starting = true;
+    released = false;
     try {
       stopRecording = await startRecording();
     } catch {
@@ -234,13 +238,16 @@
       answer.className = "";
       input.focus();
       return;
+    } finally {
+      starting = false;
     }
     mic.setAttribute("aria-pressed", "true");
     mic.textContent = "Listening…";
+    if (released) stopMic();  // let go before the microphone opened
   };
   const stopMic = () => {
     const stop = stopRecording;
-    if (!stop) return;
+    if (!stop) { released = true; return; }
     stopRecording = null;
     mic.setAttribute("aria-pressed", "false");
     mic.textContent = "Hold to talk";
