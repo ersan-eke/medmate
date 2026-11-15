@@ -48,3 +48,14 @@ def test_index_roundtrip(tmp_path, fake_embed):
     assert loaded.chunks == index.chunks
     assert loaded.vectors.dtype == np.float32
     assert np.allclose(loaded.vectors, index.vectors)
+
+
+def test_crlf_leaflet_parses():
+    text = (LEAFLETS / "warfarin.md").read_text().replace("\n", "\r\n")
+    assert [c.id for c in chunk_leaflet(text)] == [c.id for c in chunk_leaflet((LEAFLETS / "warfarin.md").read_text())]
+
+
+def test_duplicate_section_headings_raise():
+    text = (LEAFLETS / "warfarin.md").read_text() + "\n## Side effects\nAgain.\n"
+    with pytest.raises(ValueError, match="warfarin#side-effects"):
+        chunk_leaflet(text)

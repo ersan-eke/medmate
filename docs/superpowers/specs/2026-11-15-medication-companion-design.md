@@ -244,6 +244,7 @@ Deliberately out of scope for the deadline; listed in the README and the limitat
 - **Chat history:** answers are single-turn; follow-ups like "and what about the evening dose?" don't know the previous question.
 - **Word-by-word (streamed) answers:** answers arrive in one piece after a short "thinking" state.
 - **Vector database:** embeddings live in an in-memory NumPy index, which is fine for a few hundred chunks. A real vector database (e.g. Chroma, pgvector) becomes worthwhile at thousands of leaflets or with frequent updates.
+- **Users adding their own medicines:** the knowledge base is collected by hand and the dropdown only offers those medicines. A later importer would turn a leaflet PDF, or an NHS page given by URL, into the leaflet Markdown format and reuse the existing ingest step. Each import needs a human check of the sections before it goes live, because citations depend on them. Manufacturers' leaflet PDFs are copyrighted, so they could stay on the user's own device but couldn't be shipped with the app; importing from NHS pages avoids this.
 - **Offline voice on non-Mac machines:** the offline TTS fallback uses macOS `say`; a cross-platform local engine (e.g. Piper) would replace it. The whole demo already depends on the Mac running the model, so this is accepted.
 
 ## 13. Left to the builder

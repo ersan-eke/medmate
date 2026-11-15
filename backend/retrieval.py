@@ -42,9 +42,8 @@ class Retriever:
         self.medicines = {c.medicine.lower(): c.medicine for c in index.chunks}
 
     def _targets(self, question: str, medicines: list[str]) -> set[str]:
-        words = set(_tokens(question))
-        named = {m for key, m in self.medicines.items() if key in words}
-        if named or "my" not in words:
+        named = {m for key, m in self.medicines.items() if re.search(rf"\b{re.escape(key)}\b", question.lower())}
+        if named or "my" not in _tokens(question):
             return named
         return {self.medicines[m.lower()] for m in medicines if m.lower() in self.medicines}
 

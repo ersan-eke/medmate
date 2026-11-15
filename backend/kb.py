@@ -34,7 +34,7 @@ def _slug(text: str) -> str:
 
 
 def parse_leaflet(text: str) -> tuple[dict[str, str], list[tuple[str, str]]]:
-    match = re.match(r"\s*---\n(.*?)\n---\n(.*)", text, re.DOTALL)
+    match = re.match(r"\s*---\n(.*?)\n---\n(.*)", text.replace("\r\n", "\n"), re.DOTALL)
     if not match:
         raise ValueError("leaflet must start with a --- header block")
     header = dict(line.split(":", 1) for line in match.group(1).splitlines() if ":" in line)
@@ -71,6 +71,11 @@ def chunk_leaflet(text: str) -> list[Chunk]:
                 text=f"{medicine} — {section}\n{part}",
                 source_url=header["source_url"],
             ))
+    seen: set[str] = set()
+    for chunk in chunks:
+        if chunk.id in seen:
+            raise ValueError(f"duplicate chunk id '{chunk.id}': two sections share a heading")
+        seen.add(chunk.id)
     return chunks
 
 

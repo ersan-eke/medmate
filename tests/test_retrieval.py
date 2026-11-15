@@ -43,3 +43,19 @@ def test_modes_differ(retriever):
     rankings = {m: ids(retriever.search(q, [], mode=m)) for m in ("hybrid", "bm25", "vector")}
     assert rankings["hybrid"] != rankings["bm25"]
     assert rankings["hybrid"] != rankings["vector"]
+
+
+def test_multi_word_medicine_name_is_boosted(tmp_path, fake_embed):
+    import shutil
+    from pathlib import Path
+
+    from backend.kb import build_index
+
+    shutil.copy(Path(__file__).parent / "fixtures" / "leaflets" / "warfarin.md", tmp_path)
+    (tmp_path / "cocodamol.md").write_text(
+        "---\nmedicine: Co-codamol\nsource_url: https://www.nhs.uk/medicines/co-codamol/\n"
+        "retrieved: 2026-11-15\nlicence: OGL\n---\n## About\nA painkiller.\n\n## Drowsiness\nIt can make you sleepy.\n"
+    )
+    r = Retriever(build_index(tmp_path, fake_embed), fake_embed)
+    result = r.search("Co-codamol nosebleeds that do not stop, bleeding gums, blood in your urine, tell your doctor", [], k=1)
+    assert result.hits[0].chunk.medicine == "Co-codamol"
