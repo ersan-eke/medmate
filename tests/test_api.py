@@ -81,10 +81,11 @@ ELEPHANT = "it feels like an elephant is sitting on me"
 def test_urgent_triage_is_an_emergency_before_retrieval(client, spies, triage):
     assert chat(client, ELEPHANT).json()["kind"] == "not_covered"  # below the retrieval gate, no rule matches
     triage.fn = lambda m, s: '{"urgent": true}'
+    before = [s.calls for s in spies]
     body = chat(client, ELEPHANT).json()
     assert body["kind"] == "emergency" and body["answer"] == EMERGENCY
     assert body["red_flag"] == "model_triage" and body["llm_called"] is True
-    assert [s.calls for s in spies] == [0, 0]  # no embedder, no answer call
+    assert [s.calls for s in spies] == before  # no embedder, no answer call
 
 
 @pytest.mark.parametrize("raw", ["not json", "{}", '{"urgent": "maybe"}'])
