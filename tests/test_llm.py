@@ -2,7 +2,7 @@ import json
 
 from types import SimpleNamespace
 
-from backend.llm import (ANSWER_SCHEMA, TIMEOUT_SECONDS, TRIAGE_SCHEMA, TRIAGE_TIMEOUT_SECONDS, MedicineEntry,
+from backend.llm import (ANSWER_SCHEMA, TIMEOUT_SECONDS, WARMUP_TIMEOUT_SECONDS, TRIAGE_SCHEMA, TRIAGE_TIMEOUT_SECONDS, MedicineEntry,
                          build_messages, ollama_generate, validate)
 from backend.kb import Chunk
 from backend.retrieval import Hit
@@ -129,3 +129,16 @@ def test_triage_gets_a_shorter_timeout_than_the_answer(monkeypatch):
     assert generate([], TRIAGE_SCHEMA) == str(TRIAGE_TIMEOUT_SECONDS)
     assert generate([], ANSWER_SCHEMA) == str(TIMEOUT_SECONDS)
     assert TRIAGE_TIMEOUT_SECONDS < TIMEOUT_SECONDS
+
+
+def test_generate_timeout_can_be_raised_for_warm_up(monkeypatch):
+    class FakeClient:
+        def __init__(self, timeout):
+            self.timeout = timeout
+
+        def chat(self, **kwargs):
+            return SimpleNamespace(message=SimpleNamespace(content=str(self.timeout)))
+
+    monkeypatch.setattr("ollama.Client", FakeClient)
+    assert ollama_generate("m", timeout=WARMUP_TIMEOUT_SECONDS)([], ANSWER_SCHEMA) == str(WARMUP_TIMEOUT_SECONDS)
+    assert WARMUP_TIMEOUT_SECONDS > TIMEOUT_SECONDS

@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from . import messages
 from .kb import Embed, Index, Interaction, load_index, load_interactions, ollama_embed
-from .llm import ANSWER_SCHEMA, Generate, ollama_generate
+from .llm import ANSWER_SCHEMA, WARMUP_TIMEOUT_SECONDS, Generate, ollama_generate
 from .pipeline import ChatRequest, ChatResponse, Source, answer_question
 from .retrieval import Retriever
 from .speech import Engine, kokoro_engine, say_engine, synthesize, transcribe, warm_speech
@@ -70,18 +70,27 @@ def create_app(index: Index, embed: Embed, generate: Generate, interactions: lis
     return app
 
 
-def default_app() -> FastAPI:
-    """`uvicorn --factory backend.app:default_app`: real index and Ollama embedder."""
-
-    embed, generate, engines = ollama_embed(), ollama_generate(CHAT_MODEL), [kokoro_engine(), say_engine()]
-    # Load every model now so the first answer doesn't stall. A failure only means a slower first request.
-    for name, warm in [("embedder", lambda: ollama_embed(timeout=None)(["warm up"], "query")),  # a cold load may outlast the request timeout
-                       ("chat model", lambda: generate([{"role": "user", "content": "warm up"}], ANSWER_SCHEMA)),
-                       ("speech", lambda: warm_speech(engines))]:
+def warm_models(warmers: dict[str, Callable[[], object]]) -> None:
+    """Run each warm-up once. A failure only means a slower first request."""
+    for name, warm in warmers.items():
         try:
             warm()
         except Exception:
             log.exception("warming the %s failed", name)
-    return create_app(load_index(ROOT / "data" / "index"), embed, generate,
+
+
+def default_app() -> FastAPI:
+    """`uvicorn --factory backend.app:default_app`: real index and Ollama embedder."""
+
+    index = load_index(ROOT / "data" / "index")  # first: a bad index should stop startup before the slow warm-up
+    embed, generate, engines = ollama_embed(), ollama_generate(CHAT_MODEL), [kokoro_engine(), say_engine()]
+    # Load every model now so the first answer doesn't stall; warm-up clients wait longer than request ones.
+    warm_models({
+        "embedder": lambda: ollama_embed(timeout=WARMUP_TIMEOUT_SECONDS)(["warm up"], "query"),
+        "chat model": lambda: ollama_generate(CHAT_MODEL, WARMUP_TIMEOUT_SECONDS)(
+            [{"role": "user", "content": "warm up"}], ANSWER_SCHEMA),
+        "speech": lambda: warm_speech(engines),
+    })
+    return create_app(index, embed, generate,
                       load_interactions(ROOT / "data" / "interactions.csv"),
                       engines=engines, transcribe=transcribe)

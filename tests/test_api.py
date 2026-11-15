@@ -344,3 +344,70 @@ def test_medicine_list_capped_at_20():
     names = {f"med{i}": f"Med{i}" for i in range(30)}
     kept = known_medicines([MedicineEntry(name=f"MED{i}") for i in range(30)], names)
     assert [m.name for m in kept] == [f"Med{i}" for i in range(20)]
+
+
+def test_warm_models_calls_each_model_once():
+    from backend.app import warm_models
+
+    calls = []
+    warm_models({"embedder": lambda: calls.append("embed"), "chat model": lambda: calls.append("chat")})
+    assert calls == ["embed", "chat"]
+
+
+def test_warm_models_survives_a_failing_model(caplog):
+    from backend.app import warm_models
+
+    calls = []
+    warm_models({"embedder": lambda: 1 / 0, "chat model": lambda: calls.append("chat")})
+    assert calls == ["chat"] and "warming the embedder failed" in caplog.text
+
+
+@pytest.fixture
+def startup(monkeypatch, tiny_index, fake_embed):
+    """default_app with fake models; `events` records what happened, in order."""
+    import backend.app as app_module
+
+    events = []
+    monkeypatch.setattr(app_module, "load_index", lambda d: events.append("index") or tiny_index)
+    monkeypatch.setattr(app_module, "load_interactions", lambda p: INTERACTIONS)
+    monkeypatch.setattr(app_module, "kokoro_engine", lambda: None)
+    monkeypatch.setattr(app_module, "say_engine", lambda: None)
+    monkeypatch.setattr(app_module, "warm_speech", lambda engines: events.append("speech"))
+
+    def embedder(model="m", timeout=None):
+        def embed(texts, mode="document"):
+            events.append(("embed", timeout))
+            return fake_embed(texts, mode)
+        return embed
+
+    def generator(model, timeout=None):
+        def generate(messages, schema):
+            events.append(("chat", timeout))
+            return reply()
+        return generate
+
+    monkeypatch.setattr(app_module, "ollama_embed", embedder)
+    monkeypatch.setattr(app_module, "ollama_generate", generator)
+    return events
+
+
+def test_default_app_warms_each_model_once_with_a_long_timeout_before_serving(startup):
+    from backend.app import default_app
+    from backend.kb import EMBED_TIMEOUT_SECONDS
+    from backend.llm import TIMEOUT_SECONDS, WARMUP_TIMEOUT_SECONDS
+
+    default_app()
+    assert startup == ["index", ("embed", WARMUP_TIMEOUT_SECONDS), ("chat", WARMUP_TIMEOUT_SECONDS), "speech"]
+    assert WARMUP_TIMEOUT_SECONDS > max(EMBED_TIMEOUT_SECONDS, TIMEOUT_SECONDS)
+
+
+def test_default_app_stops_on_a_bad_index_before_warming(startup, monkeypatch):
+    import backend.app as app_module
+
+    def empty(d):
+        raise ValueError("The index is empty.")
+
+    monkeypatch.setattr(app_module, "load_index", empty)
+    with pytest.raises(ValueError, match="empty"):
+        app_module.default_app()
+    assert startup == []

@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from backend.kb import (
+    Index,
     MAX_CHUNK_CHARS,
     Interaction,
     build_index,
@@ -98,3 +99,9 @@ def test_empty_section_raises():
     text = (LEAFLETS / "warfarin.md").read_text() + "\n## Storage\n\n"
     with pytest.raises(ValueError, match="Warfarin.*'Storage' is empty"):
         chunk_leaflet(text)
+
+
+def test_empty_index_is_rejected_at_load(tmp_path):
+    save_index(Index([], np.zeros((0, 4), dtype=np.float32)), tmp_path)
+    with pytest.raises(ValueError, match="empty"):
+        load_index(tmp_path)

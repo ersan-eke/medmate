@@ -103,6 +103,8 @@ def save_index(index: Index, out_dir: Path) -> None:
 
 def load_index(out_dir: Path) -> Index:
     chunks = [Chunk(**c) for c in json.loads((out_dir / "chunks.json").read_text())]
+    if not chunks:
+        raise ValueError(f"The index in {out_dir} is empty. Run scripts/ingest.py to build it.")
     return Index(chunks, np.load(out_dir / "vectors.npy"))
 
 

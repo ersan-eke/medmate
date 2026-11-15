@@ -15,6 +15,7 @@ SYSTEM_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "system.tx
 TRIAGE_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "triage.txt").read_text(encoding="utf-8")
 ATTEMPTS = 2
 TIMEOUT_SECONDS = 20  # a warm 3B answer takes a few seconds; the first-answer gate is 10 s
+WARMUP_TIMEOUT_SECONDS = 120  # a cold model load can take a minute
 TRIAGE_TIMEOUT_SECONDS = 5  # a yes/no reply from a warm model; a cold one skips triage and the rules still apply
 log = logging.getLogger(__name__)
 WORD_NUMBERS = {w: str(n) for n, w in enumerate(
@@ -134,10 +135,10 @@ def triage(question: str, generate: Generate) -> bool:
         return False
 
 
-def ollama_generate(model: str) -> Generate:
+def ollama_generate(model: str, timeout: float = TIMEOUT_SECONDS) -> Generate:
     import ollama
 
-    answer_client = ollama.Client(timeout=TIMEOUT_SECONDS)
+    answer_client = ollama.Client(timeout=timeout)
     triage_client = ollama.Client(timeout=TRIAGE_TIMEOUT_SECONDS)
 
     def generate(messages: list[dict], schema: dict) -> str:
