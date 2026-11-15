@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MedMate</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; }
+  #emergency { background: #c00; color: #fff; text-align: center; padding: .75rem; width: 100%; box-sizing: border-box; }
+  #emergency strong { font-size: 2.5rem; display: block; }
+  main { max-width: 40rem; margin: 1rem auto; padding: 0 1rem; }
+  input { width: 100%; font-size: 1.1rem; padding: .5rem; box-sizing: border-box; }
+  #answer { margin-top: 1rem; font-size: 1.2rem; white-space: pre-wrap; }
+  #answer.emergency { color: #c00; font-weight: bold; }
+  footer { max-width: 40rem; margin: 2rem auto; padding: 0 1rem; font-size: .85rem; color: #444; }
+</style>
+</head>
+<body>
+<div id="emergency" role="alert">
+  In an emergency call
+  <strong>999</strong>
+</div>
+<main>
+  <form id="form">
+    <label for="q">Ask about your medicines</label>
+    <input id="q" autocomplete="off" maxlength="500">
+  </form>
+  <div id="answer" aria-live="polite"></div>
+</main>
+<footer>Information from the NHS website, licensed under the Open Government Licence v3.0. Not medical advice. In an emergency call 999.</footer>
+<script>
+  const answer = document.getElementById("answer");
+  document.getElementById("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const question = document.getElementById("q").value;
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    const data = await res.json();
+    answer.textContent = data.answer;
+    answer.className = data.kind;
+  });
+</script>
+</body>
+</html>
