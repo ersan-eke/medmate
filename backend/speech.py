@@ -49,3 +49,17 @@ def synthesize(text: str, engines: list[Engine]) -> bytes:
         except Exception:
             log.exception("TTS engine failed, trying the next one")
     raise RuntimeError("every TTS engine failed")
+
+
+_whisper = None
+
+
+def transcribe(audio: bytes) -> str:
+    """Whatever MediaRecorder sends (webm/opus); faster-whisper decodes it via PyAV."""
+    global _whisper
+    if _whisper is None:
+        from faster_whisper import WhisperModel
+
+        _whisper = WhisperModel("small.en", device="cpu", compute_type="int8")
+    segments, _ = _whisper.transcribe(io.BytesIO(audio), language="en", vad_filter=True)
+    return " ".join(s.text.strip() for s in segments).strip()

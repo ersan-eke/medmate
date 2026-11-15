@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
-from backend.speech import kokoro_engine, say_engine, synthesize
+from backend.speech import kokoro_engine, say_engine, synthesize, transcribe
 from tests.test_api import INTERACTIONS
 
 
@@ -55,3 +55,48 @@ def test_kokoro_produces_wav():
 def test_say_produces_wav():
     wav = say_engine()("When should I take amlodipine?")
     assert wav.startswith(b"RIFF") and b"WAVE" in wav[:12]
+
+
+def transcribe_client(tiny_index, fake_embed, fn):
+    app = create_app(tiny_index, fake_embed, lambda m, s: "", INTERACTIONS, transcribe=fn)
+    return TestClient(app)
+
+
+def test_transcribe_route_returns_text(tiny_index, fake_embed):
+    seen = []
+    client = transcribe_client(tiny_index, fake_embed, lambda audio: seen.append(audio) or "hello")
+    r = client.post("/api/transcribe", files={"audio": ("a.webm", b"bytes", "audio/webm")})
+    assert r.json() == {"text": "hello"}
+    assert seen == [b"bytes"]
+
+
+def test_transcribe_route_503_on_failure(tiny_index, fake_embed):
+    def boom(audio):
+        raise RuntimeError("no model")
+
+    r = transcribe_client(tiny_index, fake_embed, boom).post(
+        "/api/transcribe", files={"audio": ("a.webm", b"x", "audio/webm")})
+    assert r.status_code == 503
+
+
+def test_transcribe_route_503_without_transcriber(tiny_index, fake_embed):
+    r = transcribe_client(tiny_index, fake_embed, None).post(
+        "/api/transcribe", files={"audio": ("a.webm", b"x", "audio/webm")})
+    assert r.status_code == 503
+
+
+@pytest.mark.slow
+def test_transcribe_empty_audio():
+    import io
+    import numpy as np
+    import soundfile
+
+    buf = io.BytesIO()
+    soundfile.write(buf, np.zeros(16000, dtype="float32"), 16000, format="WAV")
+    assert transcribe(buf.getvalue()) == ""
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS say")
+def test_say_whisper_roundtrip():
+    assert "amlodipine" in transcribe(say_engine()("When should I take amlodipine?")).lower()

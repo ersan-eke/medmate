@@ -24,3 +24,15 @@ Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
 - [ ] Make `kokoro_engine()` fail (drop it from `engines` in `default_app`): the answer is still spoken by macOS `say` and the mouth still moves
 - [ ] Make every engine fail (empty `engines`): the caption shows and nothing breaks
 - [ ] Send a new question while the avatar speaks: the audio stops
+
+## Asking by voice
+
+Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
+
+- [ ] Hold "Hold to talk", ask "When should I take metformin?", release: "You asked: ..." shows and is spoken, then the answer is spoken with a card and sources
+- [ ] Space on the focused mic button starts recording, Space again stops it
+- [ ] Say "Now my chest feels tight": the banner and the 999 message are spoken
+- [ ] Hold the mic and say nothing: the "didn't catch that" reply is shown and spoken
+- [ ] Deny microphone permission: "Microphone not available. Please type your question." shows and the text box has focus; typing still works
+- [ ] Press Send twice quickly: only one `/api/chat` request is made (devtools Network)
+- [ ] Press the mic while the avatar speaks: the audio stops

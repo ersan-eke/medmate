@@ -79,8 +79,10 @@
   <form id="form">
     <label for="q">Ask about your medicines</label>
     <input id="q" autocomplete="off" maxlength="500">
-    <p><button type="submit">Send</button></p>
+    <p><button type="submit">Send</button>
+    <button id="mic" type="button" aria-pressed="false">Hold to talk</button></p>
   </form>
+  <p id="heard" aria-live="polite"></p>
   <div id="answer" aria-live="polite"></div>
   <div id="card"></div>
   <ul id="sources"></ul>
@@ -89,6 +91,7 @@
 <footer>Information from the NHS website, licensed under the Open Government Licence v3.0. Not medical advice. In an emergency call 999.</footer>
 <script type="module">
   import { Avatar } from "./avatar.js";
+  import { startRecording } from "./voice.js";
   import { TIMES, buildSchedule, findInteractions, loadMedicines, saveMedicines } from "./logic.js";
 
   const SIZES = [20, 24, 28];
@@ -206,11 +209,77 @@
     } catch {}
     avatar.setState("idle");
   };
-  document.getElementById("form").addEventListener("submit", async (e) => {
+  const heard = document.getElementById("heard");
+  const input = document.getElementById("q");
+  let busy = false;  // one request at a time: a second Send or recording is ignored until this one ends
+  const exclusive = async (fn) => {
+    if (busy) return;
+    busy = true;
+    try { await fn(); } finally { busy = false; }
+  };
+  document.getElementById("form").addEventListener("submit", (e) => {
     e.preventDefault();
+    exclusive(() => { heard.textContent = ""; return askQuestion(input.value); });
+  });
+
+  const mic = document.getElementById("mic");
+  let stopRecording = null;
+  const startMic = async () => {
+    if (busy || stopRecording) { avatar.stop(); return; }
+    avatar.stop();
+    try {
+      stopRecording = await startRecording();
+    } catch {
+      answer.textContent = "Microphone not available. Please type your question.";
+      answer.className = "";
+      input.focus();
+      return;
+    }
+    mic.setAttribute("aria-pressed", "true");
+    mic.textContent = "Listening…";
+  };
+  const stopMic = () => {
+    const stop = stopRecording;
+    if (!stop) return;
+    stopRecording = null;
+    mic.setAttribute("aria-pressed", "false");
+    mic.textContent = "Hold to talk";
+    exclusive(async () => {
+      avatar.setState("thinking");
+      const body = new FormData();
+      body.append("audio", await stop(), "question.webm");
+      const res = await fetch("/api/transcribe", { method: "POST", body }).catch(() => null);
+      if (!res?.ok) {
+        avatar.setState("idle");
+        answer.textContent = "Sorry, I couldn't hear that. Please type your question.";
+        answer.className = "";
+        input.focus();
+        return;
+      }
+      const { text } = await res.json();
+      // A blank question gets the "didn't catch that" reply from /api/chat.
+      if (text.trim()) {
+        heard.textContent = `You asked: ${text}`;
+        await speak(`You asked about ${text}.`);
+      } else {
+        heard.textContent = "";
+      }
+      await askQuestion(text);
+    });
+  };
+  mic.addEventListener("pointerdown", (e) => { e.preventDefault(); startMic(); });
+  for (const ev of ["pointerup", "pointercancel"]) mic.addEventListener(ev, stopMic);
+  // Keyboard users press Space to start and again to stop.
+  mic.addEventListener("keydown", (e) => {
+    if (e.key !== " " || e.repeat) return;
+    e.preventDefault();
+    if (stopRecording) stopMic(); else startMic();
+  });
+  mic.addEventListener("keyup", (e) => { if (e.key === " ") e.preventDefault(); });
+
+  async function askQuestion(question) {
     avatar.stop();
     avatar.setState("thinking");
-    const question = document.getElementById("q").value;
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -253,8 +322,8 @@
       li.append(a);
       return li;
     }));
-    speak(data.answer);
-  });
+    await speak(data.answer);
+  }
 </script>
 </body>
 </html>

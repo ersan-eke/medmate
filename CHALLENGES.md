@@ -17,3 +17,7 @@ Add real problems as you hit them: date, who, what happened, what fixed it.
 
 - **Kokoro set up first time.** `kokoro_engine()` returned WAV (`RIFF`) in the slow test (about 85 s for both slow tests including the model load); no setup problem to log. `say` WAV is `LEI16@22050`, which browsers decode.
 - **No portrait art yet.** The avatar draws a fallback face (circle, eyes, mouth). Image frames are not coded until the art exists.
+
+## 2026-11-16 — Asking by voice (ticket #10)
+
+- **faster-whisper vs PyAV.** faster-whisper 1.2.1 calls `av.open(..., metadata_errors=...)`, which av 19 rejects (`TypeError`). Pinned `av<19` (now 18.1.0).
