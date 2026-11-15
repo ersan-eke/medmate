@@ -12,6 +12,7 @@ from .retrieval import Hit
 Generate = Callable[[list[dict], dict], str]
 
 SYSTEM_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "system.txt").read_text(encoding="utf-8")
+TRIAGE_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "triage.txt").read_text(encoding="utf-8")
 ATTEMPTS = 2
 TIMEOUT_SECONDS = 20  # a warm 3B answer takes a few seconds; the first-answer gate is 10 s
 log = logging.getLogger(__name__)
@@ -50,6 +51,13 @@ class LlmAnswer(BaseModel):
 
 
 ANSWER_SCHEMA = LlmAnswer.model_json_schema()
+
+
+class Triage(BaseModel):
+    urgent: bool
+
+
+TRIAGE_SCHEMA = Triage.model_json_schema()
 
 
 def _plain(text: str) -> str:
@@ -109,6 +117,16 @@ def ask_llm(question: str, medicines: list[MedicineEntry], hits: list[Hit], gene
         # At temperature 0 a repeat would return the same reply, so say what was wrong.
         messages = messages[:2] + [{"role": "assistant", "content": raw}, {"role": "user", "content": result}]
     return None
+
+
+def triage(question: str, generate: Generate) -> bool:
+    """Whether the model thinks the question describes an emergency. Any failure counts as no: the rules already ran."""
+    messages = [{"role": "system", "content": TRIAGE_PROMPT}, {"role": "user", "content": _plain(question)}]
+    try:
+        return Triage.model_validate_json(generate(messages, TRIAGE_SCHEMA)).urgent
+    except Exception:
+        log.warning("triage failed", exc_info=True)
+        return False
 
 
 def ollama_generate(model: str) -> Generate:

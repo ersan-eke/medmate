@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from backend.app import create_app
 from backend.kb import Interaction
-from backend.llm import MedicineEntry
+from backend.llm import TRIAGE_SCHEMA, MedicineEntry
 from backend.pipeline import known_medicines
 from backend.messages import ATTRIBUTION, EMERGENCY, FALLBACK, NOT_COVERED, NOT_HEARD, OFF_TOPIC
 from tests.test_safety import FIRES
@@ -39,12 +39,18 @@ class Counting:
 
 @pytest.fixture
 def spies(fake_embed):
-    return Counting(fake_embed), Counting(lambda m, s: reply())
+    return Counting(fake_embed), Counting(lambda m, s: reply())  # embedder, answer call
 
 
 @pytest.fixture
-def client(spies, tiny_index):
-    embed, generate = spies
+def triage(spies):
+    return Counting(lambda m, s: '{"urgent": false}')
+
+
+@pytest.fixture
+def client(spies, triage, tiny_index):
+    embed, answer = spies
+    generate = lambda m, s: (triage if s == TRIAGE_SCHEMA else answer)(m, s)  # noqa: E731
     return TestClient(create_app(tiny_index, embed, generate, INTERACTIONS))
 
 
@@ -52,7 +58,7 @@ def chat(client, q, medicines=()):
     return client.post("/api/chat", json={"question": q, "medicines": list(medicines)})
 
 
-def test_demo_red_flag_skips_llm(client, spies):
+def test_demo_red_flag_skips_llm(client, spies, triage):
     r = chat(client, "Now my chest feels tight.")
     assert r.status_code == 200
     body = r.json()
@@ -60,13 +66,42 @@ def test_demo_red_flag_skips_llm(client, spies):
     assert body["answer"] == EMERGENCY
     assert body["red_flag"] == "chest_pain"
     assert body["llm_called"] is False
-    assert [s.calls for s in spies] == [0, 0]  # neither embedder nor LLM
+    assert [s.calls for s in spies] == [0, 0] and triage.calls == 0  # rules answer before any model call
 
 
 @pytest.mark.parametrize("q", [t for ts in FIRES.values() for t in ts])
 def test_every_emergency_phrasing_skips_embedder_and_llm(client, spies, q):
     assert chat(client, q).json()["kind"] == "emergency"
     assert [s.calls for s in spies] == [0, 0]
+
+
+ELEPHANT = "it feels like an elephant is sitting on me"
+
+
+def test_urgent_triage_is_an_emergency_before_retrieval(client, spies, triage):
+    assert chat(client, ELEPHANT).json()["kind"] == "not_covered"  # below the retrieval gate, no rule matches
+    triage.fn = lambda m, s: '{"urgent": true}'
+    body = chat(client, ELEPHANT).json()
+    assert body["kind"] == "emergency" and body["answer"] == EMERGENCY
+    assert body["red_flag"] == "model_triage" and body["llm_called"] is True
+    assert [s.calls for s in spies] == [0, 0]  # no embedder, no answer call
+
+
+@pytest.mark.parametrize("raw", ["not json", "{}", '{"urgent": "maybe"}'])
+def test_bad_triage_reply_continues(client, triage, monkeypatch, raw):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    triage.fn = lambda m, s: raw
+    assert chat(client, Q).json()["kind"] == "answer"
+
+
+def test_triage_error_continues(client, triage, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+
+    def fail(messages, schema):
+        raise TimeoutError("timed out")
+
+    triage.fn = fail
+    assert chat(client, Q).json()["kind"] == "answer"
 
 
 def test_medicine_question_with_symptom_still_fires(client):

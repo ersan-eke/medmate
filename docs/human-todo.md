@@ -25,13 +25,14 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 ## #9 Spoken answers with an audio-driven avatar
 
 - [ ] Run the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md` in Chrome: mouth follows the audio, Kokoro removed → `say` still speaks, all engines removed → captions only.
-- [ ] Blocked on the voice ticket (#10): the mic button doesn't exist yet, so "press the mic while the avatar speaks stops the audio" is only wired as `avatar.stop()` on a new typed question.
+- [ ] Check "press the mic while the avatar speaks stops the audio": the mic now exists (#10), so it is covered by the "Asking by voice" checklist.
 - [ ] Decide: the portrait art (`web/avatar/*.png`) is not made. The drawn face is the only face; image frames still need coding once the art exists.
 - [ ] Tick the acceptance boxes on issue #9 and close it.
 
 ## #10 Asking by voice (hold to talk)
 
-- [ ] Run the "Asking by voice" section of `docs/manual-ui-checklist.md` in Chrome (real microphone, mic denied, double Send).
+- [ ] Run the "Asking by voice" section of `docs/manual-ui-checklist.md` in Chrome (real microphone, mic denied, double Send). Also tap the mic very briefly (and on the first permission prompt): it must not stay on "Listening…" (fix `740b5d1`, untested in a browser).
 - [ ] Not tested in a browser: the page code was only syntax-checked. The server side was checked with webm/opus audio made by ffmpeg.
 - [ ] First transcribe downloads Whisper `small.en` weights; run it once online before the offline demo (plan Task 8 step 5, `scripts/fetch_models.py`, is not done).
+- [ ] Decide: `scripts/fetch_models.py` and the offline check (plan Task 8 step 5) are in no ticket yet. Ask for it, or do it by hand before the demo.
 - [ ] Tick the acceptance boxes on issue #10 and close it.
