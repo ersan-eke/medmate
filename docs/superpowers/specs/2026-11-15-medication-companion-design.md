@@ -63,7 +63,7 @@ An English, voice-first chatbot that helps older patients at home **understand t
 
 ## 5. Architecture
 
-Everything runs on the demo laptop. Only Edge-TTS (voice output) needs the internet, and it has an offline fallback.
+Everything runs on the demo laptop, with no internet needed. **No user question or answer text is sent to any third-party service** (team decision).
 
 ```
 Browser (localhost:8000)                      FastAPI backend (Python)                 Local services
@@ -78,8 +78,8 @@ Browser (localhost:8000)                      FastAPI backend (Python)          
 │                             │  JSON      │  4. LLM with JSON schema ─────│──▶ Ollama :11434 (chat model)
 │ Answer, sources, card ◀─────┼────────────┤  5. validate citations        │
 │                             │            │                               │
-│ Avatar canvas ◀── audio ◀───┼────────────┤ POST /api/tts                 │──▶ edge-tts (online)
-│ (mouth follows volume)      │            └──────────────────────────────┘     fallback: browser speechSynthesis
+│ Avatar canvas ◀── audio ◀───┼────────────┤ POST /api/tts                 │──▶ Kokoro → say (local)
+│ (mouth follows volume)      │            └──────────────────────────────┘                          
 └─────────────────────────────┘
                                  scripts/ingest.py: leaflets → chunks → embeddings (Ollama embed model) → index files
 ```
@@ -120,7 +120,11 @@ Browser (localhost:8000)                      FastAPI backend (Python)          
 
 ### 5.6 Voice
 - **Speech-to-text:** browser records with `MediaRecorder`, posts to `/api/transcribe`, backend runs `faster-whisper` `small.en` locally. The recognised text is shown and spoken back briefly ("You asked about…") before answering. Fallback: browser Web Speech API (needs internet in Chrome).
-- **Text-to-speech:** `/api/tts` uses `edge-tts` (free, uses Microsoft's online voices) with a warm English voice at a slightly slower rate, returns MP3. **Offline fallback: macOS `say -o` on the backend** (local, free), returning an audio file through the same `/api/tts` endpoint, so the avatar's mouth still follows the audio without internet. Browser `speechSynthesis` is a last resort only, because its audio can't be read by the Web Audio analyser (the avatar would need a fake mouth loop). Edge-TTS is an unofficial use of a Microsoft service, which is why the fallback exists. *(Design call, added after review.)*
+- **Text-to-speech:** `/api/tts` returns an audio file; the avatar code doesn't care which engine made it. Chain, decided by the team:
+  1. **Kokoro** (small open-weight TTS model, runs locally, warm English voice, slightly slower rate). Keeps the whole pipeline on the device, so answer text about the user's health never leaves the laptop. Member 3 time-boxes setup to about an hour on Sun/Mon.
+  2. **Another local engine** (e.g. Piper) only if Kokoro can't be set up.
+  3. **macOS `say -o`** on the backend as the last resort, through the same endpoint, so the avatar's mouth still follows the audio. It runs on-device; verify once with Wi-Fi off.
+  Cloud TTS is ruled out because it would send answer text to a third party: Edge-TTS (unofficial Microsoft service) and ElevenLabs (Tutorial 3) were considered and rejected for that reason. Browser `speechSynthesis` is not used either: its audio can't be read by the Web Audio analyser, so the avatar's mouth wouldn't move.
 - **Offline input:** local Whisper needs no internet; Web Speech does, so offline the order is Whisper → typing.
 
 ### 5.7 Avatar and UI
@@ -153,7 +157,7 @@ Browser (localhost:8000)                      FastAPI backend (Python)          
 
 ```
 backend/   app.py (FastAPI routes, static files), retrieval.py, safety.py,
-           llm.py (prompt, Ollama call, JSON validation), speech.py (whisper, edge-tts)
+           llm.py (prompt, Ollama call, JSON validation), speech.py (whisper, TTS chain)
 scripts/   ingest.py (leaflets → chunks → embeddings → data/index/)
 data/      leaflets/*.md, interactions.csv, index/ (generated)
 web/       index.html, app.js, styles.css, avatar/ (portrait + mouth images)
@@ -161,7 +165,7 @@ eval/      questions.jsonl, run_eval.py, results/ (CSV + charts for slides)
 tests/     test_safety.py, test_retrieval.py, test_llm_validation.py
 README.md  members (IDs, names), features, how to run, data attribution
 ```
-Stack: Python 3.11+, FastAPI, uvicorn, `ollama`, `rank_bm25`, `numpy`, `faster-whisper`, `edge-tts`, `pytest`. Frontend: no framework.
+Stack: Python 3.11+, FastAPI, uvicorn, `ollama`, `rank_bm25`, `numpy`, `faster-whisper`, `kokoro`, `pytest`. Frontend: no framework.
 
 ## 7. Demo script (≈7 minutes)
 
@@ -175,7 +179,7 @@ Stack: Python 3.11+, FastAPI, uvicorn, `ollama`, `rank_bm25`, `numpy`, `faster-w
 8. **Evaluation and feedback** (1 min): results table and charts (§8); classmate feedback.
 9. **Real challenges and limitations** (30 s): from the team's running log.
 
-A screen recording of a full successful run is made on Wed as a backup if the live demo fails.
+**The demo must be live.** The brief says: "You are required to conduct a live demonstration of your developed chatbot." A pre-recorded video can't replace it. A screen recording of a full successful run is made on Wed **only as a backup**, played only if the live system fails on stage, and the presenter says so openly. Optionally ask the lecturer beforehand whether a backup clip is acceptable in that case.
 
 ## 8. Evaluation
 
@@ -207,7 +211,7 @@ A screen recording of a full successful run is made on Wed as a backup if the li
 |---|---|
 | 1 — Knowledge & evaluation data | Collect and clean leaflets with licence notes, interaction table, write the eval question set, run the eval, feedback form |
 | 2 — Backend & safety | FastAPI app, retrieval, safety rules and tests, prompt, JSON validation |
-| 3 — Local models & voice | Ollama install and model benchmark, embedding model, Whisper and edge-tts endpoints |
+| 3 — Local models & voice | Ollama install and model benchmark, embedding model, Whisper and TTS endpoints (Kokoro, local fallbacks) |
 | 4 — Frontend, avatar & demo | Web page, medicine list and schedule card, avatar portrait and animation, slides, leads the demo |
 
 Everyone adds real problems they hit to `CHALLENGES.md` as they go; it becomes the challenges slide.
@@ -230,7 +234,8 @@ Everyone adds real problems they hit to `CHALLENGES.md` as they go; it becomes t
 | Model too slow on stage | Benchmark decides; 3B model kept pulled as a faster backup |
 | No internet at venue | Whisper and Ollama are local; TTS falls back to macOS `say` through the same endpoint, so the avatar still animates |
 | Mic or permissions fail | Typed input always works; Web Speech as second STT path |
-| Live demo crashes | Backup screen recording |
+| Live demo crashes | Typed input still works; backup screen recording played only as a last resort, stated openly |
+| Kokoro won't install | Another local engine (e.g. Piper), then macOS `say` |
 | Licensing doubt on a leaflet | Drop that medicine; keep the URL/date/licence header for every file |
 
 ## 12. Open issues / future work
@@ -243,7 +248,7 @@ Deliberately out of scope for the deadline; listed in the README and the limitat
 
 ## 13. Left to the builder
 
-- Exact Ollama model tags, Whisper model size, edge-tts voice name, RRF/threshold values — choose by measuring.
+- Exact Ollama model tags, Whisper model size, Kokoro voice name, RRF/threshold values — choose by measuring.
 - Exact red-flag phrase list wording and the interaction pairs, within the rules above.
 - Visual styling, colours, avatar look (friendly, professional, non-real person).
 - Whether to add streaming if time allows.
