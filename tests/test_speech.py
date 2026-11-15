@@ -107,5 +107,7 @@ def test_warm_speech_loads_whisper_and_first_engine(monkeypatch):
 
     calls = []
     monkeypatch.setattr(speech, "transcribe", lambda audio: calls.append("whisper") or "")
-    speech.warm_speech([failing, lambda t: calls.append("tts") or b"RIFF"])
+    speech.warm_speech([lambda t: calls.append("tts") or b"RIFF", failing])
     assert calls == ["whisper", "tts"]
+    with pytest.raises(RuntimeError):  # no quiet fall-through to the next engine
+        speech.warm_speech([failing, lambda t: b"RIFF"])

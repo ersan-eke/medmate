@@ -66,11 +66,11 @@ def transcribe(audio: bytes) -> str:
 
 
 def warm_speech(engines: list[Engine]) -> None:
-    """Load Whisper and the first TTS engine now, so the first request doesn't stall (or download)."""
+    """Load Whisper and the first TTS engine now (raises if it can't), so the first request doesn't stall (or download)."""
     import numpy as np
     import soundfile
 
     silence = io.BytesIO()
     soundfile.write(silence, np.zeros(16000, dtype="float32"), 16000, format="WAV")
     transcribe(silence.getvalue())
-    synthesize("Ready.", engines)
+    engines[0]("Ready.")  # not synthesize(): a silent fall-through to `say` would leave Kokoro uncached
