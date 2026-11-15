@@ -27,12 +27,14 @@
     <input id="q" autocomplete="off" maxlength="500">
   </form>
   <div id="answer" aria-live="polite"></div>
+  <div id="card"></div>
   <ul id="sources"></ul>
 </main>
 <footer>Information from the NHS website, licensed under the Open Government Licence v3.0. Not medical advice. In an emergency call 999.</footer>
 <script>
   const answer = document.getElementById("answer");
   const sources = document.getElementById("sources");
+  const card = document.getElementById("card");
   document.getElementById("form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const question = document.getElementById("q").value;
@@ -45,11 +47,22 @@
       answer.textContent = "Sorry, something went wrong. Please try again.";
       answer.className = "";
       sources.replaceChildren();
+      card.replaceChildren();
       return;
     }
     const data = await res.json();
     answer.textContent = data.answer;
     answer.className = data.kind;
+    const part = (title, text) => {
+      const h = document.createElement("h2");
+      h.textContent = title;
+      return [h, ...[].concat(text).map((t) => Object.assign(document.createElement("p"), { textContent: t }))];
+    };
+    card.replaceChildren(...(data.card ? [
+      ...part("Summary", data.card.summary),
+      ...part("What to do", data.card.what_to_do),
+      ...part("Get help if", data.card.get_help_if),
+    ] : []));
     sources.replaceChildren(...data.sources.map((s) => {
       const li = document.createElement("li");
       const a = document.createElement("a");
