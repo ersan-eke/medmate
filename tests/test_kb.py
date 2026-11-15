@@ -105,3 +105,26 @@ def test_empty_index_is_rejected_at_load(tmp_path):
     save_index(Index([], np.zeros((0, 4), dtype=np.float32)), tmp_path)
     with pytest.raises(ValueError, match="empty"):
         load_index(tmp_path)
+
+
+HEADER = "---\nmedicine: Aspirin\nsource_url: u\nretrieved: 2026-01-01\nlicence: OGL\n---"
+
+
+def test_text_before_first_heading_raises():
+    with pytest.raises(ValueError, match="Aspirin.*before the first heading"):
+        chunk_leaflet(f"{HEADER}\nstray text\n## Dose\nTake one.\n")
+
+
+def test_bom_leaflet_parses():
+    assert chunk_leaflet(f"﻿{HEADER}\n## Dose\nTake one.\n")[0].id == "aspirin#dose"
+
+
+def test_header_closing_line_at_end_of_file_parses():
+    assert parse_leaflet(HEADER) == ({"medicine": "Aspirin", "source_url": "u", "retrieved": "2026-01-01", "licence": "OGL"}, [])
+
+
+def test_same_chunk_id_in_two_leaflets_raises(tmp_path, fake_embed):
+    for name in ("a.md", "b.md"):
+        (tmp_path / name).write_text(f"{HEADER}\n## Dose\nTake one.\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="aspirin#dose"):
+        build_index(tmp_path, fake_embed)

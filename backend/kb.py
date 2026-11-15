@@ -43,7 +43,7 @@ def _slug(text: str) -> str:
 
 
 def parse_leaflet(text: str) -> tuple[dict[str, str], list[tuple[str, str]]]:
-    match = re.match(r"\s*---\n(.*?)\n---\n(.*)", text.replace("\r\n", "\n"), re.DOTALL)
+    match = re.match(r"\s*---\n(.*?)\n---(?:\n(.*)|$)", text.lstrip("\ufeff").replace("\r\n", "\n"), re.DOTALL)
     if not match:
         raise ValueError("leaflet must start with a --- header block")
     header = dict(line.split(":", 1) for line in match.group(1).splitlines() if ":" in line)
@@ -51,7 +51,9 @@ def parse_leaflet(text: str) -> tuple[dict[str, str], list[tuple[str, str]]]:
     for key in HEADER_KEYS:
         if not header.get(key):
             raise ValueError(f"leaflet header is missing '{key}'")
-    parts = re.split(r"^## (.+)$", match.group(2), flags=re.MULTILINE)
+    parts = re.split(r"^## (.+)$", match.group(2) or "", flags=re.MULTILINE)
+    if parts[0].strip():
+        raise ValueError(f"{header['medicine']} leaflet has text before the first heading")
     return header, [(h.strip(), b.strip()) for h, b in zip(parts[1::2], parts[2::2])]
 
 
@@ -82,16 +84,21 @@ def chunk_leaflet(text: str) -> list[Chunk]:
                 text=f"{medicine} — {section}\n{part}",
                 source_url=header["source_url"],
             ))
+    _check_unique(chunks)
+    return chunks
+
+
+def _check_unique(chunks: list[Chunk]) -> None:
     seen: set[str] = set()
     for chunk in chunks:
         if chunk.id in seen:
             raise ValueError(f"duplicate chunk id '{chunk.id}': two sections share a heading")
         seen.add(chunk.id)
-    return chunks
 
 
 def build_index(leaflet_dir: Path, embed: Embed) -> Index:
     chunks = [c for path in sorted(leaflet_dir.glob("*.md")) for c in chunk_leaflet(path.read_text(encoding="utf-8"))]
+    _check_unique(chunks)
     return Index(chunks, embed([c.text for c in chunks], "document").astype(np.float32))
 
 
