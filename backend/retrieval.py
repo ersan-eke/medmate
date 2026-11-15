@@ -70,5 +70,5 @@ class Retriever:
         top = np.argsort(-fused, kind="stable")[:k]
         return Retrieval(
             hits=[Hit(self.index.chunks[i], float(fused[i])) for i in top],
-            max_similarity=float(similarities[top].max()),
+            max_similarity=float(similarities.max()),  # every passage, not just the ranked top
         )

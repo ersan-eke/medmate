@@ -1,5 +1,7 @@
+import numpy as np
 import pytest
 
+from backend.kb import Chunk, Index
 from backend.retrieval import MIN_SIMILARITY, Retriever
 
 
@@ -59,3 +61,12 @@ def test_multi_word_medicine_name_is_boosted(tmp_path, fake_embed):
     r = Retriever(build_index(tmp_path, fake_embed), fake_embed)
     result = r.search("Co-codamol nosebleeds that do not stop, bleeding gums, blood in your urine, tell your doctor", [], k=1)
     assert result.hits[0].chunk.medicine == "Co-codamol"
+
+
+def test_similarity_gate_sees_a_strong_match_ranked_outside_the_top():
+    chunks = [Chunk("a#x", "Alpha", "X", "keyword keyword", "u"), Chunk("b#x", "Beta", "X", "unrelated words", "u")]
+    index = Index(chunks, np.eye(2, dtype=np.float32))
+    retriever = Retriever(index, lambda texts, mode="document": np.array([[0.0, 1.0]], dtype=np.float32))
+    result = retriever.search("keyword", [], k=1, mode="bm25")  # BM25 ranks `a` first; the vector match is `b`
+    assert [h.chunk.id for h in result.hits] == ["a#x"]
+    assert result.max_similarity == 1.0
