@@ -80,7 +80,7 @@ def chunk_leaflet(text: str) -> list[Chunk]:
 
 
 def build_index(leaflet_dir: Path, embed: Embed) -> Index:
-    chunks = [c for path in sorted(leaflet_dir.glob("*.md")) for c in chunk_leaflet(path.read_text())]
+    chunks = [c for path in sorted(leaflet_dir.glob("*.md")) for c in chunk_leaflet(path.read_text(encoding="utf-8"))]
     return Index(chunks, embed([c.text for c in chunks], "document").astype(np.float32))
 
 

@@ -58,7 +58,7 @@ def _plain(text: str) -> str:
 def build_messages(question: str, medicines: list[MedicineEntry], hits: list[Hit]) -> list[dict]:
     passages = "\n\n".join(f"[{h.chunk.id}] {h.chunk.text}" for h in hits)
     listed = "; ".join(_plain(f"{m.name} {m.dose}") for m in medicines) or "none listed"
-    user = f"Passages:\n\n{passages}\n\nThe user's medicines: {listed}\n\nQuestion: {question}"
+    user = f"Passages:\n\n{passages}\n\nThe user's medicines: {listed}\n\nQuestion: {_plain(question)}"
     return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
 
 
