@@ -34,3 +34,8 @@ export function findInteractions(list, interactions) {
   const have = new Set(list.map((m) => m.name.toLowerCase()));
   return interactions.filter((i) => have.has(i.a.toLowerCase()) && have.has(i.b.toLowerCase()));
 }
+
+// Mouth frame from audio volume (RMS of the waveform, 0..1).
+export function mouthFrame(rms) {
+  return rms < 0.02 ? "closed" : rms < 0.08 ? "half" : "open";
+}

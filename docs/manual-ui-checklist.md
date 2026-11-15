@@ -14,3 +14,13 @@ Run `uv run uvicorn --factory backend.app:default_app` and ask the Metformin que
 - [ ] Set `localStorage['medmate.medicines']='oops'` in devtools and reload: the page loads with an empty list
 - [ ] Keyboard only (Tab, Space, Enter): add, edit and remove a medicine, tick times, send a question; focus is always visible
 - [ ] A+ cycles text 20 → 24 → 28 → 20 px, and the size is kept after a reload
+
+## Spoken answers and avatar
+
+Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
+
+- [ ] Ask the Metformin question: the answer is spoken and the mouth visibly opens and closes with the audio, with a blink every few seconds
+- [ ] Ask "Now my chest feels tight.": the 999 message is spoken at once
+- [ ] Make `kokoro_engine()` fail (drop it from `engines` in `default_app`): the answer is still spoken by macOS `say` and the mouth still moves
+- [ ] Make every engine fail (empty `engines`): the caption shows and nothing breaks
+- [ ] Send a new question while the avatar speaks: the audio stops

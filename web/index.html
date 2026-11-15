@@ -75,6 +75,7 @@
   </section>
 </aside>
 <main>
+  <canvas id="avatar" width="160" height="160" role="img" aria-label="MedMate avatar"></canvas>
   <form id="form">
     <label for="q">Ask about your medicines</label>
     <input id="q" autocomplete="off" maxlength="500">
@@ -87,6 +88,7 @@
 </div>
 <footer>Information from the NHS website, licensed under the Open Government Licence v3.0. Not medical advice. In an emergency call 999.</footer>
 <script type="module">
+  import { Avatar } from "./avatar.js";
   import { TIMES, buildSchedule, findInteractions, loadMedicines, saveMedicines } from "./logic.js";
 
   const SIZES = [20, 24, 28];
@@ -191,8 +193,23 @@
   const answer = document.getElementById("answer");
   const sources = document.getElementById("sources");
   const card = document.getElementById("card");
+  const avatar = new Avatar(document.getElementById("avatar"));
+  // Speaks the reply; if every TTS engine fails the caption is already on screen, so just stay silent.
+  const speak = async (text) => {
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (res.ok) await avatar.speak(await res.arrayBuffer());
+    } catch {}
+    avatar.setState("idle");
+  };
   document.getElementById("form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    avatar.stop();
+    avatar.setState("thinking");
     const question = document.getElementById("q").value;
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -200,6 +217,7 @@
       body: JSON.stringify({ question, medicines }),
     });
     if (!res.ok) {
+      avatar.setState("idle");
       answer.textContent = "Sorry, something went wrong. Please try again.";
       answer.className = "";
       sources.replaceChildren();
@@ -235,6 +253,7 @@
       li.append(a);
       return li;
     }));
+    speak(data.answer);
   });
 </script>
 </body>

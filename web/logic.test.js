@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildSchedule, findInteractions, loadMedicines, saveMedicines } from "./logic.js";
+import { buildSchedule, mouthFrame, findInteractions, loadMedicines, saveMedicines } from "./logic.js";
 
 const KEY = "medmate.medicines";
 const fakeStorage = (init = {}) => {
@@ -58,4 +58,10 @@ test("interactions match either order, ignoring case", () => {
   assert.deepEqual(findInteractions([{ name: "warfarin" }, { name: "Ibuprofen" }], [row]), [row]);
   assert.deepEqual(findInteractions([{ name: "IBUPROFEN" }, { name: "Warfarin" }], [row]), [row]);
   assert.deepEqual(findInteractions([{ name: "Metformin" }], [row]), []);
+});
+
+test("mouthFrame follows the volume", () => {
+  assert.equal(mouthFrame(0), "closed");
+  assert.equal(mouthFrame(0.05), "half");
+  assert.equal(mouthFrame(0.3), "open");
 });

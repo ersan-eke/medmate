@@ -12,3 +12,8 @@ Add real problems as you hit them: date, who, what happened, what fixed it.
 - **Low-dose aspirin.** There is no separate low-dose page any more: `/medicines/low-dose-aspirin/` redirects to the combined aspirin page, which covers both low-dose and pain-relief use. `aspirin.md` is that page.
 - **Aspirin warnings.** Only the ramipril leaflet exempts low-dose aspirin, so only Ramipril + aspirin was left out. The warfarin, ibuprofen and sertraline leaflets name aspirin without that exemption, so those rows stay.
 - **Warning wording.** Each warning says what the leaflet lists, then quotes the leaflet's own advice sentence. `validate_interactions` checks that the cited passage names both medicines; whether the wording is faithful was checked by hand.
+
+## 2026-11-15 — Spoken answers (ticket #9)
+
+- **Kokoro set up first time.** `kokoro_engine()` returned WAV (`RIFF`) in the slow test (about 85 s for both slow tests including the model load); no setup problem to log. `say` WAV is `LEI16@22050`, which browsers decode.
+- **No portrait art yet.** The avatar draws a fallback face (circle, eyes, mouth). Image frames are not coded until the art exists.

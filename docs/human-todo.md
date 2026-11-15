@@ -21,3 +21,10 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 ## Earlier tickets
 
 - [ ] The card checks at the top of `docs/manual-ui-checklist.md` (from commit `ba829a6`) are still unticked.
+
+## #9 Spoken answers with an audio-driven avatar
+
+- [ ] Run the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md` in Chrome: mouth follows the audio, Kokoro removed → `say` still speaks, all engines removed → captions only.
+- [ ] Blocked on the voice ticket (#10): the mic button doesn't exist yet, so "press the mic while the avatar speaks stops the audio" is only wired as `avatar.stop()` on a new typed question.
+- [ ] Decide: the portrait art (`web/avatar/*.png`) is not made. The drawn face is the only face; image frames still need coding once the art exists.
+- [ ] Tick the acceptance boxes on issue #9 and close it.
