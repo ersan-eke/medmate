@@ -133,15 +133,18 @@ def validate_interactions(interactions: list[Interaction], index: Index) -> None
 
 
 EMBED_MODEL = "nomic-embed-text"
+EMBED_TIMEOUT_SECONDS = 10  # a warm embedding takes well under a second
 
 
-def ollama_embed(model: str = EMBED_MODEL) -> Embed:
+def ollama_embed(model: str = EMBED_MODEL, timeout: float | None = EMBED_TIMEOUT_SECONDS) -> Embed:
     import ollama
+
+    client = ollama.Client(timeout=timeout)
 
     def embed(texts: list[str], mode: Literal["query", "document"]) -> np.ndarray:
         # nomic-embed-text needs these task prefixes.
         prefix = "search_query: " if mode == "query" else "search_document: "
-        vectors = np.array(ollama.embed(model=model, input=[prefix + t for t in texts]).embeddings, dtype=np.float32)
+        vectors = np.array(client.embed(model=model, input=[prefix + t for t in texts]).embeddings, dtype=np.float32)
         return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
 
     return embed

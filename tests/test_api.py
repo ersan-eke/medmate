@@ -229,6 +229,26 @@ def test_llm_error_gives_fallback_after_one_call(client, spies, monkeypatch, err
     assert spies[1].calls == 1  # a dead model is not retried
 
 
+@pytest.mark.parametrize("error", [TimeoutError("timed out"), ConnectionError("connection refused")])
+def test_embedder_error_gives_fallback_without_answer_call(client, spies, caplog, error):
+    def fail(texts, mode="document"):
+        raise error
+
+    spies[0].fn = fail
+    with caplog.at_level(logging.WARNING):
+        r = chat(client, Q)
+    body = r.json()
+    assert r.status_code == 200 and body["kind"] == "fallback" and body["answer"] == FALLBACK
+    assert body["llm_called"] is False and spies[1].calls == 0
+    assert any(rec.exc_info and rec.exc_info[1] is error for rec in caplog.records)
+
+
+def test_embedder_error_does_not_touch_emergency_or_blank(client, spies):
+    spies[0].fn = lambda *a, **k: 1 / 0
+    assert chat(client, "Now my chest feels tight.").json()["kind"] == "emergency"
+    assert chat(client, "  ").json()["kind"] == "not_heard"
+
+
 def test_emergency_answered_while_model_call_waits(client, spies, monkeypatch):
     monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
     started, release = threading.Event(), threading.Event()

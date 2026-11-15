@@ -51,7 +51,11 @@ def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate) 
     if triage(question, generate):  # before retrieval: a novel wording matches no leaflet and would stop at the gate
         return ChatResponse(kind="emergency", answer=messages.EMERGENCY, red_flag="model_triage", llm_called=True)
     medicines = known_medicines(req.medicines, retriever.medicines)
-    result = retriever.search(question, [m.name for m in medicines])
+    try:
+        result = retriever.search(question, [m.name for m in medicines])
+    except Exception:  # embedder down or slow: the page must still get an answer
+        log.warning("retrieval failed (embedder down or slow?)", exc_info=True)
+        return ChatResponse(kind="fallback", answer=messages.FALLBACK)
     if result.max_similarity < MIN_SIMILARITY:
         return ChatResponse(kind="not_covered", answer=messages.NOT_COVERED)
     llm = ask_llm(question, medicines, result.hits, generate)

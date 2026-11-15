@@ -75,7 +75,7 @@ def default_app() -> FastAPI:
 
     embed, generate, engines = ollama_embed(), ollama_generate(CHAT_MODEL), [kokoro_engine(), say_engine()]
     # Load every model now so the first answer doesn't stall. A failure only means a slower first request.
-    for name, warm in [("embedder", lambda: embed(["warm up"], "query")),
+    for name, warm in [("embedder", lambda: ollama_embed(timeout=None)(["warm up"], "query")),  # a cold load may outlast the request timeout
                        ("chat model", lambda: generate([{"role": "user", "content": "warm up"}], ANSWER_SCHEMA)),
                        ("speech", lambda: warm_speech(engines))]:
         try:
