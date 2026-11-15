@@ -36,3 +36,8 @@ Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
 - [ ] Deny microphone permission: "Microphone not available. Please type your question." shows and the text box has focus; typing still works
 - [ ] Press Send twice quickly: only one `/api/chat` request is made (devtools Network)
 - [ ] Press the mic while the avatar speaks: the audio stops
+
+## Avatar portrait
+
+- [ ] With the four PNGs in `web/avatar/`, the portrait shows, the mouth changes between the frames as it speaks, and it blinks every few seconds
+- [ ] Delete one PNG and reload: the drawn face is used instead

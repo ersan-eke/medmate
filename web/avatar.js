@@ -1,7 +1,16 @@
 import { mouthFrame } from "./logic.js";
 
 // A drawn face whose mouth follows the audio volume through a Web Audio analyser.
-// shortcut: no portrait images yet, only the drawn face; add them when the art exists.
+// With web/avatar/{portrait,mouth-half,mouth-open,eyes-closed}.png present it shows those frames;
+// if any is missing it draws a simple face instead.
+const FRAMES = { closed: "portrait", half: "mouth-half", open: "mouth-open", blink: "eyes-closed" };
+const loadFrames = () => Promise.all(Object.entries(FRAMES).map(([key, name]) => new Promise((resolve, reject) => {
+  const img = new Image();
+  img.onload = () => resolve([key, img]);
+  img.onerror = reject;
+  img.src = `/avatar/${name}.png`;
+}))).then(Object.fromEntries, () => null);
+
 export class Avatar {
   constructor(canvas) {
     this.ctx = canvas.getContext("2d");
@@ -14,6 +23,8 @@ export class Avatar {
     this.analyser = this.audio.createAnalyser();
     this.analyser.connect(this.audio.destination);
     this.samples = new Float32Array(this.analyser.fftSize);
+    this.frames = null;
+    loadFrames().then((frames) => { this.frames = frames; });
     this.scheduleBlink();
     requestAnimationFrame(() => this.draw());
   }
@@ -56,6 +67,11 @@ export class Avatar {
     const { ctx, canvas } = this;
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0, 0, w, h);
+    if (this.frames) {
+      const blinking = performance.now() < this.blinkUntil;
+      ctx.drawImage(this.frames[blinking ? "blink" : mouthFrame(this.rms)], 0, 0, w, h);
+      return requestAnimationFrame(() => this.draw());
+    }
     ctx.fillStyle = "#f3d3b5";
     ctx.beginPath();
     ctx.arc(w / 2, h / 2, w * 0.45, 0, Math.PI * 2);
