@@ -51,15 +51,19 @@ def build_messages(question: str, medicines: list[MedicineEntry], hits: list[Hit
     return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
 
 
-def validate(raw: str, sent_ids: set[str]) -> LlmAnswer | None:
+def validate(raw: str, sent_ids: set[str]) -> LlmAnswer | str:
+    """The answer, or the reason it is unusable (fed back to the model on the retry)."""
     try:
         answer = LlmAnswer.model_validate_json(raw)
     except ValidationError:
-        return None
-    if answer.in_scope and answer.covered and not (
-        answer.answer.strip() and answer.citations and set(answer.citations) <= sent_ids
-    ):
-        return None
+        return "Your reply was not valid JSON matching the schema."
+    if answer.in_scope and answer.covered:
+        if not answer.answer.strip():
+            return "Your answer text was empty."
+        if not answer.citations:
+            return "You gave no citations. Cite the ids of the passages you used."
+        if unsent := [i for i in answer.citations if i not in sent_ids]:
+            return f"These citations were not among the passages: {', '.join(unsent)}. Cite only the ids given."
     return answer
 
 
@@ -71,8 +75,11 @@ def ask_llm(question: str, medicines: list[MedicineEntry], hits: list[Hit], gene
             raw = generate(messages, ANSWER_SCHEMA)
         except Exception:  # Ollama down or model missing: the page must still get an answer
             return None
-        if answer := validate(raw, sent_ids):
-            return answer
+        result = validate(raw, sent_ids)
+        if isinstance(result, LlmAnswer):
+            return result
+        # At temperature 0 a repeat would return the same reply, so say what was wrong.
+        messages = messages[:2] + [{"role": "assistant", "content": raw}, {"role": "user", "content": result}]
     return None
 
 

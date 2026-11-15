@@ -122,3 +122,19 @@ def test_page_has_banner_and_footer(client):
     assert "999" in r.text
     assert ATTRIBUTION in r.text
     assert "innerHTML" not in r.text
+
+
+def test_retry_is_told_what_was_wrong(client, spies, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    sent = []
+    replies = iter([reply(citations=["made#up"]), reply()])
+
+    def scripted(messages, schema):
+        sent.append(messages)
+        return next(replies)
+
+    spies[1].fn = scripted
+    body = chat(client, "Should I take metformin before or after dinner?").json()
+    assert body["kind"] == "answer" and spies[1].calls == 2
+    assert not any("made#up" in m["content"] for m in sent[0])
+    assert "made#up" in sent[1][-1]["content"]

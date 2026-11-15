@@ -31,19 +31,19 @@ def test_covered_answer_valid_with_sent_citation():
 
 
 def test_covered_answer_without_citation_invalid():
-    assert validate(raw(citations=[]), {h.chunk.id for h in HITS}) is None
+    assert isinstance(validate(raw(citations=[]), {h.chunk.id for h in HITS}), str)
 
 
 def test_citation_not_sent_invalid():
-    assert validate(raw(citations=["made#up"]), {h.chunk.id for h in HITS}) is None
+    assert "made#up" in validate(raw(citations=["made#up"]), {h.chunk.id for h in HITS})
 
 
 def test_not_covered_needs_no_citation():
-    assert validate(raw(covered=False, citations=[]), set()) is not None
+    assert not isinstance(validate(raw(covered=False, citations=[]), set()), str)
 
 
 def test_bad_json_invalid():
-    assert validate("nope", set()) is None
+    assert isinstance(validate("nope", set()), str)
 
 
 def test_bracketed_citation_accepted():
@@ -52,4 +52,4 @@ def test_bracketed_citation_accepted():
 
 
 def test_covered_blank_answer_invalid():
-    assert validate(raw(answer="  "), {h.chunk.id for h in HITS}) is None
+    assert isinstance(validate(raw(answer="  "), {h.chunk.id for h in HITS}), str)
