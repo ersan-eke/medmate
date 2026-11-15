@@ -50,3 +50,10 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Turn Wi-Fi off, start `uv run uvicorn --factory backend.app:default_app`, then do one voice question, one spoken answer and one chat. If anything tries to download, log it in `CHALLENGES.md` and fix it.
 - [ ] Time the first chat answer after start on the demo laptop (must be ≤ 10 s; 7 s here with HF offline only).
 - [ ] Tick the acceptance boxes on issue #12 and close it.
+
+## #15 Release gates and pre-flight script
+
+- [ ] **Gate failing:** demo step 3 ("…before or after dinner, and my stomach feels a bit unsettled.") returns `not_covered` 4 of 4 times with `llama3.2:3b`. Retrieval is right (metformin side-effects and how-to-take chunks, similarity 0.75); the model sets `covered: false`. Fix the prompt or choose a bigger model (ticket #11), or say so in the slides. Do not loosen the test.
+- [ ] Run `uv run python -m scripts.preflight` with Wi-Fi off at feature freeze and again on demo morning. It must print PASS for all three lines.
+- [ ] Not covered by the script: the eval gates (red-flag recall 1.0, refusal ≥ 0.9, hybrid hit@4) belong to ticket #11's `eval/run_eval.py`.
+- [ ] Tick the acceptance boxes on issue #15 and close it.
