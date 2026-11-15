@@ -1,0 +1,102 @@
+import json
+import re
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Literal
+
+import numpy as np
+
+MAX_CHUNK_CHARS = 1500
+HEADER_KEYS = ("medicine", "source_url", "retrieved", "licence")
+
+# Rows must come back L2-normalised so a dot product is a cosine.
+Embed = Callable[[list[str], Literal["query", "document"]], np.ndarray]
+
+
+@dataclass(frozen=True)
+class Chunk:
+    id: str
+    medicine: str
+    section: str
+    text: str
+    source_url: str
+
+
+@dataclass
+class Index:
+    chunks: list[Chunk]
+    vectors: np.ndarray
+
+
+def _slug(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+
+
+def parse_leaflet(text: str) -> tuple[dict[str, str], list[tuple[str, str]]]:
+    match = re.match(r"\s*---\n(.*?)\n---\n(.*)", text, re.DOTALL)
+    if not match:
+        raise ValueError("leaflet must start with a --- header block")
+    header = dict(line.split(":", 1) for line in match.group(1).splitlines() if ":" in line)
+    header = {k.strip(): v.strip() for k, v in header.items()}
+    for key in HEADER_KEYS:
+        if not header.get(key):
+            raise ValueError(f"leaflet header is missing '{key}'")
+    parts = re.split(r"^## (.+)$", match.group(2), flags=re.MULTILINE)
+    return header, [(h.strip(), b.strip()) for h, b in zip(parts[1::2], parts[2::2])]
+
+
+def _split(body: str) -> list[str]:
+    # shortcut: a single paragraph over the limit stays whole, split it if leaflets ever need that.
+    parts: list[str] = []
+    for paragraph in re.split(r"\n\s*\n", body):
+        if parts and len(parts[-1]) + len(paragraph) + 2 <= MAX_CHUNK_CHARS:
+            parts[-1] += "\n\n" + paragraph
+        else:
+            parts.append(paragraph)
+    return parts
+
+
+def chunk_leaflet(text: str) -> list[Chunk]:
+    header, sections = parse_leaflet(text)
+    medicine = header["medicine"]
+    chunks = []
+    for section, body in sections:
+        for n, part in enumerate(_split(body), start=1):
+            suffix = "" if n == 1 else f"-{n}"
+            chunks.append(Chunk(
+                id=f"{_slug(medicine)}#{_slug(section)}{suffix}",
+                medicine=medicine,
+                section=section,
+                text=f"{medicine} — {section}\n{part}",
+                source_url=header["source_url"],
+            ))
+    return chunks
+
+
+def build_index(leaflet_dir: Path, embed: Embed) -> Index:
+    chunks = [c for path in sorted(leaflet_dir.glob("*.md")) for c in chunk_leaflet(path.read_text())]
+    return Index(chunks, embed([c.text for c in chunks], "document").astype(np.float32))
+
+
+def save_index(index: Index, out_dir: Path) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "chunks.json").write_text(json.dumps([asdict(c) for c in index.chunks], indent=1))
+    np.save(out_dir / "vectors.npy", index.vectors)
+
+
+def load_index(out_dir: Path) -> Index:
+    chunks = [Chunk(**c) for c in json.loads((out_dir / "chunks.json").read_text())]
+    return Index(chunks, np.load(out_dir / "vectors.npy"))
+
+
+def ollama_embed(model: str = "nomic-embed-text") -> Embed:
+    import ollama
+
+    def embed(texts: list[str], mode: Literal["query", "document"]) -> np.ndarray:
+        # nomic-embed-text needs these task prefixes.
+        prefix = "search_query: " if mode == "query" else "search_document: "
+        vectors = np.array(ollama.embed(model=model, input=[prefix + t for t in texts]).embeddings, dtype=np.float32)
+        return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
+
+    return embed

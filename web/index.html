@@ -12,6 +12,7 @@
   input { width: 100%; font-size: 1.1rem; padding: .5rem; box-sizing: border-box; }
   #answer { margin-top: 1rem; font-size: 1.2rem; white-space: pre-wrap; }
   #answer.emergency { color: #c00; font-weight: bold; }
+  #sources { padding-left: 1.2rem; }
   footer { max-width: 40rem; margin: 2rem auto; padding: 0 1rem; font-size: .85rem; color: #444; }
 </style>
 </head>
@@ -26,10 +27,12 @@
     <input id="q" autocomplete="off" maxlength="500">
   </form>
   <div id="answer" aria-live="polite"></div>
+  <ul id="sources"></ul>
 </main>
 <footer>Information from the NHS website, licensed under the Open Government Licence v3.0. Not medical advice. In an emergency call 999.</footer>
 <script>
   const answer = document.getElementById("answer");
+  const sources = document.getElementById("sources");
   document.getElementById("form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const question = document.getElementById("q").value;
@@ -41,11 +44,20 @@
     if (!res.ok) {
       answer.textContent = "Sorry, something went wrong. Please try again.";
       answer.className = "";
+      sources.replaceChildren();
       return;
     }
     const data = await res.json();
     answer.textContent = data.answer;
     answer.className = data.kind;
+    sources.replaceChildren(...data.sources.map((s) => {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = s.url;
+      a.textContent = `${s.medicine} > ${s.section}`;
+      li.append(a);
+      return li;
+    }));
   });
 </script>
 </body>

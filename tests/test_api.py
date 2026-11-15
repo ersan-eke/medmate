@@ -2,27 +2,29 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
-from backend.messages import ATTRIBUTION, EMERGENCY, FALLBACK, NOT_HEARD
+from backend.messages import ATTRIBUTION, EMERGENCY, FALLBACK, NOT_COVERED, NOT_HEARD
 
 
-class Spy:
-    def __init__(self):
-        self.calls = 0
+class Counting:
+    def __init__(self, fn=None):
+        self.fn, self.calls = fn, 0
 
     def __call__(self, *a, **k):
         self.calls += 1
-        raise AssertionError("must not be called")
+        if self.fn is None:
+            raise AssertionError("must not be called")
+        return self.fn(*a, **k)
 
 
 @pytest.fixture
-def spies():
-    return Spy(), Spy()
+def spies(fake_embed):
+    return Counting(fake_embed), Counting()
 
 
 @pytest.fixture
-def client(spies):
+def client(spies, tiny_index):
     embed, generate = spies
-    return TestClient(create_app(embed, generate))
+    return TestClient(create_app(tiny_index, embed, generate))
 
 
 def chat(client, q):
@@ -37,7 +39,7 @@ def test_demo_red_flag_skips_llm(client, spies):
     assert body["answer"] == EMERGENCY
     assert body["red_flag"] == "chest_pain"
     assert body["llm_called"] is False
-    assert [s.calls for s in spies] == [0, 0]
+    assert [s.calls for s in spies] == [0, 0]  # neither embedder nor LLM
 
 
 def test_medicine_question_with_symptom_still_fires(client):
@@ -52,10 +54,24 @@ def test_blank_question_not_heard(client, q):
     assert r.json()["answer"] == NOT_HEARD
 
 
-def test_other_questions_get_fallback_for_now(client):
-    body = chat(client, "When should I take amlodipine?").json()
-    assert body["kind"] == "fallback"
+def test_medicine_question_returns_top_4_sources(client, spies, monkeypatch):
+    # The hashing fake embedder scores long leaflet chunks far below a real model's cosines.
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    body = chat(client, "Should I take metformin before or after dinner?").json()
+    assert body["kind"] == "fallback"  # no LLM answer yet
     assert body["answer"] == FALLBACK
+    assert len(body["sources"]) == 4
+    assert "How and when to take it" in {s["section"] for s in body["sources"]}
+    assert {s["medicine"] for s in body["sources"]} == {"Metformin"}
+    assert body["sources"][0]["url"] == "https://www.nhs.uk/medicines/metformin/"
+    assert spies[1].calls == 0
+
+
+def test_unrelated_question_not_covered(client):
+    body = chat(client, "what is the capital of France").json()
+    assert body["kind"] == "not_covered"
+    assert body["answer"] == NOT_COVERED
+    assert body["sources"] == []
 
 
 def test_page_has_banner_and_footer(client):
