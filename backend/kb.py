@@ -71,6 +71,8 @@ def chunk_leaflet(text: str) -> list[Chunk]:
     medicine = header["medicine"]
     chunks = []
     for section, body in sections:
+        if not body:
+            raise ValueError(f"{medicine} leaflet section '{section}' is empty")
         for n, part in enumerate(_split(body), start=1):
             suffix = "" if n == 1 else f"-{n}"
             chunks.append(Chunk(

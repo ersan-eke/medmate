@@ -92,3 +92,9 @@ def test_duplicate_interaction_pair_raises(tiny_index):
     swapped = Interaction("Metformin", "Warfarin", "w", "warfarin#other-medicines")
     with pytest.raises(ValueError, match="more than once"):
         validate_interactions([row, swapped], tiny_index)
+
+
+def test_empty_section_raises():
+    text = (LEAFLETS / "warfarin.md").read_text() + "\n## Storage\n\n"
+    with pytest.raises(ValueError, match="Warfarin.*'Storage' is empty"):
+        chunk_leaflet(text)
