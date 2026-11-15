@@ -36,3 +36,10 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] First transcribe downloads Whisper `small.en` weights; run it once online before the offline demo (plan Task 8 step 5, `scripts/fetch_models.py`, is not done).
 - [ ] Decide: `scripts/fetch_models.py` and the offline check (plan Task 8 step 5) are in no ticket yet. Ask for it, or do it by hand before the demo.
 - [ ] Tick the acceptance boxes on issue #10 and close it.
+
+## #11 Avatar portrait art (commit `0e14f0f`)
+
+- [ ] Make the four images and save them in `web/avatar/` as `portrait.png`, `mouth-half.png`, `mouth-open.png`, `eyes-closed.png` (same square size, aligned). Steps are in the chat for ticket #11.
+- [ ] Save the prompts you used to `prompts/avatar.txt`.
+- [ ] Run the "Avatar portrait" section of `docs/manual-ui-checklist.md`.
+- [ ] Tick the acceptance boxes on issue #11 and close it.
