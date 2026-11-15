@@ -10,6 +10,7 @@ from backend.kb import Interaction
 from backend.llm import MedicineEntry
 from backend.pipeline import known_medicines
 from backend.messages import ATTRIBUTION, EMERGENCY, FALLBACK, NOT_COVERED, NOT_HEARD, OFF_TOPIC
+from tests.test_safety import FIRES
 
 
 METFORMIN = "metformin#how-and-when-to-take-it"
@@ -60,6 +61,12 @@ def test_demo_red_flag_skips_llm(client, spies):
     assert body["red_flag"] == "chest_pain"
     assert body["llm_called"] is False
     assert [s.calls for s in spies] == [0, 0]  # neither embedder nor LLM
+
+
+@pytest.mark.parametrize("q", [t for ts in FIRES.values() for t in ts])
+def test_every_emergency_phrasing_skips_embedder_and_llm(client, spies, q):
+    assert chat(client, q).json()["kind"] == "emergency"
+    assert [s.calls for s in spies] == [0, 0]
 
 
 def test_medicine_question_with_symptom_still_fires(client):
