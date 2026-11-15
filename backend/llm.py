@@ -11,7 +11,7 @@ from .retrieval import Hit
 # (chat messages, JSON schema) -> raw JSON string. Raises on transport failure.
 Generate = Callable[[list[dict], dict], str]
 
-SYSTEM_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "system.txt").read_text()
+SYSTEM_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "system.txt").read_text(encoding="utf-8")
 ATTEMPTS = 2
 TIMEOUT_SECONDS = 20  # a warm 3B answer takes a few seconds; the first-answer gate is 10 s
 log = logging.getLogger(__name__)
@@ -50,9 +50,14 @@ class LlmAnswer(BaseModel):
 ANSWER_SCHEMA = LlmAnswer.model_json_schema()
 
 
+def _plain(text: str) -> str:
+    """One line with no passage markers, so user-typed text can't pose as instructions or passages."""
+    return " ".join(re.sub(r"[\x00-\x1f\x7f]", " ", text).replace("[", "").replace("]", "").split())
+
+
 def build_messages(question: str, medicines: list[MedicineEntry], hits: list[Hit]) -> list[dict]:
     passages = "\n\n".join(f"[{h.chunk.id}] {h.chunk.text}" for h in hits)
-    listed = "; ".join(f"{m.name} {m.dose}".strip() for m in medicines) or "none listed"
+    listed = "; ".join(_plain(f"{m.name} {m.dose}") for m in medicines) or "none listed"
     user = f"Passages:\n\n{passages}\n\nThe user's medicines: {listed}\n\nQuestion: {question}"
     return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
 
