@@ -63,3 +63,14 @@ def transcribe(audio: bytes) -> str:
         _whisper = WhisperModel("small.en", device="cpu", compute_type="int8")
     segments, _ = _whisper.transcribe(io.BytesIO(audio), language="en", vad_filter=True)
     return " ".join(s.text.strip() for s in segments).strip()
+
+
+def warm_speech(engines: list[Engine]) -> None:
+    """Load Whisper and the first TTS engine now, so the first request doesn't stall (or download)."""
+    import numpy as np
+    import soundfile
+
+    silence = io.BytesIO()
+    soundfile.write(silence, np.zeros(16000, dtype="float32"), 16000, format="WAV")
+    transcribe(silence.getvalue())
+    synthesize("Ready.", engines)

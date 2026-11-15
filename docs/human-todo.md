@@ -43,3 +43,10 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Save the prompts you used to `prompts/avatar.txt`.
 - [ ] Run the "Avatar portrait" section of `docs/manual-ui-checklist.md`.
 - [ ] Tick the acceptance boxes on issue #11 and close it.
+
+## #12 Works offline with a fast first answer
+
+- [ ] Online, once: `uv run python -m scripts.fetch_models`.
+- [ ] Turn Wi-Fi off, start `uv run uvicorn --factory backend.app:default_app`, then do one voice question, one spoken answer and one chat. If anything tries to download, log it in `CHALLENGES.md` and fix it.
+- [ ] Time the first chat answer after start on the demo laptop (must be ≤ 10 s; 7 s here with HF offline only).
+- [ ] Tick the acceptance boxes on issue #12 and close it.

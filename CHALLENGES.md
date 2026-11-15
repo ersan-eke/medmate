@@ -21,3 +21,8 @@ Add real problems as you hit them: date, who, what happened, what fixed it.
 ## 2026-11-16 — Asking by voice (ticket #10)
 
 - **faster-whisper vs PyAV.** faster-whisper 1.2.1 calls `av.open(..., metadata_errors=...)`, which av 19 rejects (`TypeError`). Pinned `av<19` (now 18.1.0).
+
+## 2026-11-16 — Offline and fast first answer (ticket #12)
+
+- **No download happened with `HF_HUB_OFFLINE=1`.** Server start (warming embedder, chat model, Whisper, Kokoro) took 8 s with every cache already filled; log showed no download or error. The first chat after start took 7.0 s on this laptop (gate: 10 s). Wi-Fi itself was not switched off, only Hugging Face offline mode.
+- **Offline default.** `backend/app.py` sets `HF_HUB_OFFLINE=1` unless already set. `scripts/fetch_models.py` turns it back on for the fetch.

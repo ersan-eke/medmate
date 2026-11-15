@@ -132,7 +132,10 @@ def validate_interactions(interactions: list[Interaction], index: Index) -> None
             raise ValueError(f"'{row.source_chunk}' does not name both {row.medicine_a} and {row.medicine_b}")
 
 
-def ollama_embed(model: str = "nomic-embed-text") -> Embed:
+EMBED_MODEL = "nomic-embed-text"
+
+
+def ollama_embed(model: str = EMBED_MODEL) -> Embed:
     import ollama
 
     def embed(texts: list[str], mode: Literal["query", "document"]) -> np.ndarray:

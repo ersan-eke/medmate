@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Callable
 from pathlib import Path
@@ -8,12 +9,18 @@ from pydantic import BaseModel, Field
 
 from . import messages
 from .kb import Embed, Index, Interaction, load_index, load_interactions, ollama_embed
-from .llm import Generate, ollama_generate
+from .llm import Generate, ollama_generate, triage
 from .pipeline import ChatRequest, ChatResponse, Source, answer_question
 from .retrieval import Retriever
-from .speech import Engine, kokoro_engine, say_engine, synthesize, transcribe
+from .speech import Engine, kokoro_engine, say_engine, synthesize, transcribe, warm_speech
+
+# Weights come from `scripts/fetch_models.py`; never reach for the network at the venue.
+# Set before anything imports huggingface_hub (all such imports are lazy).
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
 ROOT = Path(__file__).resolve().parent.parent
+CHAT_MODEL = os.environ.get("MEDMATE_CHAT_MODEL", "llama3.2:3b")
+log = logging.getLogger(__name__)
 
 
 class TtsRequest(BaseModel):
@@ -66,7 +73,15 @@ def create_app(index: Index, embed: Embed, generate: Generate, interactions: lis
 def default_app() -> FastAPI:
     """`uvicorn --factory backend.app:default_app`: real index and Ollama embedder."""
 
-    model = os.environ.get("MEDMATE_CHAT_MODEL", "llama3.2:3b")
-    return create_app(load_index(ROOT / "data" / "index"), ollama_embed(), ollama_generate(model),
+    embed, generate, engines = ollama_embed(), ollama_generate(CHAT_MODEL), [kokoro_engine(), say_engine()]
+    # Load every model now so the first answer doesn't stall. A failure only means a slower first request.
+    for name, warm in [("embedder", lambda: embed(["warm up"], "query")),
+                       ("chat model", lambda: triage("warm up", generate)),
+                       ("speech", lambda: warm_speech(engines))]:
+        try:
+            warm()
+        except Exception:
+            log.exception("warming the %s failed", name)
+    return create_app(load_index(ROOT / "data" / "index"), embed, generate,
                       load_interactions(ROOT / "data" / "interactions.csv"),
-                      engines=[kokoro_engine(), say_engine()], transcribe=transcribe)
+                      engines=engines, transcribe=transcribe)

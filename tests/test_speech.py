@@ -100,3 +100,12 @@ def test_transcribe_empty_audio():
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS say")
 def test_say_whisper_roundtrip():
     assert "amlodipine" in transcribe(say_engine()("When should I take amlodipine?")).lower()
+
+
+def test_warm_speech_loads_whisper_and_first_engine(monkeypatch):
+    import backend.speech as speech
+
+    calls = []
+    monkeypatch.setattr(speech, "transcribe", lambda audio: calls.append("whisper") or "")
+    speech.warm_speech([failing, lambda t: calls.append("tts") or b"RIFF"])
+    assert calls == ["whisper", "tts"]
