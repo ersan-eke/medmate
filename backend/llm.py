@@ -17,7 +17,9 @@ TIMEOUT_SECONDS = 20  # a warm 3B answer takes a few seconds; the first-answer g
 log = logging.getLogger(__name__)
 WORD_NUMBERS = {w: str(n) for n, w in enumerate(
     "one two three four five six seven eight nine ten eleven twelve".split(), start=1)} | {"twice": "2"}
-NUMBER = re.compile(r"\d+(?:\.\d+)?|\b(?:" + "|".join(WORD_NUMBERS) + r")\b", re.IGNORECASE)
+# "one" is a pronoun more often than a count ("one of the side effects"), so it counts only before a unit.
+NUMBER = re.compile(r"\d+(?:\.\d+)?|\bone(?=\s+(?:tablet|dose|capsule|time)s?\b)|\b(?:"
+                    + "|".join(w for w in WORD_NUMBERS if w != "one") + r")\b", re.IGNORECASE)
 
 
 class MedicineEntry(BaseModel):

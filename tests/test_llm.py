@@ -72,6 +72,16 @@ def test_word_number_rejected():
     assert isinstance(reason, str) and "3" in reason
 
 
+def test_one_as_pronoun_is_not_a_number():
+    assert not isinstance(check("One of the side effects is nausea.", "Nausea is common."), str)
+    assert not isinstance(check("No one should stop it alone.", "Ask your doctor."), str)
+
+
+def test_one_before_a_unit_is_1():
+    assert not isinstance(check("Take 1 tablet.", "Take one tablet."), str)
+    assert isinstance(check("Take one tablet.", "Take 2 tablets."), str)
+
+
 def test_twice_matches_2_both_ways():
     assert not isinstance(check("Take it 2 times a day.", "Take it twice a day."), str)
     assert not isinstance(check("Take it twice a day.", "Take it 2 times a day."), str)
