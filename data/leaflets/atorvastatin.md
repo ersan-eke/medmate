@@ -5,6 +5,8 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What atorvastatin is for
+Atorvastatin is a medicine used to treat high cholesterol and prevent heart attacks and strokes. It's only available with a prescription.
+
 Atorvastatin is used to treat high cholesterol. Having high cholesterol can cause problems with your heart and blood vessels (cardiovascular disease).
 
 It's a type of cholesterol-lowering medicine called a statin.

@@ -5,6 +5,8 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What warfarin is for
+Warfarin is a medicine that helps prevent blood clots. It's only available with a prescription.
+
 Warfarin is a type of medicine called an anticoagulant. Some people call these blood thinners.
 
 It's used to treat and prevent blood clots, including in the veins (deep vein thrombosis) and the lungs (pulmonary embolism).

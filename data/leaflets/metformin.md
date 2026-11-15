@@ -5,6 +5,8 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What metformin is for
+Metformin is a medicine that can be used to treat type 2 diabetes, gestational diabetes and the hormone condition polyendocrine metabolic ovarian syndrome (PMOS). It’s only available with a prescription.
+
 Metformin is used as a treatment for:
 
 - type 2 diabetes (either on its own or combined with other diabetes medicines)

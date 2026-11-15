@@ -5,6 +5,8 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What sertraline is for
+Sertraline is an antidepressant medicine used to treat depression and other mental health conditions. It’s only available with a prescription.
+
 Sertraline can be used to treat mental health conditions such as:
 
 - depression

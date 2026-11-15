@@ -5,6 +5,8 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What amlodipine is for
+Amlodipine is a medicine used to treat high blood pressure and angina. It's only available with a prescription.
+
 Amlodipine is used to:
 
 - lower high blood pressure (hypertension), reducing risk of serious problems like heart attacks and stroke

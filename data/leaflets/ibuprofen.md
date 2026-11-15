@@ -5,6 +5,10 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What ibuprofen is for
+Ibuprofen is a painkiller that helps relieve pain and reduce swelling (inflammation). You can buy most types from shops and pharmacies, but some types are only available with a prescription.
+
+This information is for adults aged 18 or over. There's separate information about ibuprofen for children.
+
 Ibuprofen is a type of painkiller called a non-steroidal anti-inflammatory drug (NSAID).
 
 Ibuprofen and other NSAIDs can help with lots of types of pain, including:
@@ -35,7 +39,7 @@ If a doctor prescribes ibuprofen for you, follow the advice they give you about 
 
 ### How to take common types of ibuprofen
 
-200mg tablets and capsules
+### 200mg tablets and capsules
 
 For most 200mg tablets and capsules:
 
@@ -48,7 +52,7 @@ There are also some tablets and capsules that you take in a different way, such 
 
 Follow the instructions on the packet or leaflet that comes with your medicine to make sure you're taking it correctly.
 
-400mg tablets and capsules
+### 400mg tablets and capsules
 
 If you're taking 400mg ibuprofen tablets or capsules:
 
@@ -57,7 +61,7 @@ If you're taking 400mg ibuprofen tablets or capsules:
 - wait at least 4 hours between each dose
 - do not take more than 3 tablets or capsules in 24 hours
 
-Gel or spray
+### Gel or spray
 
 If you're using ibuprofen gel or spray:
 

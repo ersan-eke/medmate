@@ -5,6 +5,8 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What levothyroxine is for
+Levothyroxine is a medicine used to treat an underactive thyroid. It's only available with a prescription.
+
 Levothyroxine is mainly used to treat an underactive thyroid (hypothyroidism).
 
 Levothyroxine can help with symptoms of an underactive thyroid including:

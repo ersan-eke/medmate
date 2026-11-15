@@ -119,13 +119,13 @@ Side effects often improve as your body gets used to the medicine.
 
 These common side effects of ramipril happen in more than 1 in 100 people. There are things you can do to help cope with them:
 
-A dry, persistent cough that does not get better
+### A dry, persistent cough that does not get better
 
 Cough medicines do not usually help for coughs caused by ramipril. Sometimes the cough gets better on its own if you keep taking ramipril.
 
 Talk to your doctor if it carries on, bothers you or stops you sleeping, as another medicine may be better.
 
-Feeling dizzy or lightheaded, especially when you stand up or sit up quickly
+### Feeling dizzy or lightheaded, especially when you stand up or sit up quickly
 
 This is more likely to happen when you start taking ramipril or move on to a higher dose. If ramipril makes you feel dizzy when you stand up, try getting up very slowly or stay sitting down until you feel better.
 
@@ -133,11 +133,11 @@ If you begin to feel dizzy, lie down so that you do not pass out (faint), then s
 
 GOV.UK has more information on the law on drugs and driving
 
-Headaches
+### Headaches
 
 Make sure you rest and drink plenty of fluids. Try not to drink too much alcohol. Ask your pharmacist to recommend a painkiller. Talk to your doctor if the headache does not go away or is severe.
 
-Diarrhoea
+### Diarrhoea
 
 Drink plenty of fluids, such as water or squash, to prevent dehydration. Speak to a pharmacist if you have signs of dehydration, such as peeing less than usual or having dark, strong-smelling pee. Do not take any other medicines to treat diarrhoea without speaking to a pharmacist or doctor first.
 
@@ -145,7 +145,7 @@ If you take the combined pill or progestogen-only pill and you have severe water
 
 If you get diarrhoea from a stomach bug or illness, tell your doctor. You may need to stop taking ramipril for a while until you feel better.
 
-Being sick (vomiting)
+### Being sick (vomiting)
 
 Take small, frequent sips of fluids, like water or squash, to prevent dehydration. Speak to a pharmacist if you have signs of dehydration, such as peeing less than usual or having dark, strong-smelling pee. Do not take any other medicines to treat vomiting without speaking to a pharmacist or doctor first.
 
@@ -153,7 +153,7 @@ If you take the combined pill or progestogen-only pill and you're being sick, yo
 
 If you get vomiting from a stomach bug or illness, tell your doctor. You may need to stop taking ramipril for a while until you feel better.
 
-A mild skin rash
+### A mild skin rash
 
 It may help to take an antihistamine, which you can buy from a pharmacy. Check with the pharmacist to see what type is suitable for you.
 
@@ -309,13 +309,13 @@ There's very little information about taking herbal remedies and supplements wit
 Tell your doctor or pharmacist if you're taking any other medicines, including herbal remedies, vitamins or supplements.
 
 ## Common questions about ramipril
-How does ramipril work?
+### How does ramipril work?
 
 Ramipril is a type of medicine called an angiotensin-converting enzyme (ACE) inhibitor.
 
 Like other ACE inhibitors, ramipril relaxes and widens your blood vessels. This lowers your blood pressure and makes it easier for your heart to pump blood around your body.
 
-When will I feel better?
+### When will I feel better?
 
 You may not have any symptoms if you're taking ramipril for high blood pressure, after a heart attack, or to prevent kidney damage getting worse. In these cases, you may not feel any different when you take ramipril, but this does not mean that the medicine is not working. It's important to keep taking it.
 
@@ -323,11 +323,11 @@ Ramipril starts to work within a few hours to reduce high blood pressure, but it
 
 If you're taking ramipril for heart failure, it may take weeks, even months, before you feel better.
 
-Are there any long-term side effects?
+### Are there any long-term side effects?
 
 Ramipril is generally safe to take for a long time. In fact, it works best when you take it for a long time.
 
-Can I stop taking ramipril now my blood pressure is lower?
+### Can I stop taking ramipril now my blood pressure is lower?
 
 Even if ramipril has successfully lowered your blood pressure, it's best to carry on taking it.
 
@@ -337,7 +337,7 @@ If you need blood pressure-lowering medicines, you'll probably need to take them
 
 Remember, by keeping your blood pressure low, you're protecting yourself against having a heart attack or stroke in the future. You're also helping to prevent possible problems with how well your kidneys work.
 
-How does ramipril compare with other medicines for high blood pressure?
+### How does ramipril compare with other medicines for high blood pressure?
 
 There are several other angiotensin-converting enzyme (ACE) inhibitor medicines that work in the same way as ramipril. They include enalapril, lisinopril and perindopril.
 
@@ -358,7 +358,7 @@ If you cannot take ramipril or other ACE inhibitor medicines because of side eff
 
 This will usually be a medicine called an angiotensin receptor blocker, such as candesartan, irbesartan, losartan or valsartan.
 
-Can I take ramipril before surgery?
+### Can I take ramipril before surgery?
 
 Tell your doctor that you're taking ramipril if you're going to be put to sleep for an operation or are going to have a major operation, such as a caesarean section, without a general anaesthetic.
 
@@ -366,7 +366,7 @@ Ramipril can reduce your blood pressure when it's used with a general anaestheti
 
 Your doctor may advise you to stop taking it 24 hours before surgery.
 
-Will it affect my contraception?
+### Will it affect my contraception?
 
 Ramipril will not affect any type of contraception.
 
@@ -381,7 +381,7 @@ Find out more:
 - What to do if you're sick or have diarrhoea when taking the combined pill
 - What to do if you're sick or have diarrhoea when taking the progestogen-only pill
 
-Can I drive or ride a bike?
+### Can I drive or ride a bike?
 
 Ramipril can make some people feel dizzy, especially when they first start taking it or after taking a bigger dose.
 
@@ -398,7 +398,7 @@ Find out more about the law on driving:
 - GOV.UK – medical conditions, disability and driving
 - GOV.UK – drugs and driving: the law
 
-Can I drink alcohol while taking ramipril?
+### Can I drink alcohol while taking ramipril?
 
 Drinking alcohol can increase the effect of ramipril, so that it lowers your blood pressure too much, which can make you feel dizzy or lightheaded.
 
@@ -406,7 +406,7 @@ During the first few days of taking ramipril or after your dose increases, it's 
 
 If you find ramipril makes you feel dizzy, it's best to stop drinking alcohol.
 
-Is there any food or drink I need to avoid?
+### Is there any food or drink I need to avoid?
 
 Do not use salt substitutes such as Lo-Salt. This is because they're high in potassium. When mixed with ramipril, they may make the level of potassium in your blood too high.
 
@@ -414,7 +414,7 @@ There are no other foods or drinks you need to avoid while taking ramipril.
 
 Eating well can help if you have high blood pressure or heart failure.
 
-Can lifestyle changes help the health of my heart?
+### Can lifestyle changes help the health of my heart?
 
 You can boost the health of your heart by making some key lifestyle changes.
 

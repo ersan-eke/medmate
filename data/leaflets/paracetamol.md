@@ -5,6 +5,10 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What paracetamol is for
+Paracetamol is a painkiller that helps with pain and high temperature. You can buy most types from shops and pharmacies, but some types are only available with a prescription.
+
+This information is for adults aged 18 or over. There's separate information about paracetamol for children (Calpol).
+
 Paracetamol is a painkiller that can be used to treat:
 
 - headaches
@@ -28,7 +32,7 @@ If you're not sure how to take it, or have any problems, speak to a pharmacist o
 
 ### How to take and use common types of paracetamol
 
-500mg or 1g tablets and capsules
+### 500mg or 1g tablets and capsules
 
 Paracetamol tablets and capsules for adults usually contain 500mg of paracetamol.
 
@@ -48,7 +52,7 @@ You can sometimes get 1g (1000mg) tablets either on prescription or from a pharm
 
 If you're taking these, you should only take one at a time and do not take more than 4 tablets in 24 hours.
 
-250mg/5ml or 500mg/5ml liquid (oral suspension)
+### 250mg/5ml or 500mg/5ml liquid (oral suspension)
 
 Paracetamol liquid (oral suspension) for adults usually contains either 250mg of paracetamol in 5ml of medicine (250mg/5ml) or 500mg of paracetamol in 5ml of medicine (500mg/5ml).
 
@@ -66,7 +70,7 @@ For 500mg/5ml oral suspension:
 - leave at least 4 hours between doses
 - do not take it more than 4 times in 24 hours
 
-500mg suppositories
+### 500mg suppositories
 
 Paracetamol suppositories for adults usually contain either 500mg or 1000mg (1g) of paracetamol.
 
@@ -77,7 +81,7 @@ If you're using a 500mg paracetamol suppository:
 - leave at least 4 hours between doses
 - do not use more than 8 suppositories in 24 hours
 
-1g suppositories
+### 1g suppositories
 
 If you're using 1000mg (1g) suppositories, you should only use one at a time and do not use more than 4 suppositories in 24 hours.
 

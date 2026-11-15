@@ -5,6 +5,8 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What aspirin is for
+Aspirin is a medicine used to reduce the chance of a blood clot or to relieve pain. You can buy it from shops and pharmacies, and for some conditions it's available with a prescription.
+
 Aspirin is a type of medicine called a non-steroidal anti-inflammatory drug (NSAID).
 
 Aspirin can be:

@@ -5,6 +5,8 @@ retrieved: 2026-11-15
 licence: Contains public sector information licensed under the Open Government Licence v3.0.
 ---
 ## What omeprazole is for
+Omeprazole is a medicine that reduces the amount of acid in your stomach. It's used to treat conditions such as heartburn. You can buy some types from pharmacies and shops, but most types are only available with a prescription.
+
 Omeprazole is a medicine called a proton pump inhibitor (PPI). It reduces the amount of acid in your stomach.
 
 It's used to treat or prevent conditions and symptoms such as:

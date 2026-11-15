@@ -145,15 +145,15 @@ Salbutamol is a safe and very effective medicine if you use it properly. It has 
 
 More than 1 in 100 people have these side effects after taking 1 or 2 puffs of their salbutamol inhaler. There are things you can do to help cope with them:
 
-Feeling shaky
+### Feeling shaky
 
 See if your asthma or COPD symptoms get better with just 1 puff of your inhaler rather than 2. If you find you need 2 puffs for symptom relief, be reassured that the shakiness will wear off after a short time.
 
-Faster heartbeat that gets better quickly
+### Faster heartbeat that gets better quickly
 
 Make sure you're not taking more than the prescribed dose. If you get a faster heartbeat regularly, talk to your doctor or nurse as you may need your treatment reviewed so that you do not need to use your salbutamol as often.
 
-Headaches
+### Headaches
 
 Make sure you rest and drink plenty of fluids. Do not drink too much alcohol. Ask your pharmacist to recommend a painkiller.
 
@@ -289,19 +289,19 @@ There's not enough information to say that complementary medicines, herbal remed
 Tell your doctor or pharmacist if you're taking any other medicines, including herbal remedies, vitamins or supplements.
 
 ## Common questions about salbutamol inhalers
-How does salbutamol work?
+### How does salbutamol work?
 
 Salbutamol is a type of medicine called a bronchodilator. It works by relaxing the muscles of the airways into the lungs, which makes it easier to breathe.
 
-When will I feel better?
+### When will I feel better?
 
 When you have a puff of your salbutamol inhaler it works almost straight away to make your breathing easier. It carries on working for 4 to 6 hours.
 
-Are there any long-term side effects?
+### Are there any long-term side effects?
 
 There's no evidence that salbutamol does any lasting damage to your body even if you use it for many years.
 
-Are there other inhalers?
+### Are there other inhalers?
 
 Salbutamol is a type of medicine called a bronchodilator.
 
@@ -318,17 +318,17 @@ If you have difficulty using a salbutamol inhaler talk to your doctor. Switching
 
 You will also be given a preventer inhaler, such as a tiotropium inhaler, to help stop you getting symptoms. Use this every day.
 
-Do I need to keep a salbutamol diary?
+### Do I need to keep a salbutamol diary?
 
 It's a good idea to keep a diary of how often you need to use your salbutamol inhaler. That way you can discuss how it's helping your asthma or COPD with your doctor or nurse.
 
 Keeping a diary will also help you know when to order a replacement inhaler. Some inhalers contain a fixed number of 200 doses and it's not always obvious when they're empty.
 
-Will it affect my contraception?
+### Will it affect my contraception?
 
 Salbutamol does not affect any type of contraception including the combined pill and emergency contraception.
 
-Can I drive or ride a bike?
+### Can I drive or ride a bike?
 
 Salbutamol can make you feel dizzy or shaky. If this happens, do not drive, cycle or use tools or machinery until you feel better.
 
@@ -336,15 +336,15 @@ It's an offence to drive a car if your ability to drive safely is affected. It's
 
 Talk to your doctor or pharmacist if you're unsure whether it's safe for you to drive while using salbutamol. GOV.UK has more information on the law on drugs and driving.
 
-Can I drink alcohol while using a salbutamol inhaler?
+### Can I drink alcohol while using a salbutamol inhaler?
 
 Yes, you can drink alcohol with salbutamol.
 
-Is there any food or drink I need to avoid?
+### Is there any food or drink I need to avoid?
 
 You can eat and drink normally while using a salbutamol inhaler.
 
-Do salbutamol inhalers cause climate change?
+### Do salbutamol inhalers cause climate change?
 
 Pressurised metered dose inhalers (pMDIs), also known as puffers, contain hydrofluorocarbon propellants which act as powerful greenhouse gases that are a lot more damaging than carbon dioxide.
 
