@@ -66,6 +66,11 @@ def numbers(text: str) -> set[str]:
     return {WORD_NUMBERS.get(m.lower(), m) for m in NUMBER.findall(text)}
 
 
+def shown_text(answer: LlmAnswer) -> str:
+    card = answer.card
+    return " ".join([answer.answer, card.summary, *card.what_to_do, *card.get_help_if])
+
+
 def validate(raw: str, sent: dict[str, str], doses: str) -> LlmAnswer | str:
     """The answer, or the reason it is unusable (fed back to the model on the retry)."""
     try:
@@ -80,7 +85,7 @@ def validate(raw: str, sent: dict[str, str], doses: str) -> LlmAnswer | str:
         if unsent := [i for i in answer.citations if i not in sent]:
             return f"These citations were not among the passages: {', '.join(unsent)}. Cite only the ids given."
         allowed = {"999"} | numbers(doses) | numbers(" ".join(sent[i] for i in answer.citations))
-        if invented := sorted(numbers(answer.answer) - allowed):
+        if invented := sorted(numbers(shown_text(answer)) - allowed):
             return f"These numbers are not in the cited passages: {', '.join(invented)}. Use only numbers from them."
     return answer
 

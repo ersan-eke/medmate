@@ -93,3 +93,11 @@ def test_number_only_in_uncited_chunk_rejected():
 
 def test_not_covered_skips_number_check():
     assert not isinstance(validate(raw(covered=False, citations=[], answer="Take 77."), SENT, ""), str)
+
+
+def test_number_in_card_rejected():
+    card = {"summary": "Take 4000 mg.", "what_to_do": ["Eat first."], "get_help_if": ["Unwell."]}
+    reason = validate(raw(card=card), {ID: "Take 500 mg."}, "")
+    assert isinstance(reason, str) and "4000" in reason
+    card["summary"] = "Take 500 mg."
+    assert not isinstance(validate(raw(answer="Take 500 mg.", card=card), {ID: "Take 500 mg."}, ""), str)
