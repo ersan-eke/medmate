@@ -19,9 +19,10 @@ WARMUP_TIMEOUT_SECONDS = 120  # a cold model load can take a minute
 TRIAGE_TIMEOUT_SECONDS = 5  # a yes/no reply from a warm model; a cold one skips triage and the rules still apply
 log = logging.getLogger(__name__)
 WORD_NUMBERS = {w: str(n) for n, w in enumerate(
-    "one two three four five six seven eight nine ten eleven twelve".split(), start=1)} | {"twice": "2"}
+    "one two three four five six seven eight nine ten eleven twelve".split(), start=1)} | {"twice": "2", "half": "0.5"} | {
+    w: str(n) for n, w in zip(range(20, 100, 10), "twenty thirty forty fifty sixty seventy eighty ninety".split())}
 # "one" is a pronoun more often than a count ("one of the side effects"), so it counts only before a unit.
-NUMBER = re.compile(r"\d+(?:\.\d+)?|\bone(?=\s+(?:tablet|dose|capsule|time)s?\b)|\b(?:"
+NUMBER = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\bone(?=\s+(?:tablet|dose|capsule|time)s?\b)|\b(?:"
                     + "|".join(w for w in WORD_NUMBERS if w != "one") + r")\b", re.IGNORECASE)
 
 
@@ -76,7 +77,7 @@ def build_messages(question: str, medicines: list[MedicineEntry], hits: list[Hit
 
 
 def numbers(text: str) -> set[str]:
-    return {WORD_NUMBERS.get(m.lower(), m) for m in NUMBER.findall(text)}
+    return {WORD_NUMBERS.get(m.lower(), m.replace(",", "")) for m in NUMBER.findall(text)}
 
 
 def shown_text(answer: LlmAnswer) -> str:

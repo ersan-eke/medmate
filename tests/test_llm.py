@@ -90,6 +90,25 @@ def test_twice_matches_2_both_ways():
     assert not isinstance(check("Take it twice a day.", "Take it 2 times a day."), str)
 
 
+def test_written_tens_and_half_are_numbers():
+    assert isinstance(check("Take twenty milligrams.", "Take 10 mg."), str)
+    assert not isinstance(check("Take twenty milligrams.", "Take 20 mg."), str)
+    assert isinstance(check("Take half a tablet.", "Take one tablet."), str)
+    assert not isinstance(check("Take half a tablet.", "Take half a tablet."), str)
+    assert not isinstance(check("Take half a tablet.", "Take 0.5 tablet."), str)
+
+
+def test_comma_grouped_number_is_one_number():
+    assert isinstance(check("Take 1,500 mg.", "Take 1 mg or 500 mg."), str)
+    assert not isinstance(check("Take 1,500 mg.", "Take 1500 mg."), str)
+    assert not isinstance(check("Take 1500 mg.", "Take 1,500 mg."), str)
+
+
+def test_written_number_in_card_rejected():
+    card = {"summary": "Take twenty mg.", "what_to_do": ["Eat first."], "get_help_if": ["Unwell."]}
+    assert isinstance(validate(raw(answer="Take 10 mg.", card=card), {ID: "Take 10 mg."}, ""), str)
+
+
 def test_decimals_and_ranges():
     assert not isinstance(check("Take 0.5 g.", "Take 0.5 g."), str)
     assert isinstance(check("Take 5 g.", "Take 0.5 g."), str)
