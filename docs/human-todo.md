@@ -70,3 +70,27 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 ## #33 Ingest rejects broken leaflets (commit `eedade5`)
 
 - [ ] Tick the acceptance boxes on issues #33 and #23 and close them. Tickets #32 and #33 skipped the separate code-review step; run `/code-review` on them if you want it.
+
+## #26 More emergency phrasings trigger the 999 message (commit `369bca3`, closed)
+
+- [ ] Not covered: no test for the near-miss "is breathing difficulty a side effect of my tablets". The rules fire on it by design (they over-trigger), which the ticket's "behave as the existing rules decide" allows. Say if you want that softened.
+
+## #27 Embedder down gives the pharmacist fallback (commit `db8dcde`, closed)
+
+- [ ] Not tested against real Ollama: nothing checks that `ollama.Client(timeout=10)` actually times out. Stop Ollama, start the app, ask a question, and check the page shows "ask your pharmacist" and not an error.
+
+## #28 Model refusals arrive as refusals (commit `26aa9d1`)
+
+- [ ] Re-run the eval with `llama3.2:3b` and `llama3.1:8b`. The answer schema now requires only `in_scope` and `covered`, so a model can send a covered reply with nothing else. `validate()` rejects and retries it, which could raise the fallback rate.
+- [ ] Tick the acceptance boxes on issue #28. It is already closed.
+
+## #29 Server starts warm and rejects a bad index (commit `381740a`, closed)
+
+- [ ] **Gate failing:** `tests/test_demo_live.py::test_step3_first_answer_is_fast_and_cites_metformin` takes about 13 s against the 10 s limit. It fails the same way without this ticket's changes. Ollama here lists `llama3.1:8b`, while the app defaults to `llama3.2:3b`. Try `ollama pull llama3.2:3b` or set `MEDMATE_CHAT_MODEL`, then re-run `pytest -m slow tests/test_demo_live.py`. The "live smoke test still passes" box on #29 is not met until then.
+- [ ] A missing `chunks.json` or `vectors.npy` still gives a raw `FileNotFoundError` at startup, not a friendly message. Only an empty index has one.
+
+## #30 Not-covered check uses every passage (commit `53f3ab3`)
+
+- [ ] `backend/retrieval.py` still has your uncommitted `MIN_SIMILARITY = 0.74` change, with `eval/` and `tests/test_eval_metrics.py` untracked. I committed only my one-line hunk. Commit the rest when the eval work is ready.
+- [ ] With 0.74 the gate gives the right result on all 36 eval questions, except turmeric-with-metformin (0.763), which only the model's `covered` flag refuses. Re-check after any index or embedder change.
+- [ ] Tick the acceptance boxes on issue #30 and close it.
