@@ -99,22 +99,29 @@ def test_invalid_llm_output_falls_back(client, spies, monkeypatch):
     body = chat(client, "Should I take metformin before or after dinner?").json()
     assert body["kind"] == "fallback" and body["answer"] == FALLBACK
     assert body["sources"] == [] and spies[1].calls == 2
+    replies = iter(["not json", reply()])
+    spies[1].fn = lambda m, s: next(replies)
+    assert chat(client, "Should I take metformin before or after dinner?").json()["kind"] == "answer"
 
 
 def test_llm_not_covered_and_off_topic(client, spies, monkeypatch):
     monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
     spies[1].fn = lambda m, s: reply(covered=False, citations=[])
-    assert chat(client, "Should I take metformin before or after dinner?").json()["kind"] == "not_covered"
+    body = chat(client, "Should I take metformin before or after dinner?").json()
+    assert body["kind"] == "not_covered" and body["answer"] == NOT_COVERED
+    assert body["llm_called"] is True and body["sources"] == [] and body["card"] is None
     spies[1].fn = lambda m, s: reply(in_scope=False, citations=[])
     body = chat(client, "Should I take metformin before or after dinner?").json()
     assert body["kind"] == "off_topic" and body["answer"] == OFF_TOPIC
+    assert body["card"] is None and body["sources"] == []
 
 
-def test_unrelated_question_not_covered(client):
+def test_unrelated_question_not_covered(client, spies):
     body = chat(client, "what is the capital of France").json()
     assert body["kind"] == "not_covered"
     assert body["answer"] == NOT_COVERED
-    assert body["sources"] == []
+    assert body["sources"] == [] and body["card"] is None
+    assert body["llm_called"] is False and spies[1].calls == 0
 
 
 def test_page_has_banner_and_footer(client):
@@ -161,15 +168,17 @@ def test_invented_number_retried_with_it_named(client, spies, monkeypatch):
 Q = "Should I take metformin before or after dinner?"
 
 
-def test_timeout_gives_fallback_after_one_call(client, spies, monkeypatch):
+@pytest.mark.parametrize("error", [TimeoutError("timed out"), ConnectionError("connection refused")])
+def test_llm_error_gives_fallback_after_one_call(client, spies, monkeypatch, error):
     monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
 
-    def hang(messages, schema):
-        raise TimeoutError("timed out")
+    def fail(messages, schema):
+        raise error
 
-    spies[1].fn = hang
+    spies[1].fn = fail
     r = chat(client, Q)
-    assert r.status_code == 200 and r.json()["kind"] == "fallback"
+    body = r.json()
+    assert r.status_code == 200 and body["kind"] == "fallback" and body["answer"] == FALLBACK
     assert spies[1].calls == 1  # a dead model is not retried
 
 
