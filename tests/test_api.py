@@ -138,3 +138,19 @@ def test_retry_is_told_what_was_wrong(client, spies, monkeypatch):
     assert body["kind"] == "answer" and spies[1].calls == 2
     assert not any("made#up" in m["content"] for m in sent[0])
     assert "made#up" in sent[1][-1]["content"]
+
+
+def test_invented_number_retried_with_it_named(client, spies, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    sent = []
+    replies = iter([reply(answer="Take 987654 tablets."), reply()])
+
+    def scripted(messages, schema):
+        sent.append(messages)
+        return next(replies)
+
+    spies[1].fn = scripted
+    body = chat(client, "Should I take metformin before or after dinner?").json()
+    assert body["kind"] == "answer" and "987654" in sent[1][-1]["content"]
+    spies[1].fn = lambda m, s: reply(answer="Take 987654 tablets.")
+    assert chat(client, "Should I take metformin before or after dinner?").json()["kind"] == "fallback"

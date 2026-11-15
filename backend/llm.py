@@ -1,4 +1,4 @@
-import json
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Literal
@@ -12,6 +12,9 @@ Generate = Callable[[list[dict], dict], str]
 
 SYSTEM_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "system.txt").read_text()
 ATTEMPTS = 2
+WORD_NUMBERS = {w: str(n) for n, w in enumerate(
+    "one two three four five six seven eight nine ten eleven twelve".split(), start=1)} | {"twice": "2"}
+NUMBER = re.compile(r"\d+(?:\.\d+)?|\b(?:" + "|".join(WORD_NUMBERS) + r")\b", re.IGNORECASE)
 
 
 class MedicineEntry(BaseModel):
@@ -51,7 +54,11 @@ def build_messages(question: str, medicines: list[MedicineEntry], hits: list[Hit
     return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
 
 
-def validate(raw: str, sent_ids: set[str]) -> LlmAnswer | str:
+def numbers(text: str) -> set[str]:
+    return {WORD_NUMBERS.get(m.lower(), m) for m in NUMBER.findall(text)}
+
+
+def validate(raw: str, sent: dict[str, str], doses: str) -> LlmAnswer | str:
     """The answer, or the reason it is unusable (fed back to the model on the retry)."""
     try:
         answer = LlmAnswer.model_validate_json(raw)
@@ -62,20 +69,24 @@ def validate(raw: str, sent_ids: set[str]) -> LlmAnswer | str:
             return "Your answer text was empty."
         if not answer.citations:
             return "You gave no citations. Cite the ids of the passages you used."
-        if unsent := [i for i in answer.citations if i not in sent_ids]:
+        if unsent := [i for i in answer.citations if i not in sent]:
             return f"These citations were not among the passages: {', '.join(unsent)}. Cite only the ids given."
+        allowed = {"999"} | numbers(doses) | numbers(" ".join(sent[i] for i in answer.citations))
+        if invented := sorted(numbers(answer.answer) - allowed):
+            return f"These numbers are not in the cited passages: {', '.join(invented)}. Use only numbers from them."
     return answer
 
 
 def ask_llm(question: str, medicines: list[MedicineEntry], hits: list[Hit], generate: Generate) -> LlmAnswer | None:
     messages = build_messages(question, medicines, hits)
-    sent_ids = {h.chunk.id for h in hits}
+    sent = {h.chunk.id: h.chunk.text for h in hits}
+    doses = " ".join(m.dose for m in medicines)
     for _ in range(ATTEMPTS):
         try:
             raw = generate(messages, ANSWER_SCHEMA)
         except Exception:  # Ollama down or model missing: the page must still get an answer
             return None
-        result = validate(raw, sent_ids)
+        result = validate(raw, sent, doses)
         if isinstance(result, LlmAnswer):
             return result
         # At temperature 0 a repeat would return the same reply, so say what was wrong.

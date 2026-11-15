@@ -9,6 +9,9 @@ HITS = [
     Hit(Chunk("warfarin#side-effects", "Warfarin", "Side effects", "Warfarin — Side effects\nBruising.", "u"), 0.5),
 ]
 
+SENT = {h.chunk.id: h.chunk.text for h in HITS}
+ID = "metformin#how-and-when-to-take-it"
+
 
 def raw(**over):
     body = {
@@ -27,29 +30,66 @@ def test_prompt_lists_every_chunk_id_and_the_users_medicines():
 
 
 def test_covered_answer_valid_with_sent_citation():
-    assert validate(raw(), {h.chunk.id for h in HITS}).answer == "Take it with meals."
+    assert validate(raw(), SENT, "").answer == "Take it with meals."
 
 
 def test_covered_answer_without_citation_invalid():
-    assert isinstance(validate(raw(citations=[]), {h.chunk.id for h in HITS}), str)
+    assert isinstance(validate(raw(citations=[]), SENT, ""), str)
 
 
 def test_citation_not_sent_invalid():
-    assert "made#up" in validate(raw(citations=["made#up"]), {h.chunk.id for h in HITS})
+    assert "made#up" in validate(raw(citations=["made#up"]), SENT, "")
 
 
 def test_not_covered_needs_no_citation():
-    assert not isinstance(validate(raw(covered=False, citations=[]), set()), str)
+    assert not isinstance(validate(raw(covered=False, citations=[]), {}, ""), str)
 
 
 def test_bad_json_invalid():
-    assert isinstance(validate("nope", set()), str)
+    assert isinstance(validate("nope", {}, ""), str)
 
 
 def test_bracketed_citation_accepted():
-    answer = validate(raw(citations=["[metformin#how-and-when-to-take-it]"]), {h.chunk.id for h in HITS})
+    answer = validate(raw(citations=["[metformin#how-and-when-to-take-it]"]), SENT, "")
     assert answer.citations == ["metformin#how-and-when-to-take-it"]
 
 
 def test_covered_blank_answer_invalid():
-    assert isinstance(validate(raw(answer="  "), {h.chunk.id for h in HITS}), str)
+    assert isinstance(validate(raw(answer="  "), SENT, ""), str)
+
+
+def check(answer, text, doses=""):
+    return validate(raw(answer=answer), {ID: text}, doses)
+
+
+def test_number_not_in_cited_text_rejected():
+    reason = check("Take 1000 mg.", "Take 500 mg.", "500 mg")
+    assert isinstance(reason, str) and "1000" in reason
+
+
+def test_word_number_rejected():
+    reason = check("Take three tablets.", "Take one tablet.")
+    assert isinstance(reason, str) and "3" in reason
+
+
+def test_twice_matches_2_both_ways():
+    assert not isinstance(check("Take it 2 times a day.", "Take it twice a day."), str)
+    assert not isinstance(check("Take it twice a day.", "Take it 2 times a day."), str)
+
+
+def test_decimals_and_ranges():
+    assert not isinstance(check("Take 0.5 g.", "Take 0.5 g."), str)
+    assert isinstance(check("Take 5 g.", "Take 0.5 g."), str)
+
+
+def test_user_dose_and_999_allowed():
+    assert not isinstance(check("Your 500 mg tablet. Call 999 if unwell.", "Take with food.", "500 mg"), str)
+
+
+def test_number_only_in_uncited_chunk_rejected():
+    sent = {ID: "Take with food.", "other#x": "Take 9 tablets."}
+    assert isinstance(validate(raw(answer="Take 9 tablets."), sent, ""), str)
+
+
+def test_not_covered_skips_number_check():
+    assert not isinstance(validate(raw(covered=False, citations=[], answer="Take 77."), SENT, ""), str)
