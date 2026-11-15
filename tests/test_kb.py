@@ -85,3 +85,10 @@ def test_load_interactions(tmp_path):
 def test_interaction_source_must_exist(tiny_index, row, message):
     with pytest.raises(ValueError, match=message):
         validate_interactions([row], tiny_index)
+
+
+def test_duplicate_interaction_pair_raises(tiny_index):
+    row = Interaction("Warfarin", "Metformin", "w", "warfarin#other-medicines")
+    swapped = Interaction("Metformin", "Warfarin", "w", "warfarin#other-medicines")
+    with pytest.raises(ValueError, match="more than once"):
+        validate_interactions([row, swapped], tiny_index)

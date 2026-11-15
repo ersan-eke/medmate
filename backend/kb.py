@@ -112,6 +112,10 @@ def load_interactions(path: Path) -> list[Interaction]:
 def validate_interactions(interactions: list[Interaction], index: Index) -> None:
     chunks = {c.id: c for c in index.chunks}
     medicines = {c.medicine for c in index.chunks}
+    pairs = [frozenset((row.medicine_a, row.medicine_b)) for row in interactions]
+    for pair in pairs:
+        if pairs.count(pair) > 1:
+            raise ValueError(f"interaction {' + '.join(sorted(pair))} is listed more than once")
     for row in interactions:
         for name in (row.medicine_a, row.medicine_b):
             if name not in medicines:
@@ -119,7 +123,7 @@ def validate_interactions(interactions: list[Interaction], index: Index) -> None
         chunk = chunks.get(row.source_chunk)
         if chunk is None:
             raise ValueError(f"interaction source '{row.source_chunk}' is not a chunk")
-        # The cited passage must itself mention the pair, so every warning traces to leaflet text.
+        # The cited passage must name both medicines; the warning wording itself is checked by hand.
         if chunk.medicine not in (row.medicine_a, row.medicine_b) or not all(
             re.search(rf"\b{re.escape(n)}\b", chunk.text, re.IGNORECASE) for n in (row.medicine_a, row.medicine_b)
         ):
