@@ -53,6 +53,12 @@ class LlmAnswer(BaseModel):
         # Small models copy the brackets the prompt wraps ids in.
         return [i.strip().strip("[]") for i in ids]
 
+    @field_validator("answer")
+    @classmethod
+    def _drop_ids(cls, text: str) -> str:
+        # Small models write passage ids into the text; their digits would trip the number check.
+        return re.sub(r"\s*\[[^\]]*#[^\]]*\]", "", text).strip()
+
 
 # Every field is required of the model, or a small one leaves out the citations; the defaults only serve parsing.
 ANSWER_SCHEMA = LlmAnswer.model_json_schema()

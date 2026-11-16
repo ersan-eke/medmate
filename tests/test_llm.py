@@ -57,6 +57,13 @@ def test_bracketed_citation_accepted():
     assert answer.citations == ["metformin#how-and-when-to-take-it"]
 
 
+def test_passage_ids_removed_from_answer_text():
+    pid = "metformin#side-effects-2"
+    answer = validate(raw(answer=f"Take it with food. [{ID}] Nausea is common. [{pid}]", citations=[ID, pid]),
+                      {ID: "Take with meals.", pid: "Feeling sick is common."}, "")
+    assert answer.answer == "Take it with food. Nausea is common."
+
+
 def test_covered_blank_answer_invalid():
     assert isinstance(validate(raw(answer="  "), SENT, ""), str)
 
