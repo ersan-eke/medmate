@@ -1,0 +1,20 @@
+Prompt:
+A friendly, professional pharmacist wearing a white lab coat, front-facing, centered head-and-shoulders portrait, eyes open, mouth closed with a gentle smile, plain light background, soft studio lighting, natural facial proportions.
+
+Negative prompt:
+distorted face, extra fingers, text, watermark, blurry, eyes closed, open mouth.
+
+Output:
+Square PNG, resized to 160 × 160 pixels after generation.
+
+Frame instructions:
+Make 4 frames, using the exact same comical avatar image. First frame: eyes closed, mouth closed. Second frame: eyes open, mouth slightly open. Third frame: eyes open, mouth wide open, speaking. Fourth frame: eyes closed, mouth closed. Make sure the four images feature exactly the same character, with only the eyes and mouth changing.
+
+Cartoon character requirement:
+Do not generate a real human or photorealistic person. The pharmacist must be a clearly illustrated cartoon character, like the cartoon avatar shown in the reference PNG, with identical character design across all four frames.
+
+Submission metadata:
+ChatGPT conversation model: GPT-6
+Image generation: ChatGPT image generation
+Exact image-generation model identifier: Not available in provided generation metadata
+Image generation seed: Not available (null in generation metadata)

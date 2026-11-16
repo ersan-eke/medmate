@@ -39,7 +39,7 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 
 ## #11 Avatar portrait art (commit `0e14f0f`)
 
-- [ ] Make the four images and save them in `web/avatar/` as `portrait.png`, `mouth-half.png`, `mouth-open.png`, `eyes-closed.png` (same square size, aligned). Steps are in the chat for ticket #11.
+- [ ] Make the four images and save them in `web/avatar/` as `portrait.png`, `mouth_half.png`, `mouth_open.png`, `eyes_closed.png` (same square size, aligned). Steps are in the chat for ticket #11.
 - [ ] Save the prompts you used to `prompts/avatar.txt`.
 - [ ] Run the "Avatar portrait" section of `docs/manual-ui-checklist.md`.
 - [ ] Tick the acceptance boxes on issue #11 and close it.

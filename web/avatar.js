@@ -1,9 +1,9 @@
 import { mouthFrame } from "./logic.js";
 
 // A drawn face whose mouth follows the audio volume through a Web Audio analyser.
-// With web/avatar/{portrait,mouth-half,mouth-open,eyes-closed}.png present it shows those frames;
+// With web/avatar/{portrait,mouth_half,mouth_open,eyes_closed}.png present it shows those frames;
 // if any is missing it draws a simple face instead.
-const FRAMES = { closed: "portrait", half: "mouth-half", open: "mouth-open", blink: "eyes-closed" };
+const FRAMES = { closed: "portrait", half: "mouth_half", open: "mouth_open", blink: "eyes_closed" };
 const loadFrames = () => Promise.all(Object.entries(FRAMES).map(([key, name]) => new Promise((resolve, reject) => {
   const img = new Image();
   img.onload = () => resolve([key, img]);
