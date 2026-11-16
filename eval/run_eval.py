@@ -125,6 +125,10 @@ def write_summary() -> None:
         m = json.loads(path.read_text())
         lines.append(f"| {m['model']} | {m['red_flag_recall']:.2f} | {m['red_flag_fpr']:.2f} | {m['refusal_rate']:.2f} "
                      f"| {m.get('answer_rate', float('nan')):.2f} | {m['citation_validity']:.2f} | {m['p50_s']:.1f} | {m['p95_s']:.1f} | {m['tokens_per_s']:.1f} |")
+    lines += ["", "Model choice: red-flag recall and refusal must be 1.00 and p95 under 15 s; then the highest answer rate; "
+              "then the lowest p95.",
+              "Off-topic questions are all refused by the similarity gate before a model sees them, so the refusal "
+              "column tests the model only on not-covered questions that pass the gate."]
     (RESULTS / "summary.md").write_text("\n".join(lines) + "\n")
 
 

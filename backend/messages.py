@@ -4,6 +4,7 @@ NOT_COVERED = "I don't have that in my leaflets. Please ask your pharmacist."
 GATE_REFUSAL = "I can only answer questions about your medicines from my leaflets. For anything else about your health, please ask your pharmacist."
 OFF_TOPIC = "I can only help with questions about your medicines. Please ask me about one of them."
 FALLBACK = "I'm not sure. Please ask your pharmacist."
+UNCONFIRMED_COMBINATION = "I can't confirm that combination from my leaflets. Please check with your pharmacist before taking them together."
 INTERACTION_ADVICE = "Please check with your pharmacist before taking them together."
 NOT_HEARD = "Sorry, I didn't catch that. Please try again or type your question."
 ATTRIBUTION = (

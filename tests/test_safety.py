@@ -1,7 +1,7 @@
 import pytest
 
 from backend import safety
-from backend.safety import check_red_flags
+from backend.safety import check_red_flags, claims_safe_combination
 
 FIRES = {
     "chest_pain": ["Now my chest feels tight.", "I have CHEST PAIN", "is chest pain a side effect of amlodipine?", "my chest hurts", "my chest is really painful", "my chest feels heavy", "There is pressure in my chest.", "chest heaviness"],
@@ -40,3 +40,13 @@ def test_near_miss(text):
 def test_every_pattern_has_a_test():
     assert {p[0] for p in safety.PATTERNS} == FIRES.keys()
     assert all(FIRES.values())
+
+
+@pytest.mark.parametrize("question,answer,flagged", [
+    ("Is it safe to take amoxicillin with warfarin?", "Yes, it is safe to take amoxicillin with warfarin.", True),
+    ("Can I take metformin with turmeric?", "You can take them together.", True),
+    ("Can I take metformin with food?", "Take it with or after a meal.", False),
+    ("Does atorvastatin cause muscle pain?", "It is fine for most people.", False),
+])
+def test_claims_safe_combination(question, answer, flagged):
+    assert claims_safe_combination(question, answer) is flagged

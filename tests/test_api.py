@@ -9,7 +9,8 @@ from backend.app import create_app
 from backend.kb import Interaction
 from backend.llm import TRIAGE_SCHEMA, MedicineEntry
 from backend.pipeline import known_medicines
-from backend.messages import ATTRIBUTION, EMERGENCY, FALLBACK, GATE_REFUSAL, NOT_COVERED, NOT_HEARD, OFF_TOPIC
+from backend.messages import (ATTRIBUTION, EMERGENCY, FALLBACK, GATE_REFUSAL, NOT_COVERED, NOT_HEARD, OFF_TOPIC,
+                              UNCONFIRMED_COMBINATION)
 from tests.test_safety import FIRES
 
 
@@ -196,6 +197,14 @@ def test_llm_not_covered_and_off_topic(client, spies, monkeypatch):
     assert body["kind"] == "off_topic" and body["answer"] == OFF_TOPIC
     assert body["card"] is None and body["sources"] == []
 
+
+
+def test_model_calling_a_combination_safe_is_referred(client, spies, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    spies[1].fn = lambda m, s: reply(answer="Yes, it is safe to take turmeric with metformin.")
+    body = chat(client, "Can I take metformin with turmeric?").json()
+    assert body["kind"] == "not_covered" and body["answer"] == UNCONFIRMED_COMBINATION
+    assert body["sources"] == [] and body["card"] is None
 
 def test_unrelated_question_not_covered(client, spies):
     body = chat(client, "what is the capital of France").json()

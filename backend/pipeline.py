@@ -7,7 +7,7 @@ from . import messages
 from .kb import Chunk, Interaction
 from .llm import Card, Generate, MedicineEntry, ask_llm, triage
 from .retrieval import MIN_SIMILARITY, Retriever
-from .safety import check_interactions, check_red_flags
+from .safety import check_interactions, check_red_flags, claims_safe_combination
 
 log = logging.getLogger(__name__)
 MAX_MEDICINES = 20
@@ -78,6 +78,9 @@ def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate,
     if not llm.covered:
         log.info("model refused: not_covered")
         return ChatResponse(kind="not_covered", answer=messages.NOT_COVERED, llm_called=True)
+    if claims_safe_combination(question, llm.answer):
+        log.info("model called a combination safe: referred")
+        return ChatResponse(kind="not_covered", answer=messages.UNCONFIRMED_COMBINATION, llm_called=True)
     by_id = {h.chunk.id: h.chunk for h in result.hits}
     sources = [Source.of(by_id[i]) for i in dict.fromkeys(llm.citations)]  # citation order, no repeats
     return ChatResponse(kind="answer", answer=llm.answer, sources=sources, card=llm.card, llm_called=True)

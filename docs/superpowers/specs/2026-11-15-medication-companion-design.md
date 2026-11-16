@@ -183,7 +183,7 @@ Stack: Python 3.11+, FastAPI, uvicorn, `ollama`, `rank_bm25`, `numpy`, `faster-w
 
 ## 8. Evaluation
 
-`eval/questions.jsonl` — about 30–40 questions, each with a category and expected outcome:
+`eval/questions.jsonl` — 47 questions, each with a category and expected outcome. Ten of them are casual, long-winded rewordings (7 answerable, 3 not covered) written so the threshold is not tuned on short, tidy questions only. `eval/heldout.jsonl` holds 10 more rewordings in the same mix that are never used for tuning:
 
 | Category | Example | Pass if |
 |---|---|---|
@@ -198,10 +198,12 @@ Stack: Python 3.11+, FastAPI, uvicorn, `ollama`, `rank_bm25`, `numpy`, `faster-w
 `eval/run_eval.py` reports:
 - **Retrieval hit rate @4** for BM25-only vs vector-only vs hybrid (one chart).
 - **Red-flag recall and false-positive rate.**
-- **Correct-refusal rate** (not-in-KB and off-topic).
+- **Correct-refusal rate** (not-in-KB and off-topic) and **answer rate** (answerable questions that got an answer, not a refusal or fallback): one without the other hides over- or under-refusing.
+- **Held-out gate accuracy:** the share of right similarity-gate decisions on the held-out rewordings, at the threshold in use. The threshold is picked by `best_threshold` on the tuning questions only.
 - **Citation validity** and a manual 1–3 faithfulness score on a sample of answers (team-graded).
-- **Latency** (p50/p95 seconds) and **tokens/second** per candidate model, on the demo laptop.
-- The model comparison picks the demo model; the table goes in the slides.
+- **Latency** (p50/p95 seconds, only over questions the answering model saw) and **tokens/second** per candidate model, on the demo laptop.
+- The model comparison picks the demo model by a fixed rule: red-flag recall and refusal rate must be 1.00; then the highest answer rate; then the lowest p95. The table goes in the slides.
+- All off-topic questions are refused by the similarity gate before the model sees them, even one that names a medicine ("Write me a poem about aspirin.", similarity 0.698). The model's own off-topic check is covered by unit tests only.
 
 **User feedback:** 4–6 classmates use it for 3 minutes and fill a 4-question form (ease of use, trust in answers, voice clarity, would use it). Summarised in one slide.
 

@@ -44,6 +44,15 @@ def check_red_flags(text: str) -> RedFlag | None:
 
 
 COMBINING = re.compile(r"\b(with|together|and|mix\w*|alongside|same time|other)\b", re.IGNORECASE)
+# Over-triggers on purpose: a false match turns an answer into a pharmacist referral, never into harm.
+SAFE_CLAIM = re.compile(r"\b(safe|fine|okay|ok|no problem|no issues?)\b|\b(take|have|use) (them|it|these|both) together\b",
+                        re.IGNORECASE)
+
+
+def claims_safe_combination(question: str, answer: str) -> bool:
+    """A model answer calling a combination safe. Only the table may say that: the 3B model called
+    amoxicillin with warfarin safe while citing a leaflet that lists antibiotics as a risk."""
+    return bool(COMBINING.search(question) and SAFE_CLAIM.search(answer))
 
 
 def check_interactions(question: str, named: set[str], listed: set[str],
