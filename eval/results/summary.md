@@ -6,6 +6,9 @@ Held-out gate accuracy at 0.72: 0.80 (10 reworded questions never used for tunin
 
 | model | red-flag recall | red-flag FPR | refusal | answer rate | citation validity | p50 s | p95 s | tokens/s |
 |---|---|---|---|---|---|---|---|---|
-| llama3.1:8b | 1.00 | 0.00 | 1.00 | nan | 1.00 | 25.9 | 36.1 | 12.6 |
-| llama3.2:3b | 1.00 | 0.00 | 1.00 | nan | 1.00 | 6.6 | 11.2 | 42.3 |
-| qwen2.5:7b | 1.00 | 0.03 | 0.90 | nan | 0.94 | 15.2 | 53.3 | 21.4 |
+| llama3.1:8b | 1.00 | 0.00 | 1.00 | 0.85 | 1.00 | 25.0 | 30.9 | 14.4 |
+| llama3.2:3b | 1.00 | 0.00 | 1.00 | 0.81 | 1.00 | 9.2 | 15.3 | 25.6 |
+| qwen2.5:7b | 1.00 | 0.02 | 0.86 | 0.85 | 0.92 | 19.9 | 24.7 | 17.8 |
+
+Model choice: red-flag recall and refusal must be 1.00 and p95 under 15 s; then the highest answer rate; then the lowest p95.
+Off-topic questions are all refused by the similarity gate before a model sees them, so the refusal column tests the model only on not-covered questions that pass the gate.
