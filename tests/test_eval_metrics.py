@@ -6,6 +6,7 @@ from eval.metrics import (
     answer_rate,
     best_threshold,
     citation_validity,
+    gate_accuracy,
     hit_at_k,
     percentile,
     red_flag_stats,
@@ -71,6 +72,10 @@ def test_percentile():
     assert percentile([1, 2, 3, 4, 5], 100) == 5
 
 
+def test_gate_accuracy():
+    assert gate_accuracy([0.8, 0.6], [0.5, 0.75], 0.7) == 0.5
+
+
 def test_best_threshold():
     assert best_threshold([0.8, 0.7, 0.6], [0.3, 0.5]) == 0.6
 
@@ -92,8 +97,10 @@ def test_question_file_covers_every_category():
     for r in rows:
         cats[r["category"]] = cats.get(r["category"], 0) + 1
     assert set(cats) == {"dosing", "side_effects", "personal", "red_flag", "near_miss", "not_in_kb", "off_topic"}
-    assert min(cats.values()) >= 4 and 30 <= len(rows) <= 40
-    assert len({r["id"] for r in rows}) == len(rows)
+    assert min(cats.values()) >= 4 and 30 <= len(rows) <= 50
+    heldout = load_rows(ROOT / "eval/heldout.jsonl")
+    assert len(heldout) == 10 and {r["expect_kind"] for r in heldout} == {"answer", "not_covered"}
+    assert len({r["id"] for r in rows + heldout}) == len(rows) + len(heldout)
 
 
 def test_expected_chunks_exist():
@@ -103,5 +110,5 @@ def test_expected_chunks_exist():
     if not path.exists():
         pytest.skip("no built index")
     ids = {c["id"] for c in json.loads(path.read_text())}
-    for row in load_rows(ROOT / "eval/questions.jsonl"):
+    for row in load_rows(ROOT / "eval/questions.jsonl") + load_rows(ROOT / "eval/heldout.jsonl"):
         assert set(row["expect_chunks"]) <= ids, row["id"]

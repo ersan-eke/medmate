@@ -51,9 +51,11 @@ def percentile(values: list[float], p: float) -> float:
     return v[lo] + (v[hi] - v[lo]) * (pos - lo)
 
 
-def best_threshold(sims_in: list[float], sims_out: list[float]) -> float:
-    """The gate refuses when similarity < threshold. Most correct decisions wins; a tie goes to the lower one."""
-    def correct(t: float) -> int:
-        return sum(s >= t for s in sims_in) + sum(s < t for s in sims_out)
+def gate_accuracy(sims_in: list[float], sims_out: list[float], threshold: float) -> float:
+    """Share of right gate decisions: answerable rows pass, the others are refused (similarity < threshold)."""
+    return _share([s >= threshold for s in sims_in] + [s < threshold for s in sims_out])
 
-    return min(sorted(set(sims_in + sims_out)), key=lambda t: (-correct(t), t))
+
+def best_threshold(sims_in: list[float], sims_out: list[float]) -> float:
+    """Most correct gate decisions wins; a tie goes to the lower threshold, which answers more."""
+    return min(sorted(set(sims_in + sims_out)), key=lambda t: (-gate_accuracy(sims_in, sims_out, t), t))

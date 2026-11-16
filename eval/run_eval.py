@@ -17,7 +17,7 @@ from backend.kb import Embed, Interaction, load_index, load_interactions, ollama
 from backend.llm import ollama_generate
 from backend.pipeline import ChatRequest, answer_question
 from backend.retrieval import MIN_SIMILARITY, Retriever
-from eval.metrics import (answer_rate, best_threshold, citation_validity, hit_at_k, percentile, red_flag_stats,
+from eval.metrics import (answer_rate, best_threshold, citation_validity, gate_accuracy, hit_at_k, percentile, red_flag_stats,
                           refusal_rate)
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -47,14 +47,19 @@ def load_rows(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
-def retrieval_section(rows: list[dict], retriever: Retriever) -> dict:
+def gate_split(rows: list[dict], retriever: Retriever) -> tuple[list[float], list[float]]:
+    """Top similarities of the answerable rows, and of the not-covered and off-topic ones."""
+    sims = {r["id"]: retriever.search(r["question"], r["medicines"]).max_similarity for r in rows}
+    return ([sims[r["id"]] for r in rows if r["expect_chunks"]],
+            [sims[r["id"]] for r in rows if r["category"] in ("not_in_kb", "off_topic")])
+
+
+def retrieval_section(rows: list[dict], heldout: list[dict], retriever: Retriever) -> dict:
     retriever = Retriever(retriever.index, cached(retriever.embed))  # not shared: full_run must time real embeds
     asked = [r for r in rows if r["expect_chunks"]]
     hit = {m: sum(hit_at_k([h.chunk.id for h in retriever.search(r["question"], r["medicines"], mode=m).hits],
                            r["expect_chunks"]) for r in asked) / len(asked) for m in MODES}
-    sims = {r["id"]: retriever.search(r["question"], r["medicines"]).max_similarity for r in rows}
-    sims_in = [sims[r["id"]] for r in asked]
-    sims_out = [sims[r["id"]] for r in rows if r["category"] in ("not_in_kb", "off_topic")]
+    sims_in, sims_out = gate_split(rows, retriever)
     plt.figure(figsize=(4, 3))
     plt.bar(MODES, [hit[m] for m in MODES])
     plt.ylim(0, 1)
@@ -64,8 +69,10 @@ def retrieval_section(rows: list[dict], retriever: Retriever) -> dict:
     plt.savefig(RESULTS / "retrieval.png", dpi=150)
     (RESULTS / "retrieval.csv").write_text("mode,hit_at_4\n" + "".join(f"{m},{hit[m]:.3f}\n" for m in MODES))
     best = best_threshold(sims_in, sims_out)
-    print(f"hit@4 {hit}; best threshold {best:.3f} (current {MIN_SIMILARITY})")
-    return {"hit": hit, "best_threshold": best, "min_similarity": MIN_SIMILARITY}
+    heldout_acc = gate_accuracy(*gate_split(heldout, retriever), MIN_SIMILARITY)  # never tuned on
+    print(f"hit@4 {hit}; best threshold {best:.3f} (current {MIN_SIMILARITY}); held-out gate accuracy {heldout_acc:.2f}")
+    return {"hit": hit, "best_threshold": best, "min_similarity": MIN_SIMILARITY, "heldout_gate_accuracy": heldout_acc,
+            "heldout_n": len(heldout)}
 
 
 def speed(model: str) -> float:
@@ -109,7 +116,9 @@ def write_summary() -> None:
     retrieval = json.loads((RESULTS / "retrieval.json").read_text())
     lines = ["# Evaluation summary", "",
              "Retrieval hit@4: " + ", ".join(f"{m} {retrieval['hit'][m]:.2f}" for m in MODES),
-             f"Best similarity threshold {retrieval['best_threshold']:.3f}; in use {retrieval['min_similarity']}", "",
+             f"Best similarity threshold {retrieval['best_threshold']:.3f}; in use {retrieval['min_similarity']}",
+             (f"Held-out gate accuracy at {retrieval['min_similarity']}: {retrieval['heldout_gate_accuracy']:.2f} "
+              f"({retrieval['heldout_n']} reworded questions never used for tuning)"), "",
              "| model | red-flag recall | red-flag FPR | refusal | answer rate | citation validity | p50 s | p95 s | tokens/s |",
              "|---|---|---|---|---|---|---|---|---|"]
     for path in sorted(RESULTS.glob("model-*.json")):
@@ -127,7 +136,8 @@ def main() -> None:
     rows = load_rows(ROOT / "eval" / "questions.jsonl")
     retriever = Retriever(load_index(ROOT / "data" / "index"), ollama_embed())
     RESULTS.mkdir(exist_ok=True)
-    (RESULTS / "retrieval.json").write_text(json.dumps(retrieval_section(rows, retriever)))
+    heldout = load_rows(ROOT / "eval" / "heldout.jsonl")
+    (RESULTS / "retrieval.json").write_text(json.dumps(retrieval_section(rows, heldout, retriever)))
     if not args.retrieval_only:
         tag = "model-" + args.model.replace(":", "-").replace("/", "-")
         metrics = {"model": args.model, **full_run(rows, retriever, load_interactions(ROOT / "data" / "interactions.csv"), args.model, tag)}
