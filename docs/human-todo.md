@@ -102,3 +102,9 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Decide: p95 latency is 15 s against the plan's 8 s. Accept it, or reduce the retries.
 - [ ] Classmate feedback (plan Task 11 step 7) is in no ticket yet.
 - [ ] Tick the acceptance boxes on issue #13 and close it.
+
+## #40 Interaction answers in chat
+
+- [ ] Try it in the running app: ask "Can I take my aspirin with my warfarin?", and "Is paracetamol OK with my other medicines?" with warfarin on the list. Check the warning reads well aloud.
+- [ ] Decide whether the broad trigger is acceptable: "Can I take warfarin with food?" with ibuprofen on the list also gets the warfarin + ibuprofen warning.
+- [ ] Tick the acceptance boxes on issue #40 and close it.
