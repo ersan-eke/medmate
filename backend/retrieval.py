@@ -9,9 +9,10 @@ from .kb import Chunk, Embed, Index
 
 RRF_K = 60
 BOOST = 1.5
-# Tuned on eval/questions.jsonl (36 questions): the best cut is 0.746, the lowest in-KB score; 0.74 leaves a little margin.
-# Turmeric-with-metformin scores 0.763: only the model's `covered` flag can refuse it, and qwen2.5:7b doesn't.
-MIN_SIMILARITY = 0.74
+# Tuned on eval/questions.jsonl (47 questions, 10 of them casual rewordings): the best cut is 0.725; 0.72 leaves a
+# little margin. No cut separates every question, so the model's `covered` and `in_scope` flags refuse the rest:
+# turmeric-with-metformin (0.763) and amoxicillin-with-warfarin (0.730) pass, and qwen2.5:7b answered turmeric.
+MIN_SIMILARITY = 0.72
 
 
 @dataclass(frozen=True)

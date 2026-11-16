@@ -1,1 +1,1 @@
-{"hit": {"bm25": 0.9, "vector": 1.0, "hybrid": 1.0}, "best_threshold": 0.7461952567100525, "min_similarity": 0.74}
+{"hit": {"bm25": 0.8888888888888888, "vector": 1.0, "hybrid": 1.0}, "best_threshold": 0.7254889011383057, "min_similarity": 0.72, "heldout_gate_accuracy": 0.8, "heldout_n": 10}
