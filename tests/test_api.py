@@ -9,7 +9,7 @@ from backend.app import create_app
 from backend.kb import Interaction
 from backend.llm import TRIAGE_SCHEMA, MedicineEntry
 from backend.pipeline import known_medicines
-from backend.messages import ATTRIBUTION, EMERGENCY, FALLBACK, NOT_COVERED, NOT_HEARD, OFF_TOPIC
+from backend.messages import ATTRIBUTION, EMERGENCY, FALLBACK, GATE_REFUSAL, NOT_COVERED, NOT_HEARD, OFF_TOPIC
 from tests.test_safety import FIRES
 
 
@@ -200,7 +200,7 @@ def test_llm_not_covered_and_off_topic(client, spies, monkeypatch):
 def test_unrelated_question_not_covered(client, spies):
     body = chat(client, "what is the capital of France").json()
     assert body["kind"] == "not_covered"
-    assert body["answer"] == NOT_COVERED
+    assert body["answer"] == GATE_REFUSAL
     assert body["sources"] == [] and body["card"] is None
     assert body["llm_called"] is False and spies[1].calls == 0
 

@@ -1,7 +1,17 @@
 import json
+import math
 from pathlib import Path
 
-from eval.metrics import best_threshold, citation_validity, hit_at_k, percentile, red_flag_stats, refusal_rate
+from eval.metrics import (
+    answer_rate,
+    best_threshold,
+    citation_validity,
+    hit_at_k,
+    percentile,
+    red_flag_stats,
+    refusal_rate,
+)
+from eval.run_eval import cached, load_rows
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,6 +39,32 @@ def test_refusal_rate_counts_either_refusal_kind():
     assert refusal_rate(ROWS, kinds) == 0.5
 
 
+def test_answer_rate_counts_only_answers_to_answerable_rows():
+    rows = [{"id": "a", "expect_kind": "answer"}, {"id": "b", "expect_kind": "answer"},
+            {"id": "c", "expect_kind": "not_covered"}]
+    assert answer_rate(rows, {"a": "answer", "b": "not_covered", "c": "answer"}) == 0.5
+
+
+def test_empty_categories_give_nan_not_a_crash():
+    assert math.isnan(answer_rate([], {}))
+    assert math.isnan(refusal_rate(ROWS[:1], {}))
+    assert all(math.isnan(x) for x in red_flag_stats([], {}))
+    assert math.isnan(percentile([], 50))
+
+
+def test_load_rows_skips_blank_lines(tmp_path):
+    path = tmp_path / "q.jsonl"
+    path.write_text('{"id": "a"}\n\n{"id": "b"}\n')
+    assert [r["id"] for r in load_rows(path)] == ["a", "b"]
+
+
+def test_cached_embeds_each_question_once():
+    calls = []
+    embed = cached(lambda texts, kind: calls.append(texts) or [[1.0]])
+    embed(["q"], "query"), embed(["q"], "query"), embed(["r"], "query")
+    assert calls == [["q"], ["r"]]
+
+
 def test_percentile():
     assert percentile([1, 2, 3, 4], 50) == 2.5
     assert percentile([5], 95) == 5
@@ -51,7 +87,7 @@ def test_citation_validity():
 
 
 def test_question_file_covers_every_category():
-    rows = [json.loads(line) for line in (ROOT / "eval/questions.jsonl").read_text().splitlines()]
+    rows = load_rows(ROOT / "eval/questions.jsonl")
     cats = {}
     for r in rows:
         cats[r["category"]] = cats.get(r["category"], 0) + 1
@@ -67,6 +103,5 @@ def test_expected_chunks_exist():
     if not path.exists():
         pytest.skip("no built index")
     ids = {c["id"] for c in json.loads(path.read_text())}
-    for line in (ROOT / "eval/questions.jsonl").read_text().splitlines():
-        row = json.loads(line)
+    for row in load_rows(ROOT / "eval/questions.jsonl"):
         assert set(row["expect_chunks"]) <= ids, row["id"]

@@ -68,7 +68,7 @@ def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate,
         log.warning("retrieval failed (embedder down or slow?)", exc_info=True)
         return ChatResponse(kind="fallback", answer=messages.FALLBACK)
     if result.max_similarity < MIN_SIMILARITY:
-        return ChatResponse(kind="not_covered", answer=messages.NOT_COVERED)
+        return ChatResponse(kind="not_covered", answer=messages.GATE_REFUSAL)
     llm = ask_llm(question, medicines, result.hits, generate)
     if llm is None:
         return ChatResponse(kind="fallback", answer=messages.FALLBACK, llm_called=True)

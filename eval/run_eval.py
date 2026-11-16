@@ -13,11 +13,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from backend.kb import Interaction, load_index, load_interactions, ollama_embed
+from backend.kb import Embed, Interaction, load_index, load_interactions, ollama_embed
 from backend.llm import ollama_generate
 from backend.pipeline import ChatRequest, answer_question
 from backend.retrieval import MIN_SIMILARITY, Retriever
-from eval.metrics import best_threshold, citation_validity, hit_at_k, percentile, red_flag_stats, refusal_rate
+from eval.metrics import (answer_rate, best_threshold, citation_validity, hit_at_k, percentile, red_flag_stats,
+                          refusal_rate)
 
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "eval" / "results"
@@ -29,7 +30,25 @@ SPEED_PROMPTS = [
 ]
 
 
+def cached(embed: Embed) -> Embed:
+    """Every search embeds the question; the retrieval section searches each one 4 times."""
+    memo = {}
+
+    def run(texts: list[str], kind: str):
+        key = (tuple(texts), kind)
+        if key not in memo:
+            memo[key] = embed(texts, kind)
+        return memo[key]
+
+    return run
+
+
+def load_rows(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
 def retrieval_section(rows: list[dict], retriever: Retriever) -> dict:
+    retriever = Retriever(retriever.index, cached(retriever.embed))  # not shared: full_run must time real embeds
     asked = [r for r in rows if r["expect_chunks"]]
     hit = {m: sum(hit_at_k([h.chunk.id for h in retriever.search(r["question"], r["medicines"], mode=m).hits],
                            r["expect_chunks"]) for r in asked) / len(asked) for m in MODES}
@@ -68,7 +87,7 @@ def full_run(rows: list[dict], retriever: Retriever, interactions: list[Interact
         start = time.perf_counter()
         resp = answer_question(ChatRequest(question=r["question"], medicines=meds), retriever, generate, interactions)
         out.append({"id": r["id"], "category": r["category"], "question": r["question"], "expect_kind": r["expect_kind"],
-                    "kind": resp.kind, "latency_s": round(time.perf_counter() - start, 2),
+                    "kind": resp.kind, "llm_called": resp.llm_called, "latency_s": round(time.perf_counter() - start, 2),
                     "sources": " ".join(s.id for s in resp.sources), "answer": resp.answer, "faithfulness": ""})
         print(f"{r['id']:8} {resp.kind:12} {out[-1]['latency_s']:5.1f}s")
     with (RESULTS / f"{tag}.csv").open("w", encoding="utf-8", newline="") as f:
@@ -78,8 +97,10 @@ def full_run(rows: list[dict], retriever: Retriever, interactions: list[Interact
     kinds = {o["id"]: o["kind"] for o in out}
     recall, fpr = red_flag_stats(rows, {i: k == "emergency" for i, k in kinds.items()})
     answered = {o["id"]: o["sources"].split() for o in out if o["kind"] == "answer"}
-    latencies = [o["latency_s"] for o in out if o["kind"] in ("answer", "fallback", "not_covered", "off_topic")]
+    # Only rows the answering model saw: gate refusals and table answers skip it, emergencies only triage.
+    latencies = [o["latency_s"] for o in out if o["llm_called"] and o["kind"] != "emergency"]
     return {"red_flag_recall": recall, "red_flag_fpr": fpr, "refusal_rate": refusal_rate(rows, kinds),
+            "answer_rate": answer_rate(rows, kinds),
             "citation_validity": citation_validity(rows, answered), "p50_s": percentile(latencies, 50),
             "p95_s": percentile(latencies, 95), "tokens_per_s": speed(model)}
 
@@ -89,12 +110,12 @@ def write_summary() -> None:
     lines = ["# Evaluation summary", "",
              "Retrieval hit@4: " + ", ".join(f"{m} {retrieval['hit'][m]:.2f}" for m in MODES),
              f"Best similarity threshold {retrieval['best_threshold']:.3f}; in use {retrieval['min_similarity']}", "",
-             "| model | red-flag recall | red-flag FPR | refusal | citation validity | p50 s | p95 s | tokens/s |",
-             "|---|---|---|---|---|---|---|---|"]
+             "| model | red-flag recall | red-flag FPR | refusal | answer rate | citation validity | p50 s | p95 s | tokens/s |",
+             "|---|---|---|---|---|---|---|---|---|"]
     for path in sorted(RESULTS.glob("model-*.json")):
         m = json.loads(path.read_text())
         lines.append(f"| {m['model']} | {m['red_flag_recall']:.2f} | {m['red_flag_fpr']:.2f} | {m['refusal_rate']:.2f} "
-                     f"| {m['citation_validity']:.2f} | {m['p50_s']:.1f} | {m['p95_s']:.1f} | {m['tokens_per_s']:.1f} |")
+                     f"| {m.get('answer_rate', float('nan')):.2f} | {m['citation_validity']:.2f} | {m['p50_s']:.1f} | {m['p95_s']:.1f} | {m['tokens_per_s']:.1f} |")
     (RESULTS / "summary.md").write_text("\n".join(lines) + "\n")
 
 
@@ -103,7 +124,7 @@ def main() -> None:
     parser.add_argument("--model", required=True)
     parser.add_argument("--retrieval-only", action="store_true")
     args = parser.parse_args()
-    rows = [json.loads(line) for line in (ROOT / "eval" / "questions.jsonl").read_text().splitlines()]
+    rows = load_rows(ROOT / "eval" / "questions.jsonl")
     retriever = Retriever(load_index(ROOT / "data" / "index"), ollama_embed())
     RESULTS.mkdir(exist_ok=True)
     (RESULTS / "retrieval.json").write_text(json.dumps(retrieval_section(rows, retriever)))

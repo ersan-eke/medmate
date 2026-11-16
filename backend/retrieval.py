@@ -10,7 +10,7 @@ from .kb import Chunk, Embed, Index
 RRF_K = 60
 BOOST = 1.5
 # Tuned on eval/questions.jsonl (36 questions): the best cut is 0.746, the lowest in-KB score; 0.74 leaves a little margin.
-# Turmeric-with-metformin scores 0.763 and is refused by the model's `covered` flag, not by this gate.
+# Turmeric-with-metformin scores 0.763: only the model's `covered` flag can refuse it, and qwen2.5:7b doesn't.
 MIN_SIMILARITY = 0.74
 
 
