@@ -69,6 +69,40 @@ def test_demo_red_flag_skips_llm(client, spies, triage):
     assert [s.calls for s in spies] == [0, 0] and triage.calls == 0  # rules answer before any model call
 
 
+PAIR_ANSWER = "Ask first. Please check with your pharmacist before taking them together."
+
+
+def test_known_pair_answers_from_interactions_table(client, spies):
+    body = chat(client, "Can I take metformin with warfarin?").json()
+    assert body["kind"] == "answer"
+    assert body["answer"] == PAIR_ANSWER
+    assert [s["id"] for s in body["sources"]] == ["warfarin#other-medicines"]
+    assert [s.calls for s in spies] == [0, 0]  # no embedder, no answer model
+
+
+def test_pair_completed_by_medicine_list(client, spies):
+    body = chat(client, "Is metformin OK with my other tablets?", [{"name": "warfarin"}]).json()
+    assert body["kind"] == "answer"
+    assert body["answer"] == PAIR_ANSWER
+    assert [s["id"] for s in body["sources"]] == ["warfarin#other-medicines"]
+    assert [s.calls for s in spies] == [0, 0]
+
+
+@pytest.mark.parametrize("q, medicines", [
+    ("When should I take metformin?", [{"name": "Warfarin"}]),  # not about combining
+    ("What is warfarin for? What is metformin for?", []),  # no combining word
+])
+def test_non_combination_question_takes_normal_path(client, spies, q, medicines):
+    body = chat(client, q, medicines).json()
+    assert body["answer"] != PAIR_ANSWER
+    assert spies[0].calls > 0  # went on to retrieval
+
+
+def test_red_flag_beats_known_pair(client):
+    body = chat(client, "Can I take metformin with warfarin? My chest feels tight.").json()
+    assert body["kind"] == "emergency"
+
+
 @pytest.mark.parametrize("q", [t for ts in FIRES.values() for t in ts])
 def test_every_emergency_phrasing_skips_embedder_and_llm(client, spies, q):
     assert chat(client, q).json()["kind"] == "emergency"

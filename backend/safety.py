@@ -1,6 +1,8 @@
 import re
 from dataclasses import dataclass
 
+from .kb import Interaction
+
 
 @dataclass(frozen=True)
 class RedFlag:
@@ -39,3 +41,17 @@ def check_red_flags(text: str) -> RedFlag | None:
         if rx.search(text):
             return RedFlag(id, label)
     return None
+
+
+COMBINING = re.compile(r"\b(with|together|and|mix\w*|alongside|same time|other)\b", re.IGNORECASE)
+
+
+def check_interactions(question: str, named: set[str], listed: set[str],
+                       interactions: list[Interaction]) -> list[Interaction]:
+    """Known pairs a combination question asks about: one medicine named, the other named or on the list."""
+    if not COMBINING.search(question):
+        return []
+    in_question = {m.lower() for m in named}
+    known = in_question | {m.lower() for m in listed}
+    pairs = [(i, {i.medicine_a.lower(), i.medicine_b.lower()}) for i in interactions]
+    return [i for i, pair in pairs if pair <= known and pair & in_question]

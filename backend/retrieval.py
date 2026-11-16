@@ -42,9 +42,14 @@ class Retriever:
         self.index, self.embed = index, embed
         self.bm25 = BM25Okapi([_tokens(c.text) for c in index.chunks])
         self.medicines = {c.medicine.lower(): c.medicine for c in index.chunks}
+        self.chunks = {c.id: c for c in index.chunks}
+
+    def named(self, question: str) -> set[str]:
+        """Leaflet medicines the question names, in their leaflet spelling."""
+        return {m for key, m in self.medicines.items() if re.search(rf"\b{re.escape(key)}\b", question.lower())}
 
     def _targets(self, question: str, medicines: list[str]) -> set[str]:
-        named = {m for key, m in self.medicines.items() if re.search(rf"\b{re.escape(key)}\b", question.lower())}
+        named = self.named(question)
         if named or "my" not in _tokens(question):
             return named
         return {self.medicines[m.lower()] for m in medicines if m.lower() in self.medicines}

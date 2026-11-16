@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from backend.kb import load_index, ollama_embed
+from backend.kb import Interaction, load_index, load_interactions, ollama_embed
 from backend.llm import ollama_generate
 from backend.pipeline import ChatRequest, answer_question
 from backend.retrieval import MIN_SIMILARITY, Retriever
@@ -59,14 +59,14 @@ def speed(model: str) -> float:
     return sum(rates) / len(rates)
 
 
-def full_run(rows: list[dict], retriever: Retriever, model: str, tag: str) -> dict:
+def full_run(rows: list[dict], retriever: Retriever, interactions: list[Interaction], model: str, tag: str) -> dict:
     generate = ollama_generate(model, timeout=120)  # measure the slow models instead of timing them out
     generate([{"role": "user", "content": "hi"}], {"type": "object"})  # load the model before timing
     out = []
     for r in rows:
         meds = [{"name": m} for m in r["medicines"]]
         start = time.perf_counter()
-        resp = answer_question(ChatRequest(question=r["question"], medicines=meds), retriever, generate)
+        resp = answer_question(ChatRequest(question=r["question"], medicines=meds), retriever, generate, interactions)
         out.append({"id": r["id"], "category": r["category"], "question": r["question"], "expect_kind": r["expect_kind"],
                     "kind": resp.kind, "latency_s": round(time.perf_counter() - start, 2),
                     "sources": " ".join(s.id for s in resp.sources), "answer": resp.answer, "faithfulness": ""})
@@ -109,7 +109,7 @@ def main() -> None:
     (RESULTS / "retrieval.json").write_text(json.dumps(retrieval_section(rows, retriever)))
     if not args.retrieval_only:
         tag = "model-" + args.model.replace(":", "-").replace("/", "-")
-        metrics = {"model": args.model, **full_run(rows, retriever, args.model, tag)}
+        metrics = {"model": args.model, **full_run(rows, retriever, load_interactions(ROOT / "data" / "interactions.csv"), args.model, tag)}
         (RESULTS / f"{tag}.json").write_text(json.dumps(metrics, indent=1))
     write_summary()
 

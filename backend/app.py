@@ -31,17 +31,14 @@ def create_app(index: Index, embed: Embed, generate: Generate, interactions: lis
                engines: list[Engine] = [], transcribe: Callable[[bytes], str] | None = None) -> FastAPI:
     app = FastAPI()
     retriever = Retriever(index, embed)
-    chunks = {c.id: c for c in index.chunks}
     warnings = [
-        {"a": i.medicine_a, "b": i.medicine_b, "warning": i.warning,
-         "source": Source(id=i.source_chunk, medicine=chunks[i.source_chunk].medicine,
-                          section=chunks[i.source_chunk].section, url=chunks[i.source_chunk].source_url)}
+        {"a": i.medicine_a, "b": i.medicine_b, "warning": i.warning, "source": Source.of(retriever.chunks[i.source_chunk])}
         for i in interactions
     ]
 
     @app.post("/api/chat")
     def chat(req: ChatRequest) -> ChatResponse:
-        return answer_question(req, retriever, generate)
+        return answer_question(req, retriever, generate, interactions)
 
     @app.post("/api/tts")
     def tts(req: TtsRequest) -> Response:
