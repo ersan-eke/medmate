@@ -128,7 +128,8 @@ def write_summary() -> None:
     lines += ["", "Model choice: red-flag recall and refusal must be 1.00 and p95 under 15 s; then the highest answer rate; "
               "then the lowest p95.",
               "Off-topic questions are all refused by the similarity gate before a model sees them, so the refusal "
-              "column tests the model only on not-covered questions that pass the gate."]
+              "column tests the model only on not-covered questions that pass the gate.",
+              "Each row is from the prompt and code at its last run; only the chosen model is rerun after a change, so rows can differ in age."]
     (RESULTS / "summary.md").write_text("\n".join(lines) + "\n")
 
 
