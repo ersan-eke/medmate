@@ -99,7 +99,7 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 
 - [ ] Grade the empty `faithfulness` column (1 to 3) in `eval/results/model-llama3.2-3b.csv` for a sample of answers.
 - [ ] Rerun `uv run python -m eval.run_eval --model llama3.2:3b` with nothing else running, to get clean latency and tokens/s for the slides.
-- [ ] Decide: p95 latency is 15 s against the plan's 8 s. Accept it, or reduce the retries.
+- [ ] Decide: p95 latency is 11.2 s against the plan's 8 s (15 s before #40). Accept it, or reduce the retries.
 - [ ] Classmate feedback (plan Task 11 step 7) is in no ticket yet.
 - [ ] Tick the acceptance boxes on issue #13 and close it.
 
@@ -108,3 +108,9 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Try it in the running app: ask "Can I take my aspirin with my warfarin?", and "Is paracetamol OK with my other medicines?" with warfarin on the list. Check the warning reads well aloud.
 - [ ] Decide whether the broad trigger is acceptable: "Can I take warfarin with food?" with ibuprofen on the list also gets the warfarin + ibuprofen warning.
 - [ ] Tick the acceptance boxes on issue #40 and close it.
+
+## #41 Answer quality and limitations
+
+- [ ] Check the hand-graded counts in `CHALLENGES.md` (#13 entry) against your own reading before quoting them on a slide.
+- [ ] Copy the new "Answer quality of the small model" limitation from the design spec §12 into the README and the limitations slide.
+- [ ] Tick the acceptance boxes on issue #41 and close it.
