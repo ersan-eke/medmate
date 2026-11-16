@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from . import messages
 from .kb import Embed, Index, Interaction, load_index, load_interactions, ollama_embed
-from .llm import ANSWER_SCHEMA, WARMUP_TIMEOUT_SECONDS, Generate, ollama_generate
+from .llm import ANSWER_SCHEMA, SYSTEM_PROMPT, WARMUP_TIMEOUT_SECONDS, Generate, ollama_generate
 from .pipeline import ChatRequest, ChatResponse, Source, answer_question
 from .retrieval import Retriever
 from .speech import Engine, kokoro_engine, say_engine, synthesize, transcribe, warm_speech
@@ -85,7 +85,7 @@ def default_app() -> FastAPI:
     warm_models({
         "embedder": lambda: ollama_embed(timeout=WARMUP_TIMEOUT_SECONDS)(["warm up"], "query"),
         "chat model": lambda: ollama_generate(CHAT_MODEL, WARMUP_TIMEOUT_SECONDS)(
-            [{"role": "user", "content": "warm up"}], ANSWER_SCHEMA),
+            [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": "warm up"}], ANSWER_SCHEMA),
         "speech": lambda: warm_speech(engines),
     })
     return create_app(index, embed, generate,

@@ -44,8 +44,9 @@ class LlmAnswer(BaseModel):
     covered: bool
     # A refusal needs only the two flags; validate() requires the rest of a covered answer.
     answer: str = ""
-    # Capped at the passages sent: uncapped, the 3B model can repeat one id until the timeout.
-    citations: list[str] = Field([], max_length=TOP_K)
+    # Capped at the passages sent in the schema Ollama decodes against, not when parsing: uncapped, the 3B model can
+    # repeat one id until the timeout, but a reply that cites too many should still be used, not retried.
+    citations: list[str] = Field([], json_schema_extra={"maxItems": TOP_K})
     card: Card | None = None
 
     @field_validator("citations")

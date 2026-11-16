@@ -62,6 +62,13 @@ def test_schema_caps_citations_at_the_passages_sent():
     assert ANSWER_SCHEMA["properties"]["citations"]["maxItems"] == TOP_K
 
 
+def test_reply_with_more_citations_than_passages_still_parses():
+    # The cap is enforced by Ollama while it writes; a reply over it must not fail parsing and cost a retry.
+    ids = [f"metformin#s{i}" for i in range(TOP_K + 1)]
+    answer = validate(raw(citations=ids), {i: "Take with meals." for i in ids}, "")
+    assert not isinstance(answer, str)
+
+
 def test_passage_ids_removed_from_answer_text():
     pid = "metformin#side-effects-2"
     answer = validate(raw(answer=f"Take it with food. [{ID}] Nausea is common. [{pid}]", citations=[ID, pid]),

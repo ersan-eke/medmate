@@ -444,6 +444,17 @@ def test_default_app_warms_each_model_once_with_a_long_timeout_before_serving(st
     assert WARMUP_TIMEOUT_SECONDS > max(EMBED_TIMEOUT_SECONDS, TIMEOUT_SECONDS)
 
 
+def test_chat_warm_up_sends_the_system_prompt(startup, monkeypatch):
+    # A warm-up without it leaves the first real question to process the whole prompt, which was 9.5 s against 10.
+    import backend.app as app_module
+    from backend.llm import SYSTEM_PROMPT
+
+    sent = []
+    monkeypatch.setattr(app_module, "ollama_generate", lambda model, timeout=None: lambda m, schema: sent.append(m) or reply())
+    app_module.default_app()
+    assert sent[0][0] == {"role": "system", "content": SYSTEM_PROMPT}
+
+
 def test_default_app_stops_on_a_bad_index_before_warming(startup, monkeypatch):
     import backend.app as app_module
 
