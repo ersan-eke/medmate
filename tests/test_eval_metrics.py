@@ -3,6 +3,8 @@ from pathlib import Path
 
 from eval.metrics import best_threshold, citation_validity, hit_at_k, percentile, red_flag_stats, refusal_rate
 
+ROOT = Path(__file__).resolve().parents[1]
+
 ROWS = [
     {"id": "a", "category": "red_flag"},
     {"id": "b", "category": "red_flag"},
@@ -49,7 +51,7 @@ def test_citation_validity():
 
 
 def test_question_file_covers_every_category():
-    rows = [json.loads(line) for line in Path("eval/questions.jsonl").read_text().splitlines()]
+    rows = [json.loads(line) for line in (ROOT / "eval/questions.jsonl").read_text().splitlines()]
     cats = {}
     for r in rows:
         cats[r["category"]] = cats.get(r["category"], 0) + 1
@@ -61,10 +63,10 @@ def test_question_file_covers_every_category():
 def test_expected_chunks_exist():
     import pytest
 
-    path = Path("data/index/chunks.json")
+    path = ROOT / "data/index/chunks.json"
     if not path.exists():
         pytest.skip("no built index")
     ids = {c["id"] for c in json.loads(path.read_text())}
-    for line in Path("eval/questions.jsonl").read_text().splitlines():
+    for line in (ROOT / "eval/questions.jsonl").read_text().splitlines():
         row = json.loads(line)
         assert set(row["expect_chunks"]) <= ids, row["id"]
