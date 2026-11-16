@@ -94,3 +94,11 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] `backend/retrieval.py` still has your uncommitted `MIN_SIMILARITY = 0.74` change, with `eval/` and `tests/test_eval_metrics.py` untracked. I committed only my one-line hunk. Commit the rest when the eval work is ready.
 - [ ] With 0.74 the gate gives the right result on all 36 eval questions, except turmeric-with-metformin (0.763), which only the model's `covered` flag refuses. Re-check after any index or embedder change.
 - [ ] Tick the acceptance boxes on issue #30 and close it.
+
+## #13 Evaluation, threshold tuning and model choice
+
+- [ ] Grade the empty `faithfulness` column (1 to 3) in `eval/results/model-llama3.2-3b.csv` for a sample of answers.
+- [ ] Rerun `uv run python -m eval.run_eval --model llama3.2:3b` with nothing else running, to get clean latency and tokens/s for the slides.
+- [ ] Decide: p95 latency is 15 s against the plan's 8 s. Accept it, or reduce the retries.
+- [ ] Classmate feedback (plan Task 11 step 7) is in no ticket yet.
+- [ ] Tick the acceptance boxes on issue #13 and close it.

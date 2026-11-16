@@ -26,3 +26,12 @@ Add real problems as you hit them: date, who, what happened, what fixed it.
 
 - **No download happened with `HF_HUB_OFFLINE=1`.** Server start (warming embedder, chat model, Whisper, Kokoro) took 8 s with every cache already filled; log showed no download or error. The first chat after start took 7.0 s on this laptop (gate: 10 s). Wi-Fi itself was not switched off, only Hugging Face offline mode.
 - **Offline default.** `backend/app.py` sets `HF_HUB_OFFLINE=1` unless already set. `scripts/fetch_models.py` turns it back on for the fetch.
+
+## 2026-11-16 — Evaluation and model choice (ticket #13)
+
+- **Candidates (exact tags, Ollama ids).** `llama3.2:3b` (a80c4f17acd5, baseline), `llama3.1:8b` (46e0c10c039e), `qwen2.5:7b` (845dbda0ea48). 36 questions in `eval/questions.jsonl`; results in `eval/results/`.
+- **Chosen: `llama3.2:3b`** (already the default). It answered 18 of 20 answerable questions; llama3.1:8b 14, qwen2.5:7b 17. All three have red-flag recall 1.0. The 8B models are 2 to 4 times slower (p50 26 s and 15 s against 6 s).
+- **Gates.** Red-flag recall 1.0 and refusal 1.0 hold, hybrid hit@4 (1.00) ≥ vector (1.00) and BM25 (0.90). **Missed: p95 latency ≤ 8 s.** The 3B model's p95 is 15 s, because a rejected answer is retried once. The gate on the first answer after startup (#12) is separate and was 7 s.
+- **Threshold.** The best cut is 0.746; `MIN_SIMILARITY` is 0.74. In-KB questions score 0.75 to 0.91, off-topic ones 0.42 to 0.53, not-in-KB ones 0.63 to 0.76. "Metformin with turmeric" (0.763) passes the gate and is refused by the model's `covered` flag.
+- **Two bugs the eval found.** (1) Ticket #28 made `answer`, `citations` and `card` optional in the schema sent to Ollama, so the models left out citations and nearly every answer fell back. `ANSWER_SCHEMA` now requires every field again. (2) The "covered" line in `prompts/system.txt` made the 3B model mark answerable questions as not covered; it is reworded.
+- **Not done.** Faithfulness column is empty for the team to grade. Classmate feedback (plan step 7) and `tests/test_demo_live.py` are not part of this ticket's acceptance and were not done. Tokens/s varied between runs (24 to 40 for the 3B model), so rerun on a quiet laptop before quoting it.

@@ -54,7 +54,9 @@ class LlmAnswer(BaseModel):
         return [i.strip().strip("[]") for i in ids]
 
 
+# Every field is required of the model, or a small one leaves out the citations; the defaults only serve parsing.
 ANSWER_SCHEMA = LlmAnswer.model_json_schema()
+ANSWER_SCHEMA["required"] = list(ANSWER_SCHEMA["properties"])
 
 
 class Triage(BaseModel):

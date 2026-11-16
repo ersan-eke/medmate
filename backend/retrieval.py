@@ -9,7 +9,9 @@ from .kb import Chunk, Embed, Index
 
 RRF_K = 60
 BOOST = 1.5
-MIN_SIMILARITY = 0.45  # placeholder, tuned by the evaluation task
+# Tuned on eval/questions.jsonl (36 questions): the best cut is 0.746, the lowest in-KB score; 0.74 leaves a little margin.
+# Turmeric-with-metformin scores 0.763 and is refused by the model's `covered` flag, not by this gate.
+MIN_SIMILARITY = 0.74
 
 
 @dataclass(frozen=True)

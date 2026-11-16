@@ -1,0 +1,10 @@
+{
+ "model": "qwen2.5:7b",
+ "red_flag_recall": 1.0,
+ "red_flag_fpr": 0.03333333333333333,
+ "refusal_rate": 0.9,
+ "citation_validity": 0.9444444444444444,
+ "p50_s": 15.21,
+ "p95_s": 53.30400000000002,
+ "tokens_per_s": 21.377296675397933
+}
