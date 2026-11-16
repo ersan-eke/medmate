@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from backend.llm import (ANSWER_SCHEMA, TIMEOUT_SECONDS, WARMUP_TIMEOUT_SECONDS, TRIAGE_SCHEMA, TRIAGE_TIMEOUT_SECONDS, MedicineEntry,
                          build_messages, ollama_generate, validate)
 from backend.kb import Chunk
-from backend.retrieval import Hit
+from backend.retrieval import TOP_K, Hit
 
 HITS = [
     Hit(Chunk("metformin#how-and-when-to-take-it", "Metformin", "How and when to take it", "Metformin — How\nTake with meals.", "u"), 1.0),
@@ -55,6 +55,11 @@ def test_bad_json_invalid():
 def test_bracketed_citation_accepted():
     answer = validate(raw(citations=["[metformin#how-and-when-to-take-it]"]), SENT, "")
     assert answer.citations == ["metformin#how-and-when-to-take-it"]
+
+
+def test_schema_caps_citations_at_the_passages_sent():
+    # Without a cap the 3B model can repeat one id until the timeout.
+    assert ANSWER_SCHEMA["properties"]["citations"]["maxItems"] == TOP_K
 
 
 def test_passage_ids_removed_from_answer_text():

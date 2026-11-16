@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
-from .retrieval import Hit
+from .retrieval import TOP_K, Hit
 
 # (chat messages, JSON schema) -> raw JSON string. Raises on transport failure.
 Generate = Callable[[list[dict], dict], str]
@@ -44,7 +44,8 @@ class LlmAnswer(BaseModel):
     covered: bool
     # A refusal needs only the two flags; validate() requires the rest of a covered answer.
     answer: str = ""
-    citations: list[str] = []
+    # Capped at the passages sent: uncapped, the 3B model can repeat one id until the timeout.
+    citations: list[str] = Field([], max_length=TOP_K)
     card: Card | None = None
 
     @field_validator("citations")

@@ -53,7 +53,7 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 
 ## #15 Release gates and pre-flight script
 
-- [ ] **Gate failing:** demo step 3 ("…before or after dinner, and my stomach feels a bit unsettled.") returns `not_covered` 4 of 4 times with `llama3.2:3b`. Retrieval is right (metformin side-effects and how-to-take chunks, similarity 0.75); the model sets `covered: false`. Fix the prompt or choose a bigger model (ticket #11), or say so in the slides. Do not loosen the test.
+- [x] **Gate failing:** demo step 3 ("…before or after dinner, and my stomach feels a bit unsettled.") returns `not_covered` 4 of 4 times with `llama3.2:3b`. Retrieval is right (metformin side-effects and how-to-take chunks, similarity 0.75); the model sets `covered: false`. Fix the prompt or choose a bigger model (ticket #11), or say so in the slides. Do not loosen the test. **Fixed 2026-11-17 (#45):** passes 3 of 3 with only `llama3.2:3b` loaded; step 3 answers in about 6 s warm, 9.5 s on the first run after a cold start.
 - [ ] Run `uv run python -m scripts.preflight` with Wi-Fi off at feature freeze and again on demo morning. It must print PASS for all three lines.
 - [ ] Not covered by the script: the eval gates (red-flag recall 1.0, refusal ≥ 0.9, hybrid hit@4) belong to ticket #11's `eval/run_eval.py`.
 - [ ] Tick the acceptance boxes on issue #15 and close it.
@@ -86,7 +86,7 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 
 ## #29 Server starts warm and rejects a bad index (commit `381740a`, closed)
 
-- [ ] **Gate failing:** `tests/test_demo_live.py::test_step3_first_answer_is_fast_and_cites_metformin` takes 12.6-13 s against the 10 s limit, after the warm-up. It fails the same way without this ticket's changes. `llama3.2:3b` and `nomic-embed-text` are installed, and so are `llama3.1:8b` and `qwen2.5:7b`. Not diagnosed: try with the other models unloaded (`ollama ps`, `ollama stop <model>`) and the laptop idle, then re-run `pytest -m slow tests/test_demo_live.py`. The "live smoke test still passes" box on #29 is not met until it does.
+- [x] **Gate failing:** `tests/test_demo_live.py::test_step3_first_answer_is_fast_and_cites_metformin` takes 12.6-13 s against the 10 s limit, after the warm-up. It fails the same way without this ticket's changes. `llama3.2:3b` and `nomic-embed-text` are installed, and so are `llama3.1:8b` and `qwen2.5:7b`. Not diagnosed: try with the other models unloaded (`ollama ps`, `ollama stop <model>`) and the laptop idle, then re-run `pytest -m slow tests/test_demo_live.py`. The "live smoke test still passes" box on #29 is not met until it does. **Fixed 2026-11-17 (#45):** passes 3 of 3 with only `llama3.2:3b` loaded; step 3 answers in about 6 s warm, 9.5 s on the first run after a cold start.
 - [ ] A missing `chunks.json` or `vectors.npy` still gives a raw `FileNotFoundError` at startup, not a friendly message. Only an empty index has one.
 
 ## #30 Not-covered check uses every passage (commit `53f3ab3`)
@@ -114,3 +114,13 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Check the hand-graded counts in `CHALLENGES.md` (#13 entry) against your own reading before quoting them on a slide.
 - [ ] Copy the new "Answer quality of the small model" limitation from the design spec §12 into the README and the limitations slide.
 - [ ] Tick the acceptance boxes on issue #41 and close it.
+
+## #45 Two-part answers: symptom rule and citation cap
+
+- [ ] Demo run-sheet: before presenting, run `ollama ps` and stop `llama3.1:8b` and `qwen2.5:7b` (`ollama stop <model>`). Untested, but the likely cause of the old 12.6–13 s first answer.
+- [ ] Demo run-sheet: after starting the server, ask one question before presenting. The first answer after a cold start took 9.5 s against the 10 s limit; the startup warm-up does not send the system prompt (`backend/app.py:87-88`). Not fixed here.
+- [ ] The stomach part of the step-3 answer is checked by hand, not by the gate. Recorded answer (with the demo list, about 6 s): "You should take your Metformin with food. According to the leaflet, most people take it 1 to 3 times a day with food. If you're unsure, you can also ask a pharmacist or doctor for advice. If your stomach feels unsettled, it's possible that you're experiencing a common side effect of Metformin, such as diarrhoea or tummy pain. You can speak to a pharmacist or doctor if these side effects bother you or do not go away." Card get-help: "side effects that bother you or do not go away".
+- [ ] Decide: the same question without doses (eval `per1`) gives invented advice, "it might be a good idea to wait until your next meal to take it", and cites only how-to-take. The answer depends on whether doses are entered. File a ticket or accept.
+- [ ] Decide: eval `nea3` (bleeding gums, warfarin) now answers but adds "They may recommend a dental check-up", which is not in the leaflet. `sid2` ("Why does metformin upset my stomach?") now refuses; its old answer invented "metformin increases acid in your stomach".
+- [ ] Eval (3B, vs `37bf319`): refusal 1.00 → 1.00, answer rate 0.81 → 0.85, citation validity 1.00, p50 9.2 → 8.5 s, p95 15.3 → 13.0 s. The p95 is now under the summary's 15 s rule.
+- [ ] Tick the acceptance boxes on issues #45 and #43 and close them. The ticket's rule text was replaced by the symptom rule; see `docs/superpowers/specs/2026-11-16-two-part-answers-design.md`.

@@ -22,6 +22,19 @@ The chat model runs at temperature 0, so the same question and passages give (al
 
 The gate passes while the step-3 answer is hollow ("check your leaflet…"). The stored 3B answer is exactly that.
 
+## Revision (2026-11-17): symptom rule instead of the two-part rule
+
+The two-part rule passed the gate but not the hand read. The raw reply showed why: the model "cited each part" by writing both ids at the end of the answer text (which #44 then strips), and filed the stomach under `card.get_help_if`, the prompt's only place for a symptom. The stomach is not a question to the model; it is a mentioned symptom, and no rule said what to do with one. The side-effects passage already holds the answer.
+
+An in-memory spike chose these two changes in place of the two-part rule (design step 1 below is replaced):
+
+- Before the answer-length rule: `- If the user mentions a symptom or feeling, answer it in the answer text: say whether the passages list it as a side effect, what the passages say to do about it, and when to get help.`
+- `card.get_help_if` becomes "a short list of warning signs taken from the passages that mean calling a pharmacist, doctor or 999."
+
+Rejected in the spike: the symptom rule alone (invented "wait until your next meal to take it"), and adding "a common side effect the user mentions is not a warning sign by itself" (turmeric ran to the 20 s timeout and fell back). The rest of the design (gate runs, hand read, eval, to-do) is unchanged.
+
+The first eval rerun dropped refusal to 0.93: turmeric without doses (the eval omits them) made the 3B model repeat one citation id until the timeout. `LlmAnswer.citations` is now capped at `TOP_K` (the 4 passages sent), which Ollama enforces through the schema's `maxItems`.
+
 ## Approaches
 
 - **A. The ticket, tightened (chosen):** add the prompt rule, then verify the whole demo and read the actual answer.

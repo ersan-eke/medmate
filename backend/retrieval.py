@@ -8,6 +8,7 @@ from rank_bm25 import BM25Okapi
 from .kb import Chunk, Embed, Index
 
 RRF_K = 60
+TOP_K = 4  # passages sent to the model
 BOOST = 1.5
 # Tuned on eval/questions.jsonl (47 questions, 10 of them casual rewordings): the best cut is 0.725; 0.72 leaves a
 # little margin. No cut separates every question, so the model's `covered` and `in_scope` flags refuse the rest:
@@ -59,7 +60,7 @@ class Retriever:
         self,
         question: str,
         medicines: list[str],
-        k: int = 4,
+        k: int = TOP_K,
         mode: Literal["hybrid", "bm25", "vector"] = "hybrid",
     ) -> Retrieval:
         query = self.embed([question], "query")[0]
