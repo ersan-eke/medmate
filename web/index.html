@@ -133,7 +133,7 @@
     document.getElementById("warnings").replaceChildren(...findInteractions(medicines, interactions).map((i) => {
       const p = document.createElement("p");
       const link = Object.assign(document.createElement("a"), {
-        href: i.source.url, textContent: `${i.source.medicine} > ${i.source.section}`,
+        href: i.source.url, target: "_blank", rel: "noopener", textContent: `${i.source.medicine} > ${i.source.section}`,
       });
       const title = Object.assign(document.createElement("strong"), { textContent: `⚠ ${i.a} + ${i.b}` });
       p.append(title, document.createElement("br"), i.warning, document.createElement("br"), "Source: ", link);
@@ -335,6 +335,8 @@
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.href = s.url;
+      a.target = "_blank";
+      a.rel = "noopener";
       a.textContent = `${s.medicine} > ${s.section}`;
       li.append(a);
       return li;
