@@ -191,10 +191,13 @@
 
   fetch("/api/meta").then((r) => (r.ok ? r.json() : Promise.reject(r.status))).then((meta) => {
     nameSelect.replaceChildren(...meta.medicines.map((n) => new Option(n, n)));
+    return meta;
+  }).then((meta) => {
     document.querySelector("footer").textContent = meta.attribution;
     interactions = meta.interactions;
     render();
-  }).catch(() => {
+  }, () => {
+    // Only a failed fetch or medicines list lands here; errors after the dropdown fills must not blank it.
     nameSelect.replaceChildren(new Option("Couldn't load medicines. Please reload.", ""));
   });
 

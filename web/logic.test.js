@@ -60,6 +60,15 @@ test("interactions match either order, ignoring case", () => {
   assert.deepEqual(findInteractions([{ name: "Metformin" }], [row]), []);
 });
 
+test("interactions skip entries without a usable name and tolerate a bad list", () => {
+  const row = { a: "Warfarin", b: "Ibuprofen", warning: "w", source: {} };
+  const list = [{}, { name: 7 }, null, { name: "Warfarin" }, { name: "Ibuprofen" }];
+  assert.deepEqual(findInteractions(list, [row]), [row]);
+  assert.deepEqual(findInteractions(list, []), []);
+  assert.deepEqual(findInteractions(list, undefined), []);
+  assert.deepEqual(findInteractions(list, { a: "Warfarin" }), []);
+});
+
 test("mouthFrame follows the volume", () => {
   assert.equal(mouthFrame(0), "closed");
   assert.equal(mouthFrame(0.05), "half");

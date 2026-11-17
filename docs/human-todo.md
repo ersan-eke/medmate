@@ -138,3 +138,8 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 ## Spoken doses (2.5mg read as "two … five em-gee")
 
 - [ ] Listen once in Chrome: the new "decimal dose" step in the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md`.
+
+## #36 Keep the sidebar working when interaction data is bad
+
+- [ ] Manual check in Chrome: make `/api/meta` leave out `interactions` (for example, comment it out in `backend/app.py` for a moment), reload, and check that the dropdown still lists medicines, no "Couldn't load medicines" shows, and no warning appears.
+- [ ] Tick the acceptance boxes on issue #36 and close it.

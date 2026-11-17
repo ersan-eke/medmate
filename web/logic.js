@@ -30,8 +30,10 @@ export function buildSchedule(list) {
   );
 }
 
+// A missing or non-array interaction list must not break the sidebar, so it counts as none (rows are checked at startup, #35).
 export function findInteractions(list, interactions) {
-  const have = new Set(list.map((m) => m.name.toLowerCase()));
+  if (!Array.isArray(interactions)) return [];
+  const have = new Set(list.filter((m) => typeof m?.name === "string").map((m) => m.name.toLowerCase()));
   return interactions.filter((i) => have.has(i.a.toLowerCase()) && have.has(i.b.toLowerCase()));
 }
 
