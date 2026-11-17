@@ -123,18 +123,18 @@ MedMate is a single-page web app with two top-level views—**MedMate** (ask a q
 flowchart TD
     Q["🎙️ Voice or Text Question"] --> E["<b>1. Emergency Check</b> — NHS 999 red-flag signs"]
     E -- "Match" --> E999["🚨 Reply with 999 message"]
-    E -- "Clear" --> G["<b>2. Similarity Gate</b> — Close to a leaflet or medicine?"]
+    E -- "Clear" --> R["<b>2. Hybrid Retrieval</b> — BM25 + Vector search"]
+    R --> G["<b>3. Similarity Gate</b> — Close to a leaflet or medicine?"]
     G -- "Off-topic" --> REF["🛑 Refuse question"]
-    G -- "In-scope" --> R["<b>3. Hybrid Retrieval</b> — BM25 + Vector search"]
-    R --> L["<b>4. Grounded Answer</b> — llama3.2:3b with citations"]
+    G -- "In-scope" --> L["<b>4. Grounded Answer</b> — llama3.2:3b with citations"]
     L --> N["<b>5. Number Check</b> — Matches passages, doses, or 999?"]
     N -- "Unverified" --> L
     N -- "Verified" --> S["<b>6. Speech & Avatar</b> — Kokoro TTS + Web Audio lip-sync"]
 ```
 
 1. **Emergency check.** Matches fixed phrases for each NHS 999 sign, then asks the model (`yes`/`no`) for each sign. Any match immediately returns the 999 message.
-2. **Similarity gate.** If no leaflet passage is close enough and the question is not about a leaflet medicine, MedMate refuses before calling the generator.
-3. **Retrieval.** Hybrid BM25 and vector search select the most relevant leaflet passages.
+2. **Retrieval.** Hybrid BM25 and vector search select the most relevant leaflet passages.
+3. **Similarity gate.** If no leaflet passage is close enough and the question is not about a leaflet medicine, MedMate refuses before calling the generator.
 4. **Answer.** The model generates a response strictly from those passages and cites them.
 5. **Number check.** Any answer containing a number not found in the cited passages, the user's own doses, or the emergency number (`999`) is sent back to the model for correction.
 6. **Speech.** The verified reply is spoken aloud while the avatar's mouth tracks the audio output.
