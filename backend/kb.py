@@ -10,6 +10,7 @@ import numpy as np
 
 MAX_CHUNK_CHARS = 1500
 HEADER_KEYS = ("medicine", "source_url", "retrieved", "licence")
+BUILD_INDEX = "Build it with: uv run python -m scripts.ingest"
 
 # Rows must come back L2-normalised so a dot product is a cosine.
 Embed = Callable[[list[str], Literal["query", "document"]], np.ndarray]
@@ -109,9 +110,12 @@ def save_index(index: Index, out_dir: Path) -> None:
 
 
 def load_index(out_dir: Path) -> Index:
+    for name in ("chunks.json", "vectors.npy"):
+        if not (out_dir / name).exists():
+            raise FileNotFoundError(f"No index in {out_dir}: {name} is missing. {BUILD_INDEX}")
     chunks = [Chunk(**c) for c in json.loads((out_dir / "chunks.json").read_text())]
     if not chunks:
-        raise ValueError(f"The index in {out_dir} is empty. Run scripts/ingest.py to build it.")
+        raise ValueError(f"The index in {out_dir} is empty. {BUILD_INDEX}")
     return Index(chunks, np.load(out_dir / "vectors.npy"))
 
 

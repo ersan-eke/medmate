@@ -1,4 +1,4 @@
-// Pure page logic, kept free of the DOM so `node --test web/` can run it.
+// Pure page logic, kept free of the DOM so `node --test web/logic.test.js` can run it.
 const KEY = "medmate.medicines";
 export const TIMES = ["morning", "midday", "evening", "bedtime"];
 

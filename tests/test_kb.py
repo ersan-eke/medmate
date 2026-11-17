@@ -107,7 +107,15 @@ def test_empty_index_is_rejected_at_load(tmp_path):
         load_index(tmp_path)
 
 
-HEADER = "---\nmedicine: Aspirin\nsource_url: u\nretrieved: 2026-01-01\nlicence: OGL\n---"
+@pytest.mark.parametrize("missing", ["chunks.json", "vectors.npy"])
+def test_missing_index_file_names_it_and_the_ingest_command(tmp_path, missing):
+    save_index(Index([], np.zeros((0, 4), dtype=np.float32)), tmp_path)
+    (tmp_path / missing).unlink()
+    with pytest.raises(FileNotFoundError, match=rf"{missing} is missing.*uv run python -m scripts\.ingest"):
+        load_index(tmp_path)
+
+
+HEADER ="---\nmedicine: Aspirin\nsource_url: u\nretrieved: 2026-01-01\nlicence: OGL\n---"
 
 
 def test_text_before_first_heading_raises():
