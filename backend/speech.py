@@ -10,10 +10,12 @@ log = logging.getLogger(__name__)
 Engine = Callable[[str], bytes]  # text -> WAV bytes; raises on failure
 
 # Kokoro reads "2.5mg" as "two . five em-gee" and "mg/ml" as "slash"; spelled-out units read right.
-SPOKEN_UNITS = {"mg": "milligram", "mcg": "microgram", "µg": "microgram", "μg": "microgram",  # micro sign, Greek mu
-                "ml": "millilitre", "g": "gram"}
-_NUMBER, _UNIT = r"\d+(?:[.,]\d+)*", "|".join(SPOKEN_UNITS)
-DOSE = re.compile(rf"({_NUMBER})\s*({_UNIT})\b(?:\s*/\s*({_NUMBER})?(?:\s*({_UNIT})\b)?)?", re.IGNORECASE)
+# "µg" is the micro sign, "μg" the Greek mu: leaflets and model output use both.
+SPOKEN_UNITS = {"mg": "milligram", "g": "gram", "ml": "millilitre",
+                "mcg": "microgram", "µg": "microgram", "μg": "microgram"}
+DOSE_NUMBER = r"\d+(?:[.,]\d+)*"
+DOSE_UNIT = "|".join(SPOKEN_UNITS)
+DOSE = re.compile(rf"({DOSE_NUMBER})\s*({DOSE_UNIT})\b(?:\s*/\s*({DOSE_NUMBER})?(?:\s*({DOSE_UNIT})\b)?)?", re.IGNORECASE)
 
 
 def kokoro_engine(voice: str = "af_heart", speed: float = 0.9) -> Engine:
@@ -51,18 +53,18 @@ def say_engine(rate: int = 165) -> Engine:
 
 def spoken(text: str) -> str:
     """'250mg/5ml' -> '250 milligrams per 5 millilitres'; the shown text keeps the leaflet's form."""
-    def amount(number: str | None, unit: str) -> str:
+    def say_amount(number: str | None, unit: str) -> str:
         word = SPOKEN_UNITS[unit.lower()]
         return word if number is None else f"{number} {word}" + ("" if number == "1" else "s")
 
-    def dose(m: re.Match) -> str:
+    def say_dose(m: re.Match) -> str:
         number, unit, per_number, per_unit = m.groups()
-        said = amount(number, unit)
+        said = say_amount(number, unit)
         if "/" in m[0]:  # "2 g/day" leaves "day" in the text after the match
-            said += " per " + (amount(per_number, per_unit) if per_unit else per_number or "")
+            said += " per " + (say_amount(per_number, per_unit) if per_unit else per_number or "")
         return said
 
-    return DOSE.sub(dose, text)
+    return DOSE.sub(say_dose, text)
 
 
 def synthesize(text: str, engines: list[Engine]) -> bytes:

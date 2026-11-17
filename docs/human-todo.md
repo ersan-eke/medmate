@@ -135,7 +135,7 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Grade the `faithfulness` column for a sample of the new 3B answers (the #13 to-do above still applies).
 - [ ] Tick the acceptance boxes on issue #42 and close it.
 
-## #47 Spoken doses (from commit `ca7685a`)
+## #47 Spoken doses (commits `ca7685a`, `0d59489`)
 
 - [x] Listen once in Chrome: "two point five milligrams" plays correctly (2026-11-17).
 - [ ] Listen once in Chrome: the "Metformin liquid (250mg/5ml)" step in the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md`.
