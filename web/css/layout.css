@@ -1,0 +1,68 @@
+/* The frame: the 999 line, the top bar, then exactly one view. The page never scrolls; each view scrolls inside itself. */
+html, body { height: 100%; }
+body {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100dvh;
+  overflow: hidden;
+  background-image: radial-gradient(rgba(180, 168, 150, .17) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+#emergency {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 .6rem;
+  padding: .2rem 1rem;
+  background: var(--emergency-bg);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+#emergency a { font-size: 1.6rem; line-height: 1.1; letter-spacing: .04em; color: #fff; border-radius: .3rem; }
+#emergency a:focus-visible { outline-color: #fff; box-shadow: none; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem 1rem;
+  flex-wrap: wrap;
+  padding: .5rem 1rem;
+  background: var(--bg-alabaster);
+  border-bottom: .12rem solid var(--border-stone);
+}
+.wordmark { display: flex; align-items: center; gap: .5rem; font-family: var(--font-serif); font-size: 1.6rem; font-weight: 700; letter-spacing: -.015em; }
+.wordmark::before {
+  content: "";
+  width: 1.3rem;
+  height: 1.3rem;
+  background:
+    linear-gradient(var(--blue-primary), var(--blue-primary)) center / 34% 100% no-repeat,
+    linear-gradient(var(--blue-primary), var(--blue-primary)) center / 100% 34% no-repeat;
+}
+
+/* The prototype's pill switch. */
+.switch {
+  display: inline-flex;
+  padding: .18rem;
+  border: .1rem solid var(--border-stone-strong);
+  border-radius: .8rem;
+  background: var(--bg-alabaster);
+}
+.switch button { min-height: 2.75rem; border: 0; border-radius: .6rem; background: transparent; font-weight: 700; color: var(--ink-secondary); }
+.switch button[aria-pressed="true"] { background: var(--blue-primary); color: var(--on-blue); }
+
+.view { min-height: 0; padding: 1.2rem max(1rem, calc((100% - 72rem) / 2)) 2rem; overflow-y: auto; overscroll-behavior: contain; animation: view-in .25s ease-out; }
+.view[hidden] { display: none; }
+@keyframes view-in { from { opacity: 0; transform: translateY(.6rem); } }
+
+footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: .1rem solid var(--border-stone);
+  font-size: .85rem;
+  color: var(--ink-secondary);
+}

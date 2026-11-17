@@ -1,0 +1,65 @@
+html { font-size: 20px; }
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg-cream);
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+h1, h2, h3 { line-height: 1.2; margin: 0; }
+p { margin: 0; }
+a { color: inherit; text-decoration-thickness: .08em; text-underline-offset: .15em; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible {
+  outline: .2rem solid var(--blue-primary);
+  outline-offset: .15rem;
+  box-shadow: 0 0 0 .35rem var(--bg-cream);
+}
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+.icon, .label-title::before, #warnings p::before, #card .help h2::before, #mic::before {
+  content: "";
+  display: inline-block;
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+  background: currentColor;
+  mask: var(--icon) center / contain no-repeat;
+}
+
+/* Buttons: the primary action is bottle green; everything else is an outlined tablet. */
+button {
+  min-height: 2.75rem;
+  padding: .35rem 1rem;
+  border: .1rem solid var(--ink-primary);
+  border-radius: .5rem;
+  background: var(--bg-alabaster);
+  cursor: pointer;
+}
+button:hover { background: var(--bg-cream); }
+button[type="submit"], #mic {
+  border-color: var(--blue-primary);
+  background: var(--blue-primary);
+  color: var(--on-blue);
+  font-weight: 700;
+}
+button[type="submit"]:hover { background: var(--blue-dark); }
+button:disabled { opacity: .55; cursor: wait; }
+input, select, textarea {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: .35rem .6rem;
+  border: .1rem solid var(--ink-secondary);
+  border-radius: .4rem;
+  background: var(--bg-alabaster);
+}
+label { display: block; font-weight: 700; margin: .9rem 0 .25rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  #mic[aria-pressed="true"] { box-shadow: 0 0 0 .4rem color-mix(in srgb, var(--blue-primary) 45%, transparent); }
+}

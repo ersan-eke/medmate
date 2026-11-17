@@ -1,0 +1,164 @@
+/* Ask panel: the hatch, mic and question box on the counter, the reply beside it on wider screens. */
+.ask { display: grid; gap: 1.5rem 2rem; align-items: start; }
+@media (min-width: 40em) {
+  .ask { grid-template-columns: minmax(13rem, 18rem) minmax(0, 1fr); }
+}
+.counter { display: grid; gap: .9rem; justify-items: center; }
+.counter #form { justify-self: stretch; margin-top: .6rem; }
+.hatch {
+  position: relative;
+  width: min(100%, 11rem);
+  padding: .4rem .4rem 0;
+  border-radius: 50% 50% .3rem .3rem / 40% 40% .3rem .3rem;
+  background: var(--border-stone);
+}
+/* On a phone the hatch shrinks so the mic and the reply stay near the top. */
+@media (max-width: 39.99em) { .hatch { width: 7rem; } }
+.hatch canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50% 50% 0 0 / 40% 40% 0 0;
+  background: var(--blue-tint);
+}
+/* The counter ledge the pharmacist leans on. */
+.hatch::after {
+  content: "";
+  position: absolute;
+  left: -.8rem;
+  right: -.8rem;
+  bottom: -.6rem;
+  height: .6rem;
+  border-radius: .3rem;
+  background: var(--blue-primary);
+}
+#mic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+  width: 100%;
+  min-height: 5rem;
+  margin-top: .6rem;
+  border-radius: 1.5rem;
+  font-size: 1.2rem;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#mic::before { --icon: var(--icon-mic); width: 1.8rem; height: 1.8rem; }
+#mic:hover { background: var(--blue-dark); }
+/* Recording: the button turns inside out and a ring pulses, alongside the "Listening…" text. */
+#mic[aria-pressed="true"] {
+  background: var(--bg-alabaster);
+  color: var(--blue-primary);
+  border-width: .25rem;
+  animation: listening 1.2s ease-out infinite;
+}
+@keyframes listening {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--blue-primary) 55%, transparent); }
+  to { box-shadow: 0 0 0 1rem transparent; }
+}
+.hint { font-size: .85rem; color: var(--ink-secondary); text-align: center; }
+
+#form label { margin-top: 0; }
+.ask-row { display: flex; gap: .5rem; align-items: end; }
+#q { resize: none; line-height: 1.35; }
+.ask-row textarea { flex: 1; min-width: 0; }
+
+/* The reply is a dispensing label: white, keylined, with a title strip and the leaflet source along the bottom. */
+.label {
+  --tone: var(--ink-primary);
+  border: .15rem solid var(--tone);
+  border-radius: .6rem;
+  background: var(--bg-alabaster);
+  box-shadow: .3rem .3rem 0 var(--border-stone);
+  overflow: hidden;
+}
+.label.print { animation: print .45s ease-out; }
+@keyframes print {
+  from { clip-path: inset(0 0 100% 0); transform: translateY(-.4rem); }
+  to { clip-path: inset(0 0 0 0); transform: none; }
+}
+.label-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem 1.1rem;
+  border-bottom: .1rem solid var(--tone);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--tone);
+}
+.label-title:empty { display: none; }
+#answer {
+  padding: 1rem 1.1rem;
+  font-size: 1.4rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  max-width: 36em;
+}
+.label[data-kind="empty"] #answer { white-space: normal; font-size: 1.15rem; display: grid; gap: .6rem; }
+.examples-title { font-weight: 700; }
+.examples { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.example { width: 100%; text-align: left; border-color: var(--blue-primary); color: var(--blue-primary); font-weight: 700; }
+
+.label[data-kind="loading"] .label-title::after {
+  content: "…";
+  animation: dots 1.2s steps(4, end) infinite;
+  display: inline-block;
+  width: 1.2em;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.label[data-kind="loading"] .label-title::before { --icon: var(--icon-search); }
+.label[data-kind="loading"] #answer { color: var(--ink-secondary); }
+@keyframes dots { from { width: 0; } to { width: 1.2em; } }
+
+.label[data-kind="emergency"] { --tone: var(--safety-red); border-width: .3rem; box-shadow: .3rem .3rem 0 var(--safety-tint); }
+.label[data-kind="emergency"] .label-title {
+  background: var(--emergency-bg); color: #fff; border-color: var(--emergency-bg); font-size: 1.4rem; padding-block: .7rem;
+}
+.label[data-kind="emergency"] .label-title::before { --icon: var(--icon-phone); width: 1.5em; height: 1.5em; }
+.label[data-kind="emergency"] #answer { font-weight: 700; font-size: 1.6rem; }
+
+/* Refusals look "not dispensed": dashed edge, no shadow, with a person or question icon. */
+.label:is([data-kind="not_covered"], [data-kind="off_topic"], [data-kind="fallback"],
+  [data-kind="not_heard"], [data-kind="type_instead"], [data-kind="error"]) {
+  border-style: dashed;
+  box-shadow: none;
+  background: transparent;
+}
+.label:is([data-kind="not_covered"], [data-kind="off_topic"]) .label-title::before { --icon: var(--icon-person); }
+.label[data-kind="fallback"] .label-title::before { --icon: var(--icon-question); }
+.label[data-kind="not_heard"] .label-title::before { --icon: var(--icon-mic); }
+.label[data-kind="type_instead"] .label-title::before { --icon: var(--icon-keyboard); }
+.label[data-kind="error"] .label-title::before { --icon: var(--icon-retry); }
+
+#card { display: grid; gap: 1rem; padding: 0 1.1rem 1rem; max-width: 40em; }
+#card:empty { display: none; }
+#card h2 { font-size: 1.15rem; margin-bottom: .3rem; }
+#card ul { margin: 0; padding-left: 1.3rem; display: grid; gap: .25rem; }
+#card .help {
+  border: .2rem solid var(--safety-red);
+  border-left-width: .6rem;
+  border-radius: .5rem;
+  padding: .7rem 1rem;
+  background: var(--safety-tint);
+}
+#card .help h2 { display: flex; align-items: center; gap: .4rem; color: var(--safety-red); }
+#card .help h2::before { --icon: var(--icon-warning); }
+
+.sources {
+  padding: .6rem 1.1rem .7rem;
+  border-top: .1rem dashed var(--border-stone);
+  font-size: .9rem;
+  color: var(--ink-secondary);
+}
+.sources:has(#sources:empty) { display: none; }
+.sources-title { font-weight: 700; }
+#sources { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .1rem 1.2rem; }
+#sources a { display: inline-block; padding-block: .5rem; }
+

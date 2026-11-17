@@ -1,0 +1,72 @@
+/* My medicines */
+/* My medicines sits below the counter: the form on the left, the list, warnings and Today on the right. */
+.mine { display: grid; gap: 1.2rem 2rem; align-items: start; }
+@media (min-width: 48em) {
+  .mine { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+  #meds-title { grid-column: 1 / -1; }
+}
+.mine-list { display: grid; gap: 1.2rem; min-width: 0; }
+.mine h2 { font-size: 1.3rem; }
+.mine #meds-title { font-size: 1.6rem; }
+#med-form { padding: .2rem 0; }
+#med-form > label:first-child { margin-top: 0; }
+.times { margin: .9rem 0 0; padding: 0; border: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+.times legend { font-weight: 700; padding: 0; margin-bottom: .25rem; }
+.times label {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 0;
+  min-height: 2.75rem;
+  padding: .3rem .6rem;
+  border: .1rem solid var(--border-stone);
+  border-radius: .4rem;
+  background: var(--bg-alabaster);
+  font-weight: 400;
+  cursor: pointer;
+}
+.times input { width: 1.3rem; height: 1.3rem; min-height: 0; margin: 0; accent-color: var(--blue-primary); }
+.times label:has(:checked) { border-color: var(--blue-primary); font-weight: 700; }
+.form-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+
+#meds { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+#meds li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .6rem .8rem;
+  border-left: .3rem solid var(--blue-primary);
+  background: var(--bg-alabaster);
+  border-radius: 0 .4rem .4rem 0;
+}
+#meds li.empty { border-left-color: var(--border-stone); color: var(--ink-secondary); }
+.med-actions { display: flex; gap: .4rem; }
+.med-actions button { min-width: 2.75rem; }
+
+#warnings { display: grid; gap: .8rem; }
+#warnings:empty { display: none; }
+#warnings p {
+  position: relative;
+  padding: .8rem 1rem .8rem 3rem;
+  border: .2rem solid var(--amber-border);
+  border-radius: .5rem;
+  background: var(--amber-tint);
+  color: var(--amber-dark);
+}
+#warnings p::before { --icon: var(--icon-warning); position: absolute; left: 1rem; top: .9rem; }
+#warnings a { display: inline-block; padding-block: .3rem; }
+
+/* Today: a pill organiser, one lidded compartment per time of day. */
+#today h2 { margin-bottom: .6rem; }
+#schedule { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: .5rem; }
+.slot { border: .1rem solid var(--border-stone); border-radius: .7rem; background: var(--bg-alabaster); overflow: hidden; }
+.slot h3 { padding: .4rem .7rem; font-size: 1rem; background: var(--lid); }
+.slot ul { margin: 0; padding: .5rem .7rem .7rem 1.6rem; }
+.slot[data-time="morning"] { --lid: var(--amber-tint); }
+.slot[data-time="midday"] { --lid: var(--midday-tint); }
+.slot[data-time="evening"] { --lid: var(--evening-tint); }
+.slot[data-time="bedtime"] { --lid: var(--bedtime-tint); }
+#schedule .empty { color: var(--ink-secondary); }
+

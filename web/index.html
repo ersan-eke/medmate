@@ -2,60 +2,70 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<meta name="color-scheme" content="light">
 <title>MedMate</title>
-<style>
-  html { font-size: 20px; }
-  body { font-family: system-ui, sans-serif; margin: 0; color: #111; background: #fff; }
-  header { display: flex; justify-content: space-between; align-items: center; padding: .5rem 1rem; border-bottom: 1px solid #ccc; }
-  header h1 { margin: 0; font-size: 1.5rem; }
-  button { font-size: 1rem; padding: .3rem .8rem; }
-  :focus-visible { outline: 3px solid #0050b3; outline-offset: 2px; }
-  .layout { display: flex; flex-wrap: wrap; gap: 1rem; max-width: 64rem; margin: 0 auto; padding: 0 1rem; }
-  aside { flex: 1 1 18rem; }
-  aside h2 { font-size: 1.2rem; }
-  aside fieldset { border: 1px solid #888; margin: .5rem 0; }
-  aside label { display: block; margin-top: .4rem; }
-  aside fieldset label { display: inline-block; margin-right: .8rem; }
-  aside input, aside select { font-size: 1rem; padding: .3rem; width: 100%; box-sizing: border-box; }
-  aside fieldset input { width: auto; }
-  #meds { padding-left: 1.2rem; }
-  #meds li { margin: .4rem 0; }
-  #warnings p { border: 2px solid #8a4b00; border-radius: .5rem; padding: .5rem 1rem; margin: 1rem 0; }
-  #today { border: 2px solid #0050b3; border-radius: .5rem; padding: .25rem 1rem .75rem; margin-top: 1rem; }
-  #today h3 { font-size: 1rem; margin: .6rem 0 .1rem; }
-  #emergency { background: #c00; color: #fff; text-align: center; padding: .75rem; width: 100%; box-sizing: border-box; }
-  #emergency strong { font-size: 2.5rem; display: block; }
-  main { flex: 2 1 24rem; margin: 1rem 0; }
-  input { width: 100%; font-size: 1.1rem; padding: .5rem; box-sizing: border-box; }
-  #answer { margin-top: 1rem; font-size: 1.2rem; white-space: pre-wrap; }
-  #answer.emergency { color: #c00; font-weight: bold; }
-  #card h2 { font-size: 1.1rem; margin: 1rem 0 .25rem; }
-  #card ul { margin: 0; padding-left: 1.2rem; }
-  #card .help { border: 3px solid #c00; border-radius: .5rem; padding: .25rem 1rem .75rem; margin-top: 1rem; }
-  #card .help h2 { color: #c00; margin-top: .5rem; }
-  #sources { padding-left: 1.2rem; }
-  footer { max-width: 64rem; margin: 2rem auto; padding: 0 1rem; font-size: .85rem; color: #444; }
-</style>
+<link rel="preload" href="fonts/atkinson-hyperlegible-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/fraunces-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/medicines.css">
 </head>
 <body>
-<div id="emergency" role="alert">
-  In an emergency call
-  <strong>999</strong>
-</div>
-<header>
-  <h1>MedMate</h1>
-  <button id="text-size" type="button" aria-label="A+ text size">A+</button>
+<p id="emergency" role="alert">In an emergency call <a href="tel:999">999</a></p>
+<header class="topbar">
+  <h1 class="wordmark">MedMate</h1>
+  <div class="switch" role="group" aria-label="View">
+    <button type="button" id="tab-ask" aria-pressed="true">MedMate</button>
+    <button type="button" id="tab-meds" aria-pressed="false">My medicines</button>
+  </div>
+  <button id="text-size" type="button"><span aria-hidden="true">A+</span> Text size</button>
 </header>
-<div class="layout">
-<aside aria-labelledby="meds-title">
+<main id="view-ask" class="view ask" aria-labelledby="ask-title">
+  <h2 id="ask-title" class="visually-hidden">Ask about your medicines</h2>
+  <div class="counter">
+    <div class="hatch">
+      <canvas id="avatar" width="160" height="160" role="img" aria-label="MedMate avatar"></canvas>
+    </div>
+    <button id="mic" type="button" aria-pressed="false" aria-describedby="mic-hint">Hold to talk</button>
+    <p id="mic-hint" class="hint">Hold while you speak, then let go. With a keyboard, press Space to start and Space again to stop.</p>
+    <form id="form">
+      <label for="q">Or type your question</label>
+      <div class="ask-row">
+        <textarea id="q" rows="3" maxlength="500"></textarea>
+        <button id="send" type="submit">Send</button>
+      </div>
+    </form>
+    <p id="heard" class="visually-hidden" aria-live="polite"></p>
+  </div>
+  <article id="reply" class="label" data-kind="empty">
+    <p id="reply-title" class="label-title"></p>
+    <div id="answer" aria-live="polite">
+      <p>Hello. I can tell you about your medicines from NHS leaflets. Hold the blue button and speak, or type your question.</p>
+      <p class="examples-title">You could ask:</p>
+      <ul class="examples">
+        <li><button type="button" class="example">When should I take metformin?</button></li>
+        <li><button type="button" class="example">What are the side effects of amlodipine?</button></li>
+        <li><button type="button" class="example">Can I drink alcohol with metformin?</button></li>
+      </ul>
+    </div>
+    <div id="card"></div>
+    <div class="sources">
+      <p class="sources-title">From the NHS leaflets</p>
+      <ul id="sources"></ul>
+    </div>
+  </article>
+</main>
+<section id="view-meds" class="view mine" aria-labelledby="meds-title" hidden>
   <h2 id="meds-title">My medicines</h2>
   <form id="med-form">
     <label for="med-name">Medicine</label>
     <select id="med-name" required></select>
     <label for="med-dose">Dose</label>
     <input id="med-dose" maxlength="100" placeholder="e.g. 500 mg">
-    <fieldset>
+    <fieldset class="times">
       <legend>When</legend>
       <label><input type="checkbox" name="times" value="morning"> Morning</label>
       <label><input type="checkbox" name="times" value="midday"> Midday</label>
@@ -64,288 +74,19 @@
     </fieldset>
     <label for="med-note">Note</label>
     <input id="med-note" maxlength="100">
-    <p><button id="med-save" type="submit">Add medicine</button>
+    <p class="form-actions"><button id="med-save" type="submit">Add medicine</button>
     <button id="med-cancel" type="button" hidden>Cancel</button></p>
   </form>
-  <ul id="meds"></ul>
-  <div id="warnings"></div>
-  <section id="today" aria-labelledby="today-title">
-    <h2 id="today-title">Today</h2>
-    <div id="schedule"></div>
-  </section>
-</aside>
-<main>
-  <canvas id="avatar" width="160" height="160" role="img" aria-label="MedMate avatar"></canvas>
-  <form id="form">
-    <label for="q">Ask about your medicines</label>
-    <input id="q" autocomplete="off" maxlength="500">
-    <p><button id="send" type="submit">Send</button>
-    <button id="mic" type="button" aria-pressed="false">Hold to talk</button></p>
-  </form>
-  <p id="heard" aria-live="polite"></p>
-  <div id="answer" aria-live="polite"></div>
-  <div id="card"></div>
-  <ul id="sources"></ul>
-</main>
-</div>
-<footer>Information from the NHS website, licensed under the Open Government Licence v3.0. Not medical advice. In an emergency call 999.</footer>
-<script type="module">
-  import { Avatar } from "./avatar.js";
-  import { startRecording } from "./voice.js";
-  import { TIMES, buildSchedule, findInteractions, loadMedicines, saveMedicines } from "./logic.js";
-
-  const SIZES = [20, 24, 28];
-  const SIZE_KEY = "medmate.textSize";
-  const applySize = (px) => { document.documentElement.style.fontSize = `${px}px`; };
-  const saved = Number(localStorage.getItem(SIZE_KEY));
-  let size = SIZES.includes(saved) ? saved : SIZES[0];
-  applySize(size);
-  document.getElementById("text-size").addEventListener("click", () => {
-    size = SIZES[(SIZES.indexOf(size) + 1) % SIZES.length];
-    localStorage.setItem(SIZE_KEY, size);
-    applySize(size);
-  });
-
-  let medicines = loadMedicines(localStorage);
-  let interactions = [];
-  let editing = -1;  // index being edited, or -1 when adding
-  const medForm = document.getElementById("med-form");
-  const nameSelect = document.getElementById("med-name");
-  const dose = document.getElementById("med-dose");
-  const note = document.getElementById("med-note");
-  const timeBoxes = [...medForm.querySelectorAll('input[name="times"]')];
-  const saveButton = document.getElementById("med-save");
-  const cancelButton = document.getElementById("med-cancel");
-
-  const button = (text, label, onClick) => {
-    const b = Object.assign(document.createElement("button"), { type: "button", textContent: text });
-    b.setAttribute("aria-label", label);
-    b.addEventListener("click", onClick);
-    return b;
-  };
-  const resetForm = () => {
-    medForm.reset();
-    editing = -1;
-    saveButton.textContent = "Add medicine";
-    cancelButton.hidden = true;
-  };
-  const render = () => {
-    document.getElementById("warnings").replaceChildren(...findInteractions(medicines, interactions).map((i) => {
-      const p = document.createElement("p");
-      const link = Object.assign(document.createElement("a"), {
-        href: i.source.url, target: "_blank", rel: "noopener", textContent: `${i.source.medicine} > ${i.source.section}`,
-      });
-      const title = Object.assign(document.createElement("strong"), { textContent: `⚠ ${i.a} + ${i.b}` });
-      p.append(title, document.createElement("br"), i.warning, document.createElement("br"), "Source: ", link);
-      return p;
-    }));
-    document.getElementById("meds").replaceChildren(...medicines.map((m, i) => {
-      const li = document.createElement("li");
-      const when = (m.times ?? []).join(", ");
-      li.append(
-        [m.name, m.dose, when && `(${when})`, m.note && `: ${m.note}`].filter(Boolean).join(" "), " ",
-        button("Edit", `Edit ${m.name}`, () => {
-          editing = i;
-          nameSelect.value = m.name;
-          dose.value = m.dose ?? "";
-          note.value = m.note ?? "";
-          timeBoxes.forEach((b) => { b.checked = (m.times ?? []).includes(b.value); });
-          saveButton.textContent = "Save changes";
-          cancelButton.hidden = false;
-          nameSelect.focus();
-        }), " ",
-        button("Remove", `Remove ${m.name}`, () => {
-          medicines.splice(i, 1);
-          saveMedicines(localStorage, medicines);
-          resetForm();
-          render();
-        }),
-      );
-      return li;
-    }));
-    const schedule = buildSchedule(medicines);
-    const groups = TIMES.filter((t) => schedule[t].length).flatMap((t) => {
-      const h = Object.assign(document.createElement("h3"), { textContent: t[0].toUpperCase() + t.slice(1) });
-      const ul = document.createElement("ul");
-      ul.append(...schedule[t].map((e) => Object.assign(document.createElement("li"), { textContent: e })));
-      return [h, ul];
-    });
-    document.getElementById("schedule").replaceChildren(
-      ...(groups.length ? groups : [Object.assign(document.createElement("p"), { textContent: "No doses added yet." })]));
-  };
-  medForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const entry = {
-      name: nameSelect.value,
-      dose: dose.value.trim(),
-      times: timeBoxes.filter((b) => b.checked).map((b) => b.value),
-      note: note.value.trim(),
-    };
-    if (editing >= 0) medicines[editing] = entry; else medicines.push(entry);
-    saveMedicines(localStorage, medicines);
-    resetForm();
-    render();
-  });
-  cancelButton.addEventListener("click", resetForm);
-  render();
-
-  fetch("/api/meta").then((r) => (r.ok ? r.json() : Promise.reject(r.status))).then((meta) => {
-    nameSelect.replaceChildren(...meta.medicines.map((n) => new Option(n, n)));
-    return meta;
-  }).then((meta) => {
-    document.querySelector("footer").textContent = meta.attribution;
-    interactions = meta.interactions;
-    render();
-  }, () => {
-    // Only a failed fetch or medicines list lands here; errors after the dropdown fills must not blank it.
-    nameSelect.replaceChildren(new Option("Couldn't load medicines. Please reload.", ""));
-  });
-
-  const answer = document.getElementById("answer");
-  const sources = document.getElementById("sources");
-  const card = document.getElementById("card");
-  const avatar = new Avatar(document.getElementById("avatar"));
-  // Speaks the reply; if every TTS engine fails the caption is already on screen, so just stay silent.
-  const speak = async (text) => {
-    try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (res.ok) await avatar.speak(await res.arrayBuffer());
-    } catch {}
-    avatar.setState("idle");
-  };
-  const heard = document.getElementById("heard");
-  const input = document.getElementById("q");
-  const send = document.getElementById("send");
-  let busy = false;  // one request at a time: a second Send or recording is ignored until this one ends
-  const exclusive = async (fn) => {
-    if (busy) return;
-    busy = true;
-    send.disabled = true;
-    try { await fn(); } finally { busy = false; send.disabled = false; }
-  };
-  document.getElementById("form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    exclusive(() => { heard.textContent = ""; return askQuestion(input.value); });
-  });
-
-  const mic = document.getElementById("mic");
-  let stopRecording = null;
-  let starting = false;   // waiting for getUserMedia
-  let released = false;   // the button came up while starting
-  const startMic = async () => {
-    avatar.stop();
-    if (busy || stopRecording || starting) return;
-    starting = true;
-    released = false;
-    try {
-      stopRecording = await startRecording();
-    } catch {
-      answer.textContent = "Microphone not available. Please type your question.";
-      answer.className = "";
-      input.focus();
-      return;
-    } finally {
-      starting = false;
-    }
-    mic.setAttribute("aria-pressed", "true");
-    mic.textContent = "Listening…";
-    if (released) stopMic();  // let go before the microphone opened
-  };
-  const stopMic = () => {
-    const stop = stopRecording;
-    if (!stop) { released = true; return; }
-    stopRecording = null;
-    mic.setAttribute("aria-pressed", "false");
-    mic.textContent = "Hold to talk";
-    exclusive(async () => {
-      avatar.setState("thinking");
-      const body = new FormData();
-      body.append("audio", await stop(), "question.webm");
-      const res = await fetch("/api/transcribe", { method: "POST", body }).catch(() => null);
-      if (!res?.ok) {
-        avatar.setState("idle");
-        answer.textContent = "Sorry, I couldn't hear that. Please type your question.";
-        answer.className = "";
-        input.focus();
-        return;
-      }
-      const { text } = await res.json();
-      // A blank question gets the "didn't catch that" reply from /api/chat.
-      if (text.trim()) {
-        heard.textContent = `You asked: ${text}`;
-        await speak(`You asked about ${text}.`);
-      } else {
-        heard.textContent = "";
-      }
-      await askQuestion(text);
-    });
-  };
-  mic.addEventListener("pointerdown", (e) => { e.preventDefault(); startMic(); });
-  for (const ev of ["pointerup", "pointercancel"]) mic.addEventListener(ev, stopMic);
-  // Keyboard users press Space to start and again to stop.
-  mic.addEventListener("keydown", (e) => {
-    if (e.key !== " " || e.repeat) return;
-    e.preventDefault();
-    if (stopRecording) stopMic(); else startMic();
-  });
-  mic.addEventListener("keyup", (e) => { if (e.key === " ") e.preventDefault(); });
-
-  async function askQuestion(question) {
-    avatar.stop();
-    avatar.setState("thinking");
-    let data;
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, medicines }),
-      });
-      if (!res.ok) throw new Error(res.status);
-      data = await res.json();
-    } catch {
-      avatar.setState("idle");
-      answer.textContent = "Sorry, something went wrong. Please try again.";
-      answer.className = "";
-      sources.replaceChildren();
-      card.replaceChildren();
-      return;
-    }
-    answer.textContent = data.answer;
-    answer.className = data.kind;
-    // A section with no text shows no heading.
-    const section = (title, items, cls = "") => {
-      items = [].concat(items).filter((t) => t && t.trim());
-      if (!items.length) return [];
-      const el = document.createElement("section");
-      el.className = cls;
-      const h = document.createElement("h2");
-      h.textContent = title;
-      const ul = document.createElement("ul");
-      ul.append(...items.map((t) => Object.assign(document.createElement("li"), { textContent: t })));
-      el.append(h, ul);
-      return [el];
-    };
-    card.replaceChildren(...(data.card ? [
-      ...section("Summary", data.card.summary),
-      ...section("What to do", data.card.what_to_do),
-      ...section("Get help if", data.card.get_help_if, "help"),
-    ] : []));
-    sources.replaceChildren(...data.sources.map((s) => {
-      const li = document.createElement("li");
-      const a = document.createElement("a");
-      a.href = s.url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      a.textContent = `${s.medicine} > ${s.section}`;
-      li.append(a);
-      return li;
-    }));
-    await speak(data.answer);
-  }
-</script>
+  <div class="mine-list">
+    <ul id="meds"></ul>
+    <div id="warnings"></div>
+    <section id="today" aria-labelledby="today-title">
+      <h2 id="today-title">Today</h2>
+      <div id="schedule"></div>
+    </section>
+  </div>
+  <footer>Information from the NHS website, licensed under the Open Government Licence v3.0. Not medical advice. In an emergency call 999.</footer>
+</section>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
