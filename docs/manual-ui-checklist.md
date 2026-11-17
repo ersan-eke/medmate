@@ -23,6 +23,7 @@ Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
 - [ ] Ask "Now my chest feels tight.": the 999 message is spoken at once
 - [ ] Make `kokoro_engine()` fail (drop it from `engines` in `default_app`): the answer is still spoken by macOS `say` and the mouth still moves
 - [ ] Make every engine fail (empty `engines`): the caption shows and nothing breaks
+- [ ] Ask about a decimal dose (Warfarin 2.5mg): it is spoken as "two point five milligrams", with no pause and no "em-gee"
 - [ ] Send a new question while the avatar speaks: the audio stops
 
 ## Asking by voice

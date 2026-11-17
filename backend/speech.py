@@ -1,5 +1,6 @@
 import io
 import logging
+import re
 import subprocess
 import tempfile
 from typing import Callable
@@ -42,7 +43,13 @@ def say_engine(rate: int = 165) -> Engine:
     return speak
 
 
+UNITS = {"mg": "milligrams", "mcg": "micrograms", "µg": "micrograms", "ml": "millilitres", "g": "grams"}
+# Kokoro reads "2.5mg" as "two . five em-gee"; a space and a spelled-out unit make it "two point five milligrams".
+DOSE = re.compile(r"(\d)\s*(mg|mcg|µg|ml|g)\b", re.IGNORECASE)
+
+
 def synthesize(text: str, engines: list[Engine]) -> bytes:
+    text = DOSE.sub(lambda m: f"{m[1]} {UNITS[m[2].lower()]}", text)
     for engine in engines:
         try:
             return engine(text)

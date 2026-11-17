@@ -134,3 +134,7 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] The off-topic refusal is tested only by unit tests: the gate refuses all 6 off-topic eval questions before any model sees them (the aspirin poem scores 0.698).
 - [ ] Grade the `faithfulness` column for a sample of the new 3B answers (the #13 to-do above still applies).
 - [ ] Tick the acceptance boxes on issue #42 and close it.
+
+## Spoken doses (2.5mg read as "two … five em-gee")
+
+- [ ] Listen once in Chrome: the new "decimal dose" step in the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md`.

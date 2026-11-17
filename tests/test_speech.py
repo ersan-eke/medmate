@@ -16,6 +16,12 @@ def test_synthesize_falls_back():
     assert synthesize("hi", [failing, lambda t: b"RIFF..."]) == b"RIFF..."
 
 
+def test_synthesize_speaks_doses_in_words():
+    heard = []
+    synthesize("Take 2.5mg, then 10 mL or 500 mcg. Agree.", [lambda t: heard.append(t) or b"RIFF"])
+    assert heard == ["Take 2.5 milligrams, then 10 millilitres or 500 micrograms. Agree."]
+
+
 def test_synthesize_all_fail_raises():
     with pytest.raises(RuntimeError):
         synthesize("hi", [failing, failing])
