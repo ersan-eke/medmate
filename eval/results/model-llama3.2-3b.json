@@ -5,7 +5,7 @@
  "refusal_rate": 1.0,
  "answer_rate": 0.8888888888888888,
  "citation_validity": 1.0,
- "p50_s": 9.23,
- "p95_s": 12.436,
- "tokens_per_s": 42.10465358199399
+ "p50_s": 9.65,
+ "p95_s": 12.582,
+ "tokens_per_s": 35.42640229163295
 }
