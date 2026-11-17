@@ -98,8 +98,14 @@ def _check_unique(chunks: list[Chunk]) -> None:
 
 
 def build_index(leaflet_dir: Path, embed: Embed) -> Index:
-    chunks = [c for path in sorted(leaflet_dir.glob("*.md")) for c in chunk_leaflet(path.read_text(encoding="utf-8"))]
-    _check_unique(chunks)
+    chunks: list[Chunk] = []
+    owner: dict[str, Path] = {}
+    for path in sorted(leaflet_dir.glob("*.md")):
+        for c in chunk_leaflet(path.read_text(encoding="utf-8")):
+            if c.id in owner:
+                raise ValueError(f"duplicate chunk id '{c.id}': {owner[c.id]} and {path} share a heading")
+            owner[c.id] = path
+            chunks.append(c)
     return Index(chunks, embed([c.text for c in chunks], "document").astype(np.float32))
 
 

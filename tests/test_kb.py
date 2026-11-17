@@ -134,5 +134,5 @@ def test_header_closing_line_at_end_of_file_parses():
 def test_same_chunk_id_in_two_leaflets_raises(tmp_path, fake_embed):
     for name in ("a.md", "b.md"):
         (tmp_path / name).write_text(f"{HEADER}\n## Dose\nTake one.\n", encoding="utf-8")
-    with pytest.raises(ValueError, match="aspirin#dose"):
+    with pytest.raises(ValueError, match=r"aspirin#dose.*a\.md.*b\.md"):
         build_index(tmp_path, fake_embed)
