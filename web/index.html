@@ -130,10 +130,15 @@
     cancelButton.hidden = true;
   };
   const render = () => {
-    document.getElementById("warnings").replaceChildren(...findInteractions(medicines, interactions).map((i) =>
-      Object.assign(document.createElement("p"), {
-        textContent: `⚠ ${i.a} + ${i.b}: ${i.warning} Source: ${i.source.medicine} > ${i.source.section}`,
-      })));
+    document.getElementById("warnings").replaceChildren(...findInteractions(medicines, interactions).map((i) => {
+      const p = document.createElement("p");
+      const link = Object.assign(document.createElement("a"), {
+        href: i.source.url, textContent: `${i.source.medicine} > ${i.source.section}`,
+      });
+      const title = Object.assign(document.createElement("strong"), { textContent: `⚠ ${i.a} + ${i.b}` });
+      p.append(title, document.createElement("br"), i.warning, document.createElement("br"), "Source: ", link);
+      return p;
+    }));
     document.getElementById("meds").replaceChildren(...medicines.map((m, i) => {
       const li = document.createElement("li");
       const when = (m.times ?? []).join(", ");
