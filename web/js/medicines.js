@@ -14,8 +14,8 @@ export function initMedicines() {
   const saveButton = document.getElementById("med-save");
   const cancelButton = document.getElementById("med-cancel");
 
-  const button = (text, label, onClick) => {
-    const b = el("button", { type: "button", textContent: text });
+  const button = (text, label, onClick, className = "btn-stone") => {
+    const b = el("button", { type: "button", className, textContent: text });
     b.setAttribute("aria-label", label);
     b.addEventListener("click", onClick);
     return b;
@@ -36,7 +36,7 @@ export function initMedicines() {
       medicines = reinsertAt(medicines, removed, index);
       saveMedicines(localStorage, medicines);
       render();
-    }));
+    }, "btn-stone undo-btn"));
     undoTimer = setTimeout(hideUndo, 6000);
   };
   document.getElementById("today-date").textContent = todayLabel(new Date());
@@ -49,10 +49,18 @@ export function initMedicines() {
     }));
     document.getElementById("meds").replaceChildren(...(medicines.length ? medicines.map((m, i) => {
       const li = el("li");
-      const when = (m.times ?? []).join(", ");
       const details = el("span", { className: "med-details" });
-      details.append(el("strong", { textContent: m.name }), " ",
-        [m.dose, when && `(${when})`, m.note && `: ${m.note}`].filter(Boolean).join(" "));
+      const title = el("span", { className: "med-title" });
+      title.append(el("strong", { textContent: m.name }));
+      if (m.times?.length) title.append(` (${m.times.join(", ")})`);
+      if (m.dose) title.append(el("span", { className: "dose", textContent: m.dose }));
+      details.append(title);
+      if (m.times?.length) {
+        const chips = el("span", { className: "chips" });
+        chips.append(...m.times.map((t) => el("span", { className: "chip", textContent: t[0].toUpperCase() + t.slice(1) })));
+        details.append(chips);
+      }
+      if (m.note) details.append(el("span", { className: "note", textContent: `Note: ${m.note}` }));
       const actions = el("span", { className: "med-actions" });
       actions.append(
         button("Edit", `Edit ${m.name}`, () => {
@@ -76,18 +84,18 @@ export function initMedicines() {
       li.append(details, actions);
       return li;
     }) : [el("li", { className: "empty", textContent: "No medicines yet. Add yours here so I can answer about them." })]));
-    // One pill-box compartment per time of day that has a dose.
+    // Four slot cards always show; each takes its icon from the form's matching checkbox.
     const schedule = buildSchedule(medicines);
-    const slots = TIMES.filter((t) => schedule[t].length).map((t) => {
+    document.getElementById("schedule").replaceChildren(...TIMES.map((t) => {
       const slot = el("div", { className: "slot" });
       slot.dataset.time = t;
-      const ul = el("ul");
-      ul.append(...schedule[t].map((e) => el("li", { textContent: e })));
-      slot.append(el("h3", { textContent: t[0].toUpperCase() + t.slice(1) }), ul);
+      const head = el("h4");
+      head.append(medForm.querySelector(`label[data-time="${t}"] .when-icon`).cloneNode(true), t[0].toUpperCase() + t.slice(1));
+      const items = schedule[t].length ? el("ul") : el("p", { className: "empty", textContent: "No medicines" });
+      items.append(...schedule[t].map((e) => el("li", { textContent: e })));
+      slot.append(head, items);
       return slot;
-    });
-    document.getElementById("schedule").replaceChildren(
-      ...(slots.length ? slots : [el("p", { className: "empty", textContent: "No doses added yet." })]));
+    }));
   };
   medForm.addEventListener("submit", (e) => {
     e.preventDefault();

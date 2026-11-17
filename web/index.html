@@ -81,35 +81,40 @@
 </main>
 <section id="view-meds" class="view mine" aria-labelledby="meds-title" hidden>
   <div class="mine-head">
-    <h2 id="meds-title">My medicines</h2>
+    <div>
+      <h2 id="meds-title">My medicines</h2>
+      <p class="mine-sub">Your daily medicine list and schedule</p>
+    </div>
     <span id="med-count" class="badge"></span>
   </div>
-  <form id="med-form">
+  <section id="today" aria-labelledby="today-title">
+    <div class="today-head">
+      <h3 id="today-title">Today</h3>
+      <span id="today-date"></span>
+    </div>
+    <div id="schedule"></div>
+  </section>
+  <div id="undo" role="status"></div>
+  <ul id="meds"></ul>
+  <div id="warnings"></div>
+  <form id="med-form" class="card">
+    <h3>Add a medicine</h3>
     <label for="med-name">Medicine</label>
     <select id="med-name" required></select>
     <label for="med-dose">Dose</label>
     <input id="med-dose" maxlength="100" placeholder="e.g. 500 mg">
     <fieldset class="times">
       <legend>When</legend>
-      <label><input type="checkbox" name="times" value="morning"> Morning</label>
-      <label><input type="checkbox" name="times" value="midday"> Midday</label>
-      <label><input type="checkbox" name="times" value="evening"> Evening</label>
-      <label><input type="checkbox" name="times" value="bedtime"> Bedtime</label>
+      <label data-time="morning"><input type="checkbox" name="times" value="morning"><span class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span><svg class="when-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>Morning</label>
+      <label data-time="midday"><input type="checkbox" name="times" value="midday"><span class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span><svg class="when-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>Midday</label>
+      <label data-time="evening"><input type="checkbox" name="times" value="evening"><span class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span><svg class="when-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>Evening</label>
+      <label data-time="bedtime"><input type="checkbox" name="times" value="bedtime"><span class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span><svg class="when-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>Bedtime</label>
     </fieldset>
     <label for="med-note">Note</label>
-    <input id="med-note" maxlength="100">
-    <p class="form-actions"><button id="med-save" type="submit">Add medicine</button>
-    <button id="med-cancel" type="button" hidden>Cancel</button></p>
+    <input id="med-note" maxlength="100" placeholder="e.g. Take with breakfast">
+    <p class="form-actions"><button id="med-save" class="btn-blue" type="submit">Add medicine</button>
+    <button id="med-cancel" class="btn-stone" type="button" hidden>Cancel</button></p>
   </form>
-  <div class="mine-list">
-    <div id="undo" role="status"></div>
-    <ul id="meds"></ul>
-    <div id="warnings"></div>
-    <section id="today" aria-labelledby="today-title">
-      <h2 id="today-title">Today <span id="today-date"></span></h2>
-      <div id="schedule"></div>
-    </section>
-  </div>
   <footer>Information from the NHS website, licensed under the Open Government Licence v3.0. Not medical advice. In an emergency call 999.</footer>
 </section>
 <script type="module" src="js/main.js"></script>
