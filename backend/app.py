@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from typing import Callable
 from pathlib import Path
 
@@ -37,6 +38,15 @@ def create_app(index: Index, embed: Embed, generate: Generate, interactions: lis
         for i in interactions
     ]
 
+    # A leaflet's first section is its intro ("What X is for" or "About X"); chunk text is "Medicine — Section\nbody".
+    intros = {}
+    for c in index.chunks:
+        intros.setdefault(c.medicine, c)
+    leaflets = [
+        {"medicine": m, "url": c.source_url, "description": re.split(r"(?<=[.!?])\s", c.text.split("\n", 1)[1], 1)[0]}
+        for m, c in sorted(intros.items())
+    ]
+
     @app.post("/api/chat")
     def chat(req: ChatRequest) -> ChatResponse:
         return answer_question(req, retriever, generate, interactions)
@@ -61,7 +71,7 @@ def create_app(index: Index, embed: Embed, generate: Generate, interactions: lis
     @app.get("/api/meta")
     def meta() -> dict:
         return {"medicines": sorted(set(retriever.medicines.values())), "interactions": warnings,
-                "attribution": messages.ATTRIBUTION}
+                "leaflets": leaflets, "attribution": messages.ATTRIBUTION}
 
     # Mounted last so it never shadows the API routes.
     app.mount("/", StaticFiles(directory=ROOT / "web", html=True))

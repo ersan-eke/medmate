@@ -21,8 +21,20 @@
     <button type="button" id="tab-ask" aria-pressed="true">MedMate</button>
     <button type="button" id="tab-meds" aria-pressed="false">My medicines</button>
   </div>
-  <button id="text-size" type="button"><span aria-hidden="true">A+</span> Text size</button>
+  <button id="menu-btn" type="button" aria-label="More" aria-haspopup="true" aria-expanded="false" aria-controls="tools"><span aria-hidden="true">⋯</span></button>
+  <div id="tools" class="tools">
+    <button id="leaflets-btn" type="button" aria-haspopup="dialog">Your NHS leaflets</button>
+    <button id="text-size" type="button"><span class="a-plus" aria-hidden="true">A+</span> Text size
+      <span class="size-dots" aria-hidden="true"><i></i><i></i><i></i></span></button>
+  </div>
 </header>
+<dialog id="leaflets" aria-labelledby="leaflets-title">
+  <div class="dialog-head">
+    <h2 id="leaflets-title">Your NHS leaflets</h2>
+    <button id="leaflets-close" type="button">Close</button>
+  </div>
+  <ul id="leaflet-list"><li>The leaflet list is not available right now.</li></ul>
+</dialog>
 <main id="view-ask" class="view ask" aria-labelledby="ask-title">
   <h2 id="ask-title" class="visually-hidden">Ask about your medicines</h2>
   <div class="counter">

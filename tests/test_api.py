@@ -391,6 +391,30 @@ def test_meta(client):
     }]
 
 
+def test_meta_leaflets_list_every_leaflet_with_its_first_sentence(spies, triage):
+    from pathlib import Path
+    from backend.kb import build_index
+    from tests.conftest import fake_embed_fn
+
+    index = build_index(Path(__file__).parent.parent / "data" / "leaflets", fake_embed_fn)
+    app = create_app(index, fake_embed_fn, lambda m, s: None, [])
+    body = TestClient(app).get("/api/meta").json()
+    leaflets = body["leaflets"]
+    assert len(leaflets) == 12
+    assert [l["medicine"] for l in leaflets] == sorted(l["medicine"] for l in leaflets)
+    for l in leaflets:
+        assert l["medicine"] and l["url"].startswith("https://www.nhs.uk/medicines/")
+        assert l["description"].endswith(".") and l["description"].count(". ") == 0 and "\n" not in l["description"]
+    metformin = next(l for l in leaflets if l["medicine"] == "Metformin")
+    assert metformin["description"].startswith("Metformin is a medicine that can be used to treat type 2 diabetes")
+    assert body["medicines"] == sorted(l["medicine"] for l in leaflets) and body["attribution"] == ATTRIBUTION
+
+
+def test_meta_leaflets_in_the_small_index(client):
+    assert [(l["medicine"], l["url"]) for l in client.get("/api/meta").json()["leaflets"]] == [
+        ("Metformin", "https://www.nhs.uk/medicines/metformin/"), ("Warfarin", "https://www.nhs.uk/medicines/warfarin/")]
+
+
 def test_medicine_list_capped_at_20():
     names = {f"med{i}": f"Med{i}" for i in range(30)}
     kept = known_medicines([MedicineEntry(name=f"MED{i}") for i in range(30)], names)
