@@ -7,8 +7,7 @@ sources/
 eval/results/*.wav
 .pytest_cache/
 medmate.zip
-docs/agents/
-docs/superpowers/
+docs/superpowers/plans/
 docs/human-todo.md
 content/
 .ruff_cache/
