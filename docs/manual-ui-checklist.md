@@ -79,3 +79,19 @@ Not yet run in a browser. Run `uv run uvicorn --factory backend.app:default_app`
 - [ ] An answer shows its NHS links and "In your medicines" (Metformin on the list) or "Not in your medicines"; a reply without sources shows no tag
 - [ ] Reload keeps the thread; a new tab starts empty; Reset chat empties it and brings the suggestions back
 - [ ] In DevTools set `sessionStorage["medmate.thread"]` to `{bad` and reload: the page loads with an empty thread
+
+## Redesign hardening (#54)
+
+Run in Chrome at 1280, 390×844 and 360×640, at all three text sizes. Items needing real hardware are marked.
+
+- [ ] 360×640 at 28 px: the top bar is one row, the 999 line is one line, the text box and newest message are visible, nothing scrolls sideways
+- [ ] On a phone (or DevTools device mode with the keyboard open): focusing the text box keeps it and the newest message above the keyboard
+- [ ] The switch is the only way to change views; the page never scrolls, the thread and My medicines scroll inside themselves
+- [ ] Wide: face column beside the chat; narrow: small face at the chat's top left
+- [ ] Both mics (big talk button, small mic) and Space tap to start and stop, with the same listening state
+- [ ] Read aloud on an earlier answer replays it and stops any speech already playing
+- [ ] Reset chat, the leaflets list (links, Escape, outside click, focus returns), the ⋯ menu, and add/edit/remove with Undo
+- [ ] DevTools console has no errors and the Network tab shows no request to any outside host
+- [ ] Real microphone: say a question, check it appears as your bubble (needs hardware)
+- [ ] Real speech audio: the face's mouth moves with MedMate's voice (needs hardware)
+- [ ] Screen reader: the switch announces its options and current one; replies and the listening state are announced (needs a screen reader)

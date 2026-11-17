@@ -121,6 +121,10 @@ export function initChat(meds, isShown) {
       e.target.form.requestSubmit();
     }
   });
+  // On a phone the keyboard shrinks the thread after focus; keep the newest message above it.
+  const toBottom = () => { thread.scrollTop = thread.scrollHeight; };
+  input.addEventListener("focus", toBottom);
+  window.addEventListener("resize", () => { if (document.activeElement === input) toBottom(); });
   // The example questions in the empty state ask themselves.
   empty.addEventListener("click", (e) => {
     const example = e.target.closest(".example");

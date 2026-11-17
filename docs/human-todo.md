@@ -157,3 +157,8 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Limitations slide (from #46): use the `per1` and `nea3` examples from `CHALLENGES.md`.
 - [ ] Limitations slide (from #13): p95 latency is 11.9 s against the plan's 8 s; say so.
 - [ ] Limitations slide (from #5): the number check can reject a correct answer that says "one of these" or "ten minutes", which then gets the pharmacist fallback.
+
+## #54 Phone and large-text hardening
+
+- [ ] The Claude in Chrome pass was not run (extension not connected). Run the "Redesign hardening (#54)" section of `docs/manual-ui-checklist.md`, including the real microphone, lip movement and screen reader steps, then tick the acceptance boxes on #54.
+- [ ] Confirm deleting `web/medmate_prototype.html` (it is kept until you say so).
