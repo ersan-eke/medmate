@@ -183,7 +183,6 @@ medmate/
 │   └── decisions.md      what each change did
 ├── scripts/            fetch_models, ingest, preflight, package.sh
 ├── tests/              pytest suite
-├── docs/               manual UI checklist
 ├── GLOSSARY.md         project terms
 ├── CHALLENGES.md       problems met and how they were fixed
 └── pyproject.toml      Python dependencies (with uv.lock)
