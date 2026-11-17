@@ -53,10 +53,10 @@
 
 | Name | Student ID |
 | :--- | :--- |
-| **Ersan Eke** | `26012487X` |
 | **Karin Ishikawa** | `23031369D` |
 | **Sela De Jong** | `26012648X` |
 | **Katina Casimaty** | `26012457X` |
+| **Ersan Eke** | `26012487X` |
 
 ---
 
