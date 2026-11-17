@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import messages
-from .kb import Embed, Index, Interaction, load_index, load_interactions, ollama_embed
+from .kb import Embed, Index, Interaction, load_index, load_interactions, ollama_embed, validate_interactions
 from .llm import ANSWER_SCHEMA, SYSTEM_PROMPT, WARMUP_TIMEOUT_SECONDS, Generate, ollama_generate
 from .pipeline import ChatRequest, ChatResponse, Source, answer_question
 from .retrieval import Retriever
@@ -29,6 +29,7 @@ class TtsRequest(BaseModel):
 
 def create_app(index: Index, embed: Embed, generate: Generate, interactions: list[Interaction],
                engines: list[Engine] = [], transcribe: Callable[[bytes], str] | None = None) -> FastAPI:
+    validate_interactions(interactions, index)
     app = FastAPI()
     retriever = Retriever(index, embed)
     warnings = [

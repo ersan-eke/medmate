@@ -465,3 +465,13 @@ def test_default_app_stops_on_a_bad_index_before_warming(startup, monkeypatch):
     with pytest.raises(ValueError, match="empty"):
         app_module.default_app()
     assert startup == []
+
+
+@pytest.mark.parametrize("rows, message", [
+    ([Interaction("Warfarin", "Metformin", "w", "warfarin#nope")], "warfarin#nope"),
+    ([Interaction("Warfarin", "Metformin", "w", "warfarin#side-effects")], "does not name"),
+    (INTERACTIONS + [Interaction("Metformin", "Warfarin", "w", "warfarin#other-medicines")], "more than once"),
+])
+def test_bad_interaction_row_stops_startup(tiny_index, fake_embed, rows, message):
+    with pytest.raises(ValueError, match=message):
+        create_app(tiny_index, fake_embed, lambda m, s: "", rows)

@@ -16,4 +16,4 @@ If you miss a dose, take it as soon as you remember on the same day. Do not take
 The main risk with warfarin is bleeding. Tell your doctor if you have nosebleeds that do not stop, bleeding gums, blood in your urine or very heavy periods.
 
 ## Other medicines
-Many medicines change how warfarin works. Painkillers such as ibuprofen and aspirin can raise the risk of bleeding. Check with a pharmacist before you buy any medicine or herbal remedy.
+Many medicines change how warfarin works. Painkillers such as ibuprofen and aspirin, and metformin, can raise the risk of bleeding. Check with a pharmacist before you buy any medicine or herbal remedy.
