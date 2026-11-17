@@ -5,17 +5,17 @@ export function initLeaflets() {
   const dialog = document.getElementById("leaflets");
   const list = document.getElementById("leaflet-list");
   document.getElementById("leaflets-btn").addEventListener("click", () => dialog.showModal());
-  document.getElementById("leaflets-close").addEventListener("click", () => dialog.close());
+  for (const id of ["leaflets-close", "leaflets-done"]) document.getElementById(id).addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
   return {
     show(leaflets) {
+      document.getElementById("leaflets-title").textContent = `Your NHS leaflets (${leaflets.length})`;
+      document.getElementById("leaflet-names").textContent = `NHS leaflets: ${leaflets.map((l) => l.medicine).join(", ")}`;
       list.replaceChildren(...leaflets.map((l) => {
         const li = el("li");
-        li.append(
-          el("h3", { textContent: l.medicine }),
-          el("p", { textContent: l.description }),
-          el("a", { href: l.url, target: "_blank", rel: "noopener", textContent: `Read the ${l.medicine} leaflet on nhs.uk` }),
-        );
+        const text = el("div");
+        text.append(el("h3", { textContent: l.medicine }), el("p", { textContent: l.description }));
+        li.append(text, el("a", { className: "btn-blue", href: l.url, target: "_blank", rel: "noopener", textContent: "Open leaflet ↗" }));
         return li;
       }));
     },

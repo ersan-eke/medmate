@@ -35,9 +35,14 @@
 <dialog id="leaflets" aria-labelledby="leaflets-title">
   <div class="dialog-head">
     <h2 id="leaflets-title">Your NHS leaflets</h2>
-    <button id="leaflets-close" type="button">Close</button>
+    <button id="leaflets-close" class="btn-stone" type="button">Close
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
   <ul id="leaflet-list"><li>The leaflet list is not available right now.</li></ul>
+  <div class="dialog-foot">
+    <span id="leaflet-names"></span>
+    <button id="leaflets-done" class="btn-blue" type="button">Done</button>
+  </div>
 </dialog>
 <main id="view-ask" class="view ask" aria-labelledby="ask-title">
   <h2 id="ask-title" class="visually-hidden">Ask about your medicines</h2>
