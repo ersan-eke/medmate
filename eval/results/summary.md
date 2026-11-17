@@ -10,7 +10,7 @@ Held-out gate accuracy at 0.72: 0.80 (10 reworded questions never used for tunin
 | llama3.2:3b | 1.00 | 0.00 | 1.00 | 0.89 | 1.00 | 9.7 | 12.6 | 35.4 |
 | qwen2.5:7b | 1.00 | 0.02 | 0.86 | 0.85 | 0.92 | 19.9 | 24.7 | 17.8 |
 
-Faithful answers (graded 3 of 3 by hand, blank until graded; not part of the model choice): llama3.1-8b nan (0 graded), llama3.2-3b nan (0 graded), qwen2.5-7b nan (0 graded)
+Faithful answers (graded 3 of 3 by hand, blank until graded; not part of the model choice): llama3.1-8b nan (0 graded), llama3.2-3b 0.94 (16 graded), qwen2.5-7b nan (0 graded)
 
 Model choice: red-flag recall and refusal must be 1.00 and p95 under 15 s; then the highest answer rate; then the lowest p95.
 Off-topic questions are all refused by the similarity gate before a model sees them, so the refusal column tests the model only on not-covered questions that pass the gate.
