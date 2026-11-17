@@ -175,6 +175,14 @@ def test_prompt_carries_passages_and_medicines(client, spies, monkeypatch):
     assert f"[{METFORMIN}]" in user and "Warfarin" in user
 
 
+def test_fifty_entry_list_reaches_prompt_as_known_medicines_only(client, spies, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    entries = [{"name": "metformin"}, {"name": "Unknownol"}] + [{"name": f"Unknownol{i}"} for i in range(48)]
+    assert chat(client, "Should I take metformin before or after dinner?", entries).status_code == 200
+    user = spies[1].messages[-1]["content"]
+    assert "The user's medicines: Metformin\n" in user and "Unknownol" not in user
+
+
 def test_invalid_llm_output_falls_back(client, spies, monkeypatch):
     monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
     spies[1].fn = lambda m, s: "not json"
@@ -220,7 +228,7 @@ def test_page_has_banner_and_footer(client):
     assert 'role="alert"' in r.text
     assert "999" in r.text
     assert ATTRIBUTION in r.text
-    assert "innerHTML" not in r.text
+    assert "innerHTML" not in r.text + client.get("/app.js").text
 
 
 def test_retry_is_told_what_was_wrong(client, spies, monkeypatch):

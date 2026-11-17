@@ -6,50 +6,50 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 
 ## #5 Honest refusals and safe fallbacks (commit `7121443`)
 
-- [ ] Decide: the ticket says the "card says ask your pharmacist" for an unrelated question. Today the reply text says it and the card is empty, and the tests assert there is no card. Keep that, or ask for a real card (plan Task 5 step 4 describes one: "This isn't covered in my leaflets." / "Ask your pharmacist or GP.").
+- [x] Decided 2026-11-17: no card, keep the empty card and the reply text. Was: the ticket says the "card says ask your pharmacist" for an unrelated question. Today the reply text says it and the card is empty, and the tests assert there is no card. Keep that, or ask for a real card (plan Task 5 step 4 describes one: "This isn't covered in my leaflets." / "Ask your pharmacist or GP.").
 - [ ] Decide: the number check counts word numbers, so "one of these" or "ten minutes" can get a correct answer rejected and send it to the fallback. "1,000" only passes because the leaflet splits the same way. Accept, or ask for a fix.
 - [ ] Tick the acceptance boxes on issue #5 and close it.
 
 ## #7 My medicines list, today's schedule and personal answers (commit `5bc4c50`)
 
-- [ ] Run the "My medicines and Today" section of `docs/manual-ui-checklist.md` in Chrome with `uv run uvicorn --factory backend.app:default_app`: persistence after reload, edit/remove, corrupt `localStorage` reset, keyboard-only use, A+ 20 → 24 → 28 px remembered.
+- [x] Run the "My medicines and Today" section of `docs/manual-ui-checklist.md` in Chrome with `uv run uvicorn --factory backend.app:default_app`: persistence after reload, edit/remove, corrupt `localStorage` reset, keyboard-only use, A+ 20 → 24 → 28 px remembered.
 - [ ] Blocked until the leaflet content ticket lands: the manual "Amlodipine 5 mg morning" step needs an Amlodipine leaflet (the real KB has only Metformin and Warfarin).
-- [ ] Decide: the page keeps CSS and script inline in `web/index.html` instead of the plan's `styles.css` / `app.js`. The voice ticket (plan Task 10) expects `app.js` to export `renderResponse` and `askQuestion`.
-- [ ] Fix the plan / preflight docs: `node --test web/` fails on Node 24; the working command is `node --test web/logic.test.js`.
-- [ ] Tick the acceptance boxes on issue #7 and close it.
+- [x] Decide: the page keeps CSS and script inline in `web/index.html` instead of the plan's `styles.css` / `app.js`. The voice ticket (plan Task 10) expects `app.js` to export `renderResponse` and `askQuestion`.
+- [x] Fix the plan / preflight docs: `node --test web/` fails on Node 24; the working command is `node --test web/logic.test.js`.
+- [x] Tick the acceptance boxes on issue #7 and close it.
 
 ## Earlier tickets
 
-- [ ] The card checks at the top of `docs/manual-ui-checklist.md` (from commit `ba829a6`) are still unticked.
+- [x] The card checks at the top of `docs/manual-ui-checklist.md` (from commit `ba829a6`) are still unticked.
 
 ## #9 Spoken answers with an audio-driven avatar
 
-- [ ] Run the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md` in Chrome: mouth follows the audio, Kokoro removed → `say` still speaks, all engines removed → captions only.
-- [ ] Check "press the mic while the avatar speaks stops the audio": the mic now exists (#10), so it is covered by the "Asking by voice" checklist.
-- [ ] Decide: the portrait art (`web/avatar/*.png`) is not made. The drawn face is the only face; image frames still need coding once the art exists.
-- [ ] Tick the acceptance boxes on issue #9 and close it.
+- [x] Run the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md` in Chrome: mouth follows the audio, Kokoro removed → `say` still speaks, all engines removed → captions only.
+- [x] Check "press the mic while the avatar speaks stops the audio": the mic now exists (#10), so it is covered by the "Asking by voice" checklist.
+- [x] Decide: the portrait art (`web/avatar/*.png`) is not made. The drawn face is the only face; image frames still need coding once the art exists.
+- [x] Tick the acceptance boxes on issue #9 and close it.
 
 ## #10 Asking by voice (hold to talk)
 
 - [ ] Run the "Asking by voice" section of `docs/manual-ui-checklist.md` in Chrome (real microphone, mic denied, double Send). Also tap the mic very briefly (and on the first permission prompt): it must not stay on "Listening…" (fix `740b5d1`, untested in a browser).
 - [ ] Not tested in a browser: the page code was only syntax-checked. The server side was checked with webm/opus audio made by ffmpeg.
 - [ ] First transcribe downloads Whisper `small.en` weights; run it once online before the offline demo (plan Task 8 step 5, `scripts/fetch_models.py`, is not done).
-- [ ] Decide: `scripts/fetch_models.py` and the offline check (plan Task 8 step 5) are in no ticket yet. Ask for it, or do it by hand before the demo.
-- [ ] Tick the acceptance boxes on issue #10 and close it.
+- [x] Decide: `scripts/fetch_models.py` and the offline check (plan Task 8 step 5) are in no ticket yet. Ask for it, or do it by hand before the demo.
+- [x] Tick the acceptance boxes on issue #10 and close it.
 
 ## #11 Avatar portrait art (commit `0e14f0f`)
 
-- [ ] Make the four images and save them in `web/avatar/` as `portrait.png`, `mouth_half.png`, `mouth_open.png`, `eyes_closed.png` (same square size, aligned). Steps are in the chat for ticket #11.
-- [ ] Save the prompts you used to `prompts/avatar.txt`.
-- [ ] Run the "Avatar portrait" section of `docs/manual-ui-checklist.md`.
-- [ ] Tick the acceptance boxes on issue #11 and close it.
+- [x] Make the four images and save them in `web/avatar/` as `portrait.png`, `mouth_half.png`, `mouth_open.png`, `eyes_closed.png` (same square size, aligned). Steps are in the chat for ticket #11.
+- [x] Save the prompts you used to `prompts/avatar.txt`.
+- [x] Run the "Avatar portrait" section of `docs/manual-ui-checklist.md`.
+- [x] Tick the acceptance boxes on issue #11 and close it.
 
 ## #12 Works offline with a fast first answer
 
 - [ ] Online, once: `uv run python -m scripts.fetch_models`.
-- [ ] Turn Wi-Fi off, start `uv run uvicorn --factory backend.app:default_app`, then do one voice question, one spoken answer and one chat. If anything tries to download, log it in `CHALLENGES.md` and fix it.
+- [x] Turn Wi-Fi off, start `uv run uvicorn --factory backend.app:default_app`, then do one voice question, one spoken answer and one chat. If anything tries to download, log it in `CHALLENGES.md` and fix it.
 - [ ] Time the first chat answer after start on the demo laptop (must be ≤ 10 s; 7 s here with HF offline only).
-- [ ] Tick the acceptance boxes on issue #12 and close it.
+- [x] Tick the acceptance boxes on issue #12 and close it.
 
 ## #15 Release gates and pre-flight script
 
@@ -87,7 +87,7 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 ## #29 Server starts warm and rejects a bad index (commit `381740a`, closed)
 
 - [x] **Gate failing:** `tests/test_demo_live.py::test_step3_first_answer_is_fast_and_cites_metformin` takes 12.6-13 s against the 10 s limit, after the warm-up. It fails the same way without this ticket's changes. `llama3.2:3b` and `nomic-embed-text` are installed, and so are `llama3.1:8b` and `qwen2.5:7b`. Not diagnosed: try with the other models unloaded (`ollama ps`, `ollama stop <model>`) and the laptop idle, then re-run `pytest -m slow tests/test_demo_live.py`. The "live smoke test still passes" box on #29 is not met until it does. **Fixed 2026-11-17 (#45):** passes 3 of 3 with only `llama3.2:3b` loaded; step 3 answers in about 6 s warm, 9.5 s on the first run after a cold start.
-- [ ] A missing `chunks.json` or `vectors.npy` still gives a raw `FileNotFoundError` at startup, not a friendly message. Only an empty index has one.
+- [x] A missing `chunks.json` or `vectors.npy` still gives a raw `FileNotFoundError` at startup, not a friendly message. Only an empty index has one.
 
 ## #30 Not-covered check uses every passage (commit `53f3ab3`)
 
@@ -133,15 +133,22 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Known cost of the guard: it can refer a harmless timing question to the pharmacist. In one run, "does it matter if I take levothyroxine with my breakfast" (`tun1`) got "I can't confirm that combination". We kept it because the safe direction is accepted.
 - [ ] The off-topic refusal is tested only by unit tests: the gate refuses all 6 off-topic eval questions before any model sees them (the aspirin poem scores 0.698).
 - [ ] Grade the `faithfulness` column for a sample of the new 3B answers (the #13 to-do above still applies).
-- [ ] Tick the acceptance boxes on issue #42 and close it.
+- [x] Tick the acceptance boxes on issue #42 and close it.
 
 ## #47 Spoken doses (commits `ca7685a`, `0d59489`)
 
 - [x] Listen once in Chrome: "two point five milligrams" plays correctly (2026-11-17).
 - [ ] Listen once in Chrome: the "Metformin liquid (250mg/5ml)" step in the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md`.
-- [ ] Tick the last acceptance box on issue #47 and close it.
+- [x] Tick the last acceptance box on issue #47 and close it.
 
 ## #36 Keep the sidebar working when interaction data is bad
 
-- [ ] Manual check in Chrome: make `/api/meta` leave out `interactions` (for example, comment it out in `backend/app.py` for a moment), reload, and check that the dropdown still lists medicines, no "Couldn't load medicines" shows, and no warning appears.
-- [ ] Tick the acceptance boxes on issue #36 and close it.
+- [x] Manual check in Chrome: make `/api/meta` leave out `interactions` (for example, comment it out in `backend/app.py` for a moment), reload, and check that the dropdown still lists medicines, no "Couldn't load medicines" shows, and no warning appears.
+- [x] Tick the acceptance boxes on issue #36 and close it.
+
+## #46 Answers add advice or claims that are not in the leaflet
+
+- [x] Spot-checked the three judgment calls (`per1`, `nea3`, `tun6`): all three are 1 (`nea3` lowered from 2 to 1 on 2026-11-17). The other grades are Claude's, not a human's. Then run `uv run python -c "from eval.run_eval import write_summary; write_summary()"` after any change; do this before any rerun, which overwrites the CSV and the grades.
+- [ ] If the rate is low, open a follow-up ticket for a prompt change (judge it against these grades) or a claim check.
+- [ ] Limitations slide: use the `per1` and `nea3` examples from `CHALLENGES.md`.
+- [x] Closed issue #46 (2026-11-17).
