@@ -1,4 +1,4 @@
-import { Avatar } from "./avatar.js";
+import { Avatar } from "./face.js";
 import { startRecording } from "./voice.js";
 import { el, leafletLink } from "./dom.js";
 import { loadThread, saveThread, clearThread, replyCard, medicinesTag, showSuggestions } from "./logic.js";
@@ -29,6 +29,7 @@ export function initChat(meds, isShown) {
     node.dataset.tone = tone;
     node.dataset.icon = icon;
     node.append(el("p", { className: "label-title", textContent: title }), el("div", { className: "answer", textContent: r.answer }));
+    if (r.kind !== "loading") node.append(el("button", { type: "button", className: "read-aloud", textContent: "Read aloud", onclick: () => speak(r.answer) }));
     const cardSections = r.card ? [
       ...section("Summary", r.card.summary),
       ...section("What to do", r.card.what_to_do),
@@ -80,16 +81,22 @@ export function initChat(meds, isShown) {
   const show = (kind, answer) => add({ role: "medmate", kind, answer, sources: [] });
   draw();  // restore the saved thread on load
   // Speaks the reply; if every TTS engine fails the caption is already on screen, so just stay silent.
+  // Only the newest request may play or reset the face: an older fetch that finishes late is dropped.
+  let speechId = 0;
+  const stopSpeech = () => { speechId++; avatar.stop(); };
   const speak = async (text) => {
+    stopSpeech();
+    const id = speechId;
     try {
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (res.ok) await avatar.speak(await res.arrayBuffer());
+      const wav = res.ok && await res.arrayBuffer();
+      if (wav && id === speechId) await avatar.speak(wav);
     } catch {}
-    avatar.setState("idle");
+    if (id === speechId) avatar.setState("idle");
   };
   const heard = document.getElementById("heard");
   const input = document.getElementById("q");
@@ -120,7 +127,7 @@ export function initChat(meds, isShown) {
     if (example) ask(example.textContent);
   });
   reset.addEventListener("click", () => {
-    avatar.stop();
+    stopSpeech();
     entries = [];
     clearThread(sessionStorage);
     draw();
@@ -131,7 +138,7 @@ export function initChat(meds, isShown) {
   let starting = false;   // waiting for getUserMedia
   let released = false;   // the button came up while starting
   const startMic = async () => {
-    avatar.stop();
+    stopSpeech();
     if (busy || stopRecording || starting) return;
     starting = true;
     released = false;
@@ -145,6 +152,7 @@ export function initChat(meds, isShown) {
       starting = false;
     }
     mic.setAttribute("aria-pressed", "true");
+    avatar.setState("listening");
     mic.textContent = "Listening…";
     if (released) stopMic();  // let go before the microphone opened
   };
@@ -192,7 +200,7 @@ export function initChat(meds, isShown) {
   mic.addEventListener("keyup", (e) => { if (e.key === " ") e.preventDefault(); });
 
   async function askQuestion(question) {
-    avatar.stop();
+    stopSpeech();
     avatar.setState("thinking");
     input.value = "";
     // A blank question gets the "didn't catch that" reply without a bubble of its own.
