@@ -8,6 +8,10 @@ A voice-first companion that answers questions about a person's medicines from a
 The check that refuses a question before the model sees it, when no leaflet passage is close enough to the question.
 _Avoid_: threshold check, cut-off
 
+**Number check**:
+The check that sends an answer back to the model when it states a number not found in the passages it cites, the user's own doses, or the emergency number.
+_Avoid_: number guard, dose check
+
 **Refusal**:
 A reply that declines to answer: either "not in my leaflets" or "only questions about your medicines".
 _Avoid_: rejection, decline

@@ -117,7 +117,7 @@ def test_written_tens_and_half_are_numbers():
     assert not isinstance(check("Take half a tablet.", "Take 0.5 tablet."), str)
 
 
-def test_written_tens_and_unit_are_one_number():
+def test_written_tens_and_ones_are_one_number():
     assert isinstance(check("Take twenty-five mg.", "Take 20 mg, then 5 mg."), str)
     assert not isinstance(check("Take twenty-five mg.", "Take 25 mg."), str)
     assert not isinstance(check("Take 25 mg.", "Take twenty five mg."), str)
