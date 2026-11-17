@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
-from backend.speech import kokoro_engine, say_engine, synthesize, transcribe
+from backend.speech import kokoro_engine, say_engine, spoken, synthesize, transcribe
 from tests.test_api import INTERACTIONS
 
 
@@ -16,10 +16,25 @@ def test_synthesize_falls_back():
     assert synthesize("hi", [failing, lambda t: b"RIFF..."]) == b"RIFF..."
 
 
-def test_synthesize_speaks_doses_in_words():
+@pytest.mark.parametrize("text, said", [
+    ("Take 2.5mg daily.", "Take 2.5 milligrams daily."),
+    ("Take 1g.", "Take 1 gram."),
+    ("Take 1 mg or 0.5 mg.", "Take 1 milligram or 0.5 milligrams."),
+    ("10 mL or 500 mcg", "10 millilitres or 500 micrograms"),
+    ("250mg/5ml", "250 milligrams per 5 millilitres"),
+    ("5 mg/ml", "5 milligrams per millilitre"),
+    ("2 g/day", "2 grams per day"),
+    ("2.5μg or 2.5µg", "2.5 micrograms or 2.5 micrograms"),  # Greek mu, then micro sign
+    ("5 gallons, and/or 3 GPs", "5 gallons, and/or 3 GPs"),
+])
+def test_spoken_reads_doses_in_words(text, said):
+    assert spoken(text) == said
+
+
+def test_synthesize_speaks_the_spoken_text():
     heard = []
-    synthesize("Take 2.5mg, then 10 mL or 500 mcg. Agree.", [lambda t: heard.append(t) or b"RIFF"])
-    assert heard == ["Take 2.5 milligrams, then 10 millilitres or 500 micrograms. Agree."]
+    synthesize("Take 2.5mg.", [lambda t: heard.append(t) or b"RIFF"])
+    assert heard == ["Take 2.5 milligrams."]
 
 
 def test_synthesize_all_fail_raises():

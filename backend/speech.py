@@ -9,6 +9,12 @@ log = logging.getLogger(__name__)
 
 Engine = Callable[[str], bytes]  # text -> WAV bytes; raises on failure
 
+# Kokoro reads "2.5mg" as "two . five em-gee" and "mg/ml" as "slash"; spelled-out units read right.
+SPOKEN_UNITS = {"mg": "milligram", "mcg": "microgram", "µg": "microgram", "μg": "microgram",  # micro sign, Greek mu
+                "ml": "millilitre", "g": "gram"}
+_NUMBER, _UNIT = r"\d+(?:[.,]\d+)*", "|".join(SPOKEN_UNITS)
+DOSE = re.compile(rf"({_NUMBER})\s*({_UNIT})\b(?:\s*/\s*({_NUMBER})?(?:\s*({_UNIT})\b)?)?", re.IGNORECASE)
+
 
 def kokoro_engine(voice: str = "af_heart", speed: float = 0.9) -> Engine:
     pipeline = None
@@ -43,13 +49,24 @@ def say_engine(rate: int = 165) -> Engine:
     return speak
 
 
-UNITS = {"mg": "milligrams", "mcg": "micrograms", "µg": "micrograms", "ml": "millilitres", "g": "grams"}
-# Kokoro reads "2.5mg" as "two . five em-gee"; a space and a spelled-out unit make it "two point five milligrams".
-DOSE = re.compile(r"(\d)\s*(mg|mcg|µg|ml|g)\b", re.IGNORECASE)
+def spoken(text: str) -> str:
+    """'250mg/5ml' -> '250 milligrams per 5 millilitres'; the shown text keeps the leaflet's form."""
+    def amount(number: str | None, unit: str) -> str:
+        word = SPOKEN_UNITS[unit.lower()]
+        return word if number is None else f"{number} {word}" + ("" if number == "1" else "s")
+
+    def dose(m: re.Match) -> str:
+        number, unit, per_number, per_unit = m.groups()
+        said = amount(number, unit)
+        if "/" in m[0]:  # "2 g/day" leaves "day" in the text after the match
+            said += " per " + (amount(per_number, per_unit) if per_unit else per_number or "")
+        return said
+
+    return DOSE.sub(dose, text)
 
 
 def synthesize(text: str, engines: list[Engine]) -> bytes:
-    text = DOSE.sub(lambda m: f"{m[1]} {UNITS[m[2].lower()]}", text)
+    text = spoken(text)
     for engine in engines:
         try:
             return engine(text)

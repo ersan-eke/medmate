@@ -135,9 +135,11 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Grade the `faithfulness` column for a sample of the new 3B answers (the #13 to-do above still applies).
 - [ ] Tick the acceptance boxes on issue #42 and close it.
 
-## Spoken doses (2.5mg read as "two … five em-gee")
+## #47 Spoken doses (from commit `ca7685a`)
 
-- [ ] Listen once in Chrome: the new "decimal dose" step in the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md`.
+- [x] Listen once in Chrome: "two point five milligrams" plays correctly (2026-11-17).
+- [ ] Listen once in Chrome: the "Metformin liquid (250mg/5ml)" step in the "Spoken answers and avatar" section of `docs/manual-ui-checklist.md`.
+- [ ] Tick the last acceptance box on issue #47 and close it.
 
 ## #36 Keep the sidebar working when interaction data is bad
 

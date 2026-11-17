@@ -24,6 +24,7 @@ Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
 - [ ] Make `kokoro_engine()` fail (drop it from `engines` in `default_app`): the answer is still spoken by macOS `say` and the mouth still moves
 - [ ] Make every engine fail (empty `engines`): the caption shows and nothing breaks
 - [ ] Ask about a decimal dose (Warfarin 2.5mg): it is spoken as "two point five milligrams", with no pause and no "em-gee"
+- [ ] Ask about the Metformin liquid (250mg/5ml): it is spoken as "250 milligrams per 5 millilitres", with no "slash"
 - [ ] Send a new question while the avatar speaks: the audio stops
 
 ## Asking by voice
