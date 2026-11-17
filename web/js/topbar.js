@@ -19,21 +19,22 @@ function initTextSize() {
   });
 }
 
-// Under 1024 px the tools collapse into the ⋯ menu: a disclosure that Escape or a click elsewhere closes.
+// The Menu button opens a disclosure of the three tools; Escape or a click elsewhere closes it and returns focus to the button.
 // It stays open behind the leaflets dialog so focus can return to the button that opened it.
 function initMenu() {
-  const topbar = document.querySelector(".topbar");
   const button = document.getElementById("menu-btn");
+  const tools = document.getElementById("tools");
   const set = (open) => {
-    topbar.classList.toggle("menu-open", open);
+    tools.hidden = !open;
     button.setAttribute("aria-expanded", String(open));
   };
-  button.addEventListener("click", () => set(button.getAttribute("aria-expanded") !== "true"));
+  button.addEventListener("click", () => set(tools.hidden));
+  document.getElementById("reset").addEventListener("click", () => set(false));
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !document.querySelector("dialog[open]") && topbar.classList.contains("menu-open")) { set(false); button.focus(); }
+    if (e.key === "Escape" && !document.querySelector("dialog[open]") && !tools.hidden) { set(false); button.focus(); }
   });
   document.addEventListener("click", (e) => {
-    if (!topbar.contains(e.target) && !e.target.closest("dialog")) set(false);
+    if (!tools.hidden && !button.contains(e.target) && !tools.contains(e.target) && !e.target.closest("dialog")) set(false);
   });
 }
 

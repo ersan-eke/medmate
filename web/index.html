@@ -16,16 +16,20 @@
 <body>
 <p id="emergency" role="alert">In an emergency call <a href="tel:999">999</a></p>
 <header class="topbar">
-  <h1 class="wordmark">MedMate</h1>
+  <div class="brand">
+    <h1 class="wordmark">MedMate</h1>
+    <p class="tagline">Your friendly NHS medicine companion</p>
+  </div>
   <div class="switch" role="group" aria-label="View">
     <button type="button" id="tab-ask" aria-pressed="true">MedMate</button>
     <button type="button" id="tab-meds">My medicines</button>
   </div>
-  <button id="menu-btn" type="button" aria-label="More" aria-haspopup="true" aria-expanded="false" aria-controls="tools"><span aria-hidden="true">⋯</span></button>
-  <div id="tools" class="tools">
-    <button id="leaflets-btn" type="button" aria-haspopup="dialog">Your NHS leaflets</button>
-    <button id="text-size" type="button"><span class="a-plus" aria-hidden="true">A+</span> Text size
+  <button id="menu-btn" class="btn-stone" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="tools"><span class="icon" aria-hidden="true"></span>Menu</button>
+  <div id="tools" class="tools" hidden>
+    <button id="leaflets-btn" class="btn-stone" type="button" aria-haspopup="dialog">Your NHS leaflets</button>
+    <button id="text-size" class="btn-stone" type="button"><span class="a-plus" aria-hidden="true">A+</span> Text size
       <span class="size-dots" aria-hidden="true"><i></i><i></i><i></i></span></button>
+    <button id="reset" class="btn-stone" type="button">Reset chat</button>
   </div>
 </header>
 <dialog id="leaflets" aria-labelledby="leaflets-title">
@@ -48,9 +52,6 @@
     <p id="heard" class="visually-hidden" aria-live="polite"></p>
   </div>
   <section class="chat" aria-label="Chat">
-    <div class="chat-head">
-      <button id="reset" type="button">Reset chat</button>
-    </div>
     <div id="thread" class="thread" role="log" aria-live="polite">
       <div id="empty" class="msg medmate">
         <p>Hello. I can tell you about your medicines from NHS leaflets. Tap the blue button and speak, or type your question.</p>
