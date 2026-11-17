@@ -7,7 +7,6 @@ sources/
 eval/results/*.wav
 .pytest_cache/
 medmate.zip
-CLAUDE.md
 docs/agents/
 docs/superpowers/
 docs/human-todo.md
