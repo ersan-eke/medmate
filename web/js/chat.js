@@ -134,6 +134,12 @@ export function initChat(meds, isShown) {
   const toBottom = () => { thread.scrollTop = thread.scrollHeight; };
   input.addEventListener("focus", toBottom);
   window.addEventListener("resize", () => { if (document.activeElement === input) toBottom(); });
+  // On a phone the field grows from one line to three inside a bar of fixed height (the CSS caps it).
+  const grow = () => {
+    input.style.removeProperty("--q-height");
+    input.style.setProperty("--q-height", `${input.scrollHeight + input.offsetHeight - input.clientHeight}px`);
+  };
+  input.addEventListener("input", grow);
   // The example questions in the empty state ask themselves.
   empty.addEventListener("click", (e) => {
     const example = e.target.closest(".example");
@@ -215,6 +221,7 @@ export function initChat(meds, isShown) {
     stopSpeech();
     avatar.setState("thinking");
     input.value = "";
+    grow();
     // A blank question gets the "didn't catch that" reply without a bubble of its own.
     if (question.trim()) add({ role: "user", text: question });
     wait("One moment…");

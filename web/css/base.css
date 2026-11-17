@@ -21,7 +21,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip-path: inset(50%); white-space: nowrap;
 }
-.icon, .mini-avatar::before, .read-aloud::before, #warnings p::before, .reply .help h3::before, #mic::before {
+.icon, .mini-avatar::before, .read-aloud::before, #warnings p::before, .reply .help h3::before, .talk-icon::before {
   content: "";
   display: inline-block;
   flex: none;

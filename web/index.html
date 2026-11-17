@@ -41,20 +41,32 @@
 </dialog>
 <main id="view-ask" class="view ask" aria-labelledby="ask-title">
   <h2 id="ask-title" class="visually-hidden">Ask about your medicines</h2>
-  <div id="avatar" class="face-box" data-state="idle">
-    <div class="face-arch">              <svg class="face-svg" viewBox="0 0 200 210" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Friendly community pharmacist wearing tortoiseshell glasses and a white coat over a blue shirt" > <path d="M26 145C18 130 22 112 34 104C36 120 33 134 26 145Z" fill="#B8D1E8" opacity="0.65" /> <path d="M174 145C182 130 178 112 166 104C164 120 167 134 174 145Z" fill="#B8D1E8" opacity="0.65" /> <path d="M54 92C54 55 74 34 100 34C126 34 146 55 146 92C146 125 142 148 134 160H66C58 148 54 125 54 92Z" fill="#4A3228" /> <path d="M28 210C32 172 56 154 84 150H116C144 154 168 172 172 210H28Z" fill="#FFFDF9" /> <path d="M78 150L100 198L82 210H64L78 150Z" fill="#EFEAE1" /> <path d="M122 150L100 198L118 210H136L122 150Z" fill="#EFEAE1" /> <path d="M80 150H120L100 196L80 150Z" fill="#1B4D7E" /> <path d="M82 150L94 166L100 156L82 150Z" fill="#2B6CB0" /> <path d="M118 150L106 166L100 156L118 150Z" fill="#2B6CB0" /> <rect x="122" y="176" width="28" height="14" rx="3" fill="#EBF3FA" stroke="#B8D1E8" stroke-width="1.5" /> <circle cx="128" cy="183" r="2.5" fill="#1B4D7E" /> <rect x="133" y="181.5" width="13" height="3" rx="1.5" fill="#13385C" /> <path d="M88 128H112V154C112 160 88 160 88 154V128Z" fill="#E8B89A" /> <path d="M88 130C94 135 106 135 112 130V138C105 142 95 142 88 138V130Z" fill="#D6A182" opacity="0.6" /> <path d="M66 88C66 64 81 48 100 48C119 48 134 64 134 88C134 114 120 135 100 135C80 135 66 114 66 88Z" fill="#F3C6AA" /> <ellipse cx="65" cy="95" rx="5.5" ry="9" fill="#E8B89A" /> <ellipse cx="135" cy="95" rx="5.5" ry="9" fill="#E8B89A" /> <ellipse cx="78" cy="103" rx="7" ry="4" fill="#E08E79" opacity="0.35" /> <ellipse cx="122" cy="103" rx="7" ry="4" fill="#E08E79" opacity="0.35" /> <path d="M76 80C80 77 87 77 91 80" stroke="#4A3228" stroke-width="2.6" stroke-linecap="round" /> <path d="M109 80C113 77 120 77 124 80" stroke="#4A3228" stroke-width="2.6" stroke-linecap="round" /> <circle cx="84" cy="90" r="4" fill="#291D18" /> <circle cx="85.3" cy="88.7" r="1.3" fill="#FFFDF9" /> <circle cx="116" cy="90" r="4" fill="#291D18" /> <circle cx="117.3" cy="88.7" r="1.3" fill="#FFFDF9" /> <rect x="71" y="81" width="25" height="18" rx="6" stroke="#6B3E26" stroke-width="2.8" fill="rgba(255,253,249,0.18)" /> <rect x="104" y="81" width="25" height="18" rx="6" stroke="#6B3E26" stroke-width="2.8" fill="rgba(255,253,249,0.18)" /> <path d="M96 89H104" stroke="#6B3E26" stroke-width="2.8" stroke-linecap="round" /> <path d="M66 88L71 89" stroke="#6B3E26" stroke-width="2.4" stroke-linecap="round" /> <path d="M129 89L134 88" stroke="#6B3E26" stroke-width="2.4" stroke-linecap="round" /> <path d="M100 91V103C100 105 97 106 95 105" stroke="#C99272" stroke-width="2.3" stroke-linecap="round" /> <path id="face-mouth" d="M89 114C93 119 107 119 111 114" stroke="#8C4A3C" stroke-width="3" stroke-linecap="round" /> <path d="M64 86C64 56 80 40 102 40C124 40 137 56 136 86C132 69 121 60 106 58C91 63 75 68 64 86Z" fill="#4A3228" /> <path d="M76 53C70 61 67 70 66 79" stroke="#D8CFC0" stroke-width="2.5" stroke-linecap="round" opacity="0.75" /> </svg></div>
-    <div class="face-sill" aria-hidden="true"></div>
-    <p id="face-status" class="status-pill" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span id="face-status-text">Ready to listen</span></p>
-  </div>
-  <div class="counter">
-    <button id="mic" class="talk" type="button" aria-describedby="mic-hint"><span class="talk-text">Tap to talk</span><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
-    <p id="mic-hint" class="hint">Tap to start, speak, then tap again to stop. With a keyboard, press Space to start and Space again to stop.</p>
+  <div class="side">
+    <div id="avatar" class="face-box" data-state="idle">
+      <div class="face-arch">              <svg class="face-svg" viewBox="0 0 200 210" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Friendly community pharmacist wearing tortoiseshell glasses and a white coat over a blue shirt" > <path d="M26 145C18 130 22 112 34 104C36 120 33 134 26 145Z" fill="#B8D1E8" opacity="0.65" /> <path d="M174 145C182 130 178 112 166 104C164 120 167 134 174 145Z" fill="#B8D1E8" opacity="0.65" /> <path d="M54 92C54 55 74 34 100 34C126 34 146 55 146 92C146 125 142 148 134 160H66C58 148 54 125 54 92Z" fill="#4A3228" /> <path d="M28 210C32 172 56 154 84 150H116C144 154 168 172 172 210H28Z" fill="#FFFDF9" /> <path d="M78 150L100 198L82 210H64L78 150Z" fill="#EFEAE1" /> <path d="M122 150L100 198L118 210H136L122 150Z" fill="#EFEAE1" /> <path d="M80 150H120L100 196L80 150Z" fill="#1B4D7E" /> <path d="M82 150L94 166L100 156L82 150Z" fill="#2B6CB0" /> <path d="M118 150L106 166L100 156L118 150Z" fill="#2B6CB0" /> <rect x="122" y="176" width="28" height="14" rx="3" fill="#EBF3FA" stroke="#B8D1E8" stroke-width="1.5" /> <circle cx="128" cy="183" r="2.5" fill="#1B4D7E" /> <rect x="133" y="181.5" width="13" height="3" rx="1.5" fill="#13385C" /> <path d="M88 128H112V154C112 160 88 160 88 154V128Z" fill="#E8B89A" /> <path d="M88 130C94 135 106 135 112 130V138C105 142 95 142 88 138V130Z" fill="#D6A182" opacity="0.6" /> <path d="M66 88C66 64 81 48 100 48C119 48 134 64 134 88C134 114 120 135 100 135C80 135 66 114 66 88Z" fill="#F3C6AA" /> <ellipse cx="65" cy="95" rx="5.5" ry="9" fill="#E8B89A" /> <ellipse cx="135" cy="95" rx="5.5" ry="9" fill="#E8B89A" /> <ellipse cx="78" cy="103" rx="7" ry="4" fill="#E08E79" opacity="0.35" /> <ellipse cx="122" cy="103" rx="7" ry="4" fill="#E08E79" opacity="0.35" /> <path d="M76 80C80 77 87 77 91 80" stroke="#4A3228" stroke-width="2.6" stroke-linecap="round" /> <path d="M109 80C113 77 120 77 124 80" stroke="#4A3228" stroke-width="2.6" stroke-linecap="round" /> <circle cx="84" cy="90" r="4" fill="#291D18" /> <circle cx="85.3" cy="88.7" r="1.3" fill="#FFFDF9" /> <circle cx="116" cy="90" r="4" fill="#291D18" /> <circle cx="117.3" cy="88.7" r="1.3" fill="#FFFDF9" /> <rect x="71" y="81" width="25" height="18" rx="6" stroke="#6B3E26" stroke-width="2.8" fill="rgba(255,253,249,0.18)" /> <rect x="104" y="81" width="25" height="18" rx="6" stroke="#6B3E26" stroke-width="2.8" fill="rgba(255,253,249,0.18)" /> <path d="M96 89H104" stroke="#6B3E26" stroke-width="2.8" stroke-linecap="round" /> <path d="M66 88L71 89" stroke="#6B3E26" stroke-width="2.4" stroke-linecap="round" /> <path d="M129 89L134 88" stroke="#6B3E26" stroke-width="2.4" stroke-linecap="round" /> <path d="M100 91V103C100 105 97 106 95 105" stroke="#C99272" stroke-width="2.3" stroke-linecap="round" /> <path id="face-mouth" d="M89 114C93 119 107 119 111 114" stroke="#8C4A3C" stroke-width="3" stroke-linecap="round" /> <path d="M64 86C64 56 80 40 102 40C124 40 137 56 136 86C132 69 121 60 106 58C91 63 75 68 64 86Z" fill="#4A3228" /> <path d="M76 53C70 61 67 70 66 79" stroke="#D8CFC0" stroke-width="2.5" stroke-linecap="round" opacity="0.75" /> </svg></div>
+      <div class="face-sill" aria-hidden="true"></div>
+      <p id="face-status" class="status-pill" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span id="face-status-text">Ready to listen</span></p>
+    </div>
+    <div class="counter">
+      <button id="mic" class="talk" type="button" aria-describedby="mic-hint">
+        <span class="talk-icon" aria-hidden="true"><span class="bars"><i></i><i></i><i></i><i></i></span></span>
+        <span class="talk-copy"><span class="talk-text">Tap to talk</span><span class="talk-sub">Tap to start, tap again to stop</span></span>
+      </button>
+      <p id="mic-hint" class="visually-hidden">Tap to start, speak, then tap again to stop. With a keyboard, press Space to start and Space again to stop.</p>
+    </div>
+    <div class="divider" aria-hidden="true"><span>Or write below</span></div>
+    <form id="form">
+      <label for="q">Type your question</label>
+      <textarea id="q" rows="1" maxlength="500" placeholder="Ask about your medicines…"></textarea>
+      <button id="mic-small" class="talk" type="button" aria-label="Talk"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span></button>
+      <button id="send" type="submit">Send</button>
+    </form>
     <p id="heard" class="visually-hidden" aria-live="polite"></p>
   </div>
   <section class="chat" aria-label="Chat">
     <div id="thread" class="thread" role="log" aria-live="polite">
       <div id="empty">
-        <p class="msg medmate greeting">Hello. I can tell you about your medicines from NHS leaflets. Tap the blue button and speak, or type your question.</p>
+        <p class="msg medmate greeting">Hello. I can tell you about your medicines from NHS leaflets. Tap the microphone and speak, or type your question.</p>
         <div class="suggest">
           <p class="suggest-label">Try asking</p>
           <ul class="examples">
@@ -65,14 +77,6 @@
         </div>
       </div>
     </div>
-    <form id="form">
-      <label for="q">Or type your question</label>
-      <div class="ask-row">
-        <textarea id="q" rows="3" maxlength="500"></textarea>
-        <button id="mic-small" class="talk" type="button" aria-label="Talk"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span></button>
-        <button id="send" type="submit">Send</button>
-      </div>
-    </form>
   </section>
 </main>
 <section id="view-meds" class="view mine" aria-labelledby="meds-title" hidden>

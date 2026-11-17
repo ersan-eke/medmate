@@ -1,24 +1,26 @@
-/* Ask panel: the face, the mic and the question box on the left, the chat beside it.
-   Under 1024 px the one face element is a small window at the chat's top left, in the chat's own grid cell. */
+/* Ask panel. From 1024 px: a side column (face, big talk button, question box) beside the chat.
+   Under 1024 px the side column is gone: the face is a small window at the chat's top left (in the chat's own cell)
+   and the question form is a fixed-height composer bar under the chat. */
 .ask {
   display: grid;
-  gap: 1rem 2rem;
-  align-items: start;
-  grid-template-areas: "counter" "chat";
-  grid-template-rows: auto minmax(0, 1fr);
+  gap: .6rem;
+  grid-template-areas: "chat" "form";
+  grid-template-rows: minmax(0, 1fr) auto;
   overflow: hidden;
 }
-.counter { grid-area: counter; display: grid; gap: .9rem; justify-items: center; }
+.side { display: contents; }
 .chat { grid-area: chat; }
+#form { grid-area: form; }
+.counter, .divider { display: none; }
 .face-box { grid-area: chat; z-index: 1; justify-self: start; display: flex; flex-direction: column; align-items: center; width: 4.5rem; }
-@media (min-width: 40em) {
-  .ask { grid-template-areas: "counter chat"; grid-template-columns: minmax(13rem, 18rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-}
 @media (min-width: 64em) {
-  .ask { grid-template-areas: "face chat" "counter chat"; grid-template-rows: auto minmax(0, 1fr); }
-  .face-box { grid-area: face; z-index: auto; justify-self: stretch; width: auto; padding: .9rem; border: .12rem solid var(--border-stone); border-radius: 1.15rem; background: rgba(242, 236, 225, .72); }
+  .ask { grid-template-areas: "side chat"; grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 1rem 2rem; align-items: start; }
+  .side { grid-area: side; display: flex; flex-direction: column; gap: .7rem; max-height: 100%; overflow-y: auto; padding: .2rem; }
+  .side > * { flex: none; }
+  .counter { display: block; }
+  .divider { display: flex; margin: .3rem 0; }
+  .face-box { z-index: auto; justify-self: stretch; width: auto; padding: .9rem; border: .12rem solid var(--border-stone); border-radius: 1.15rem; background: rgba(242, 236, 225, .72); }
 }
-@media (max-width: 39.99em) { .hint { display: none; } #mic { min-height: 3.5rem; } }
 
 /* The face: the prototype's arched window, a sill and a status pill (the pill is only for the face column). */
 .face-arch {
@@ -61,20 +63,24 @@
 .talk { position: relative; }
 #mic {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: .3rem;
+  gap: .95rem;
   width: 100%;
-  min-height: 5rem;
-  margin-top: .6rem;
-  border-radius: 1.5rem;
-  font-size: 1.2rem;
+  min-height: 5.5rem;
+  padding: .85rem 1.25rem;
+  border-radius: 1.15rem;
+  text-align: left;
 }
-#mic::before { --icon: var(--icon-mic); width: 1.8rem; height: 1.8rem; }
+.talk-icon { display: flex; align-items: center; justify-content: center; flex: none; width: 3rem; height: 3rem; border-radius: .8rem; background: color-mix(in srgb, currentColor 16%, transparent); }
+.talk-icon::before { --icon: var(--icon-mic); width: 1.7rem; height: 1.7rem; }
+#mic[data-listening] .talk-icon::before { display: none; }
+.talk-text { display: block; font-size: 1.45rem; line-height: 1.15; }
+.talk-sub { display: block; margin-top: .15rem; font-size: .92rem; font-weight: 400; }
 #mic:hover { background: var(--blue-dark); }
+#mic[data-listening]:hover { background: var(--bg-cream); }
 /* Recording: both talk buttons turn inside out, a ring pulses and wave bars move. */
-#mic-small { flex: none; width: 2.75rem; height: 2.75rem; min-height: 2.75rem; padding: 0; display: grid; place-items: center; border-radius: 50%; }
+#mic-small { grid-area: mic; width: 100%; min-height: 2.75rem; padding: 0; display: grid; place-items: center; }
 #mic-small::before { content: ""; width: 1.4rem; height: 1.4rem; background: currentColor; -webkit-mask: var(--icon-mic) center / contain no-repeat; mask: var(--icon-mic) center / contain no-repeat; color: inherit; }
 #mic-small:hover { background: var(--blue-dark); }
 #mic-small[data-listening]:hover { background: var(--bg-cream); }
@@ -94,12 +100,20 @@
   from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--blue-primary) 55%, transparent); }
   to { box-shadow: 0 0 0 1rem transparent; }
 }
-.hint { font-size: .85rem; color: var(--ink-secondary); text-align: center; }
-
-#form label { margin-top: .5rem; }
-.ask-row { display: flex; gap: .5rem; align-items: end; }
-#q { resize: none; line-height: 1.35; }
-.ask-row textarea { flex: 1; min-width: 0; }
+/* Phone: a bar of fixed height: the field on the left, the mic stacked above Send on the right.
+   The field starts one line high, centred, and grows to three lines (chat.js sets --q-height), then scrolls. */
+#form { display: grid; grid-template-areas: "field mic" "field send"; grid-template-columns: minmax(0, 1fr) 5rem; grid-template-rows: repeat(2, 2.75rem); gap: .4rem .5rem; }
+#form label { display: none; }
+#q { grid-area: field; align-self: center; resize: none; line-height: 1.35; height: var(--q-height, auto); max-height: calc(3 * 1.35em + .9rem); overflow-y: auto; }
+#send { grid-area: send; }
+/* From 1024 px: the prototype's question box. */
+@media (min-width: 64em) {
+  #form { display: flex; flex-direction: column; gap: .7rem; padding: 1rem; border: .12rem solid var(--blue-border); border-radius: 1.15rem; background: rgba(235, 243, 250, .55); }
+  #form label { display: block; margin: 0; font-size: .95rem; }
+  #q { height: auto; min-height: 5rem; max-height: none; padding: .6rem .8rem; font-size: 1.12rem; }
+  #mic-small { display: none; }
+  #send { min-height: 3.35rem; border-radius: .85rem; font-size: 1.1rem; }
+}
 
 /* The chat: the thread scrolls on its own and the question box stays at the bottom.
    Messages never shrink to fit the thread's height (flex: none), so a long reply is never clipped. */
