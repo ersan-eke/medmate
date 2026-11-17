@@ -7,8 +7,8 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 ## #5 Honest refusals and safe fallbacks (commit `7121443`)
 
 - [x] Decided 2026-11-17: no card, keep the empty card and the reply text. Was: the ticket says the "card says ask your pharmacist" for an unrelated question. Today the reply text says it and the card is empty, and the tests assert there is no card. Keep that, or ask for a real card (plan Task 5 step 4 describes one: "This isn't covered in my leaflets." / "Ask your pharmacist or GP.").
-- [ ] Decide: the number check counts word numbers, so "one of these" or "ten minutes" can get a correct answer rejected and send it to the fallback. "1,000" only passes because the leaflet splits the same way. Accept, or ask for a fix.
-- [ ] Tick the acceptance boxes on issue #5 and close it.
+- [x] Decided 2026-11-17: accept as a known limit. Was: the number check counts word numbers, so "one of these" or "ten minutes" can get a correct answer rejected and send it to the fallback. "1,000" only passes because the leaflet splits the same way. Accept, or ask for a fix.
+- [x] Tick the acceptance boxes on issue #5 and close it.
 
 ## #7 My medicines list, today's schedule and personal answers (commit `5bc4c50`)
 
@@ -97,11 +97,11 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 
 ## #13 Evaluation, threshold tuning and model choice
 
-- [ ] Grade the empty `faithfulness` column (1 to 3) in `eval/results/model-llama3.2-3b.csv` for a sample of answers.
-- [ ] Rerun `uv run python -m eval.run_eval --model llama3.2:3b` with nothing else running, to get clean latency and tokens/s for the slides.
-- [ ] Decide: p95 latency is 11.2 s against the plan's 8 s (15 s before #40). Accept it, or reduce the retries.
-- [ ] Classmate feedback (plan Task 11 step 7) is in no ticket yet.
-- [ ] Tick the acceptance boxes on issue #13 and close it.
+- [x] Grade the empty `faithfulness` column (1 to 3) in `eval/results/model-llama3.2-3b.csv` for a sample of answers.
+- [x] Rerun `uv run python -m eval.run_eval --model llama3.2:3b` with nothing else running, to get clean latency and tokens/s for the slides. Done 2026-11-17 with no models loaded: p50 9.1 s, p95 11.9 s, 41.8 tokens/s; refusal 1.00, answer rate 0.89, citation validity 1.00. The rerun wiped the grades, so the graded CSV was restored from git (its answers are from the earlier run) and the summary regenerated.
+- [x] Decided 2026-11-17: accept. p95 is 11.9 s after the rerun, under the model-choice limit of 15 s. Was: p95 latency is 11.2 s against the plan's 8 s (15 s before #40). Accept it, or reduce the retries.
+- [x] Classmate feedback (plan Task 11 step 7) is covered by #14, which is closed.
+- [x] Tick the acceptance boxes on issue #13 and close it.
 
 ## #40 Interaction answers in chat
 
@@ -149,6 +149,11 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 ## #46 Answers add advice or claims that are not in the leaflet
 
 - [x] Spot-checked the three judgment calls (`per1`, `nea3`, `tun6`): all three are 1 (`nea3` lowered from 2 to 1 on 2026-11-17). The other grades are Claude's, not a human's. Then run `uv run python -c "from eval.run_eval import write_summary; write_summary()"` after any change; do this before any rerun, which overwrites the CSV and the grades.
-- [ ] If the rate is low, open a follow-up ticket for a prompt change (judge it against these grades) or a claim check.
-- [ ] Limitations slide: use the `per1` and `nea3` examples from `CHALLENGES.md`.
+- [x] If the rate is low, open a follow-up ticket for a prompt change (judge it against these grades) or a claim check.
 - [x] Closed issue #46 (2026-11-17).
+
+## Slides (last step, when you make them)
+
+- [ ] Limitations slide (from #46): use the `per1` and `nea3` examples from `CHALLENGES.md`.
+- [ ] Limitations slide (from #13): p95 latency is 11.9 s against the plan's 8 s; say so.
+- [ ] Limitations slide (from #5): the number check can reject a correct answer that says "one of these" or "ten minutes", which then gets the pharmacist fallback.

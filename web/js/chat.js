@@ -1,7 +1,7 @@
 import { Avatar } from "./avatar.js";
 import { startRecording } from "./voice.js";
 import { el, leafletLink } from "./dom.js";
-import { loadThread, saveThread, replyCard, medicinesTag, showSuggestions } from "./logic.js";
+import { loadThread, saveThread, clearThread, replyCard, medicinesTag, showSuggestions } from "./logic.js";
 
 // The MedMate view: ask by text or voice, show the reply. `meds()` gives the current medicines list
 // and `isShown()` says whether this view is the visible one (Space must not start the mic from the other view).
@@ -78,6 +78,7 @@ export function initChat(meds, isShown) {
     place(pending);
   };
   const show = (kind, answer) => add({ role: "medmate", kind, answer, sources: [] });
+  draw();  // restore the saved thread on load
   // Speaks the reply; if every TTS engine fails the caption is already on screen, so just stay silent.
   const speak = async (text) => {
     try {
@@ -120,7 +121,7 @@ export function initChat(meds, isShown) {
   });
   reset.addEventListener("click", () => {
     entries = [];
-    sessionStorage.removeItem("medmate.thread");
+    clearThread(sessionStorage);
     draw();
   });
 
@@ -165,7 +166,6 @@ export function initChat(meds, isShown) {
         return;
       }
       const { text } = await res.json();
-      // The transcript lands in the question box, as if typed, then is sent;
       // #heard is a hidden live region so screen readers still hear it.
       // A blank question gets the "didn't catch that" reply from /api/chat.
       if (text.trim()) {

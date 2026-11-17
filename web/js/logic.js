@@ -88,4 +88,8 @@ export function saveThread(storage, thread) {
   try { storage.setItem(THREAD_KEY, JSON.stringify(thread)); } catch {}
 }
 
+export function clearThread(storage) {
+  try { storage.removeItem(THREAD_KEY); } catch {}
+}
+
 export const showSuggestions = (thread) => thread.length === 0;

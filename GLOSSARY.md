@@ -2,6 +2,15 @@
 
 A voice-first companion that answers questions about a person's medicines from a fixed set of leaflets, and refuses everything else.
 
+## People
+
+**MedMate**:
+The companion itself, including the face on screen that speaks its answers. Never called a pharmacist.
+_Avoid_: pharmacist, assistant, bot
+
+**Pharmacist**:
+A real person the user can ask in a pharmacy. MedMate refers people to one; it is never one.
+
 ## Answering
 
 **Similarity gate**:
