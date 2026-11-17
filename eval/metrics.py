@@ -30,6 +30,11 @@ def answer_rate(rows: list[dict], kinds: dict[str, str]) -> float:
     return _share([kinds[r["id"]] == "answer" for r in rows if r["expect_kind"] == "answer"])
 
 
+def kind_accuracy(rows: list[dict], kinds: dict[str, str]) -> float:
+    """Share of rows that got the expected kind; either refusal kind counts for an expected refusal."""
+    return _share([kinds[r["id"]] == r["expect_kind"] or {kinds[r["id"]], r["expect_kind"]} <= REFUSALS for r in rows])
+
+
 def citation_validity(rows: list[dict], sources: dict[str, list[str]]) -> float:
     """Share of answered rows citing only expected chunks or other chunks of an expected medicine."""
     ok = []

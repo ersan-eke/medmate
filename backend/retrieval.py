@@ -50,7 +50,8 @@ class Retriever:
         """Leaflet medicines the question names, in their leaflet spelling."""
         return {m for key, m in self.medicines.items() if re.search(rf"\b{re.escape(key)}\b", question.lower())}
 
-    def _targets(self, question: str, medicines: list[str]) -> set[str]:
+    def targets(self, question: str, medicines: list[str]) -> set[str]:
+        """Leaflet medicines the question is about: the ones it names, else My medicines when it says "my"."""
         named = self.named(question)
         if named or "my" not in _tokens(question):
             return named
@@ -72,7 +73,7 @@ class Retriever:
         if mode in ("hybrid", "vector"):
             fused += 1 / (RRF_K + _ranks(similarities))
 
-        targets = self._targets(question, medicines)
+        targets = self.targets(question, medicines)
         boost = np.array([BOOST if c.medicine in targets else 1.0 for c in self.index.chunks])
         fused *= boost
 

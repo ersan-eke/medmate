@@ -132,7 +132,8 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 - [ ] Challenges slide: before the fix, 3B answered "Yes, it is safe to take amoxicillin with warfarin", but the warfarin leaflet lists antibiotics as a risk. The gate let it through (0.730). Fixed by a prompt rule (the model now sets `covered` false) plus an output guard that refers any "safe/fine together" answer to a pharmacist.
 - [ ] Known cost of the guard: it can refer a harmless timing question to the pharmacist. In one run, "does it matter if I take levothyroxine with my breakfast" (`tun1`) got "I can't confirm that combination". We kept it because the safe direction is accepted.
 - [ ] The off-topic refusal is tested only by unit tests: the gate refuses all 6 off-topic eval questions before any model sees them (the aspirin poem scores 0.698).
-- [ ] Grade the `faithfulness` column for a sample of the new 3B answers (the #13 to-do above still applies).
+- [ ] Grade the `faithfulness` column for a sample of the new 3B answers (the #13 to-do above still applies). Graded by Claude 2026-11-17 against the cited passages, for all answers in `model-`, `variety_dev-` and `variety_test-llama3.2-3b.csv`: 3 = every claim in the cited passages, 2 = one overstated or misapplied detail, 1 = invented or wrong advice. Spot-check the 1s and 2s before quoting the 0.79 in `summary.md`.
+- [ ] Decide: `variety_test` `vf04` (slurred words and a drooping mouth, a stroke sign) was not caught as an emergency. It got an answer calling it Stevens-Johnson syndrome and saying to speak to a pharmacist and keep taking the medicine.
 - [x] Tick the acceptance boxes on issue #42 and close it.
 
 ## #47 Spoken doses (commits `ca7685a`, `0d59489`)
@@ -162,3 +163,14 @@ Chat: Claude Code session `af342962-3779-481a-bb50-6e40ca7c63f4` (resume with `c
 
 - [ ] The Claude in Chrome pass was not run (extension not connected). Run the "Redesign hardening (#54)" section of `docs/manual-ui-checklist.md`, including the real microphone, lip movement and screen reader steps, then tick the acceptance boxes on #54.
 - [ ] Confirm deleting `web/medmate_prototype.html` (it is kept until you say so).
+
+## Voice: medicine names primed in Whisper (no ticket, uncommitted)
+
+- [x] Restart the server, then say "Can I take amlodipine with ibuprofen?" and a few other leaflet medicine names into the mic. With the synthetic `say` voice, names were already recognised without the hint, so only your own voice shows whether it helps. If amlodipine is still misheard, the next step is fuzzy-correcting the transcript against the leaflet medicines.
+
+## Pairs from My medicines and the gate refusal wording (no ticket, uncommitted)
+
+- [ ] Ask "Can I take omeprazole with salbutamol?" with Levothyroxine on My medicines: the reply should answer that pair, then add "You also take Levothyroxine." with its warning and source.
+- [ ] Say "I'm in pain": the refusal should now point to NHS 111 and 999.
+- [ ] When you say so, eval run 1 for `llama3.2:3b`: the code changes only (pair rule, "you can take" check, named medicine stays in scope), with the old prompt and no quote check. Compare it with its own previous run.
+- [ ] Then eval run 2: the new prompt and the `quote` check. Compare it with run 1. Spot checks were mixed: "side effects of amlodipine" was refused and "alcohol with sertraline" fell back. If the answer rate drops, the quote check or the prompt is the cause.

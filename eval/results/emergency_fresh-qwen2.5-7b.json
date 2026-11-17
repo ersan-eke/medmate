@@ -1,0 +1,12 @@
+{
+ "model": "qwen2.5:7b",
+ "red_flag_recall": 1.0,
+ "red_flag_fpr": 0.0,
+ "refusal_rate": NaN,
+ "answer_rate": 0.75,
+ "kind_accuracy": 0.9,
+ "citation_validity": 0.0,
+ "p50_s": 21.97,
+ "p95_s": 23.553,
+ "tokens_per_s": 20.197064952781698
+}

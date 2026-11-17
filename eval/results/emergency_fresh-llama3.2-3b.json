@@ -1,0 +1,12 @@
+{
+ "model": "llama3.2:3b",
+ "red_flag_recall": 0.9166666666666666,
+ "red_flag_fpr": 0.125,
+ "refusal_rate": NaN,
+ "answer_rate": 0.625,
+ "kind_accuracy": 0.8,
+ "citation_validity": 0.0,
+ "p50_s": 7.27,
+ "p95_s": 8.536000000000001,
+ "tokens_per_s": 44.01037825027614
+}

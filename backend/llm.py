@@ -63,7 +63,9 @@ class LlmAnswer(BaseModel):
     @classmethod
     def _drop_ids(cls, text: str) -> str:
         # Small models write passage ids into the text; their digits would trip the number check.
-        return re.sub(r"\s*\[[^\]]*#[^\]]*\]", "", text).strip()
+        # A trailing "Citations: [id], [id]" then leaves "Citations: ," behind, so that label goes too.
+        text = re.sub(r"\s*\[[^\]]*#[^\]]*\]", "", text)
+        return re.sub(r"\s*\b(citations?|sources?)\s*:[\s,.;]*$", "", text, flags=re.IGNORECASE).strip()
 
 
 # Every field is required of the model, or a small one leaves out the citations; the defaults only serve parsing.
@@ -71,8 +73,26 @@ ANSWER_SCHEMA = LlmAnswer.model_json_schema()
 ANSWER_SCHEMA["required"] = list(ANSWER_SCHEMA["properties"])
 
 
+def answer_schema(ids: list[str]) -> dict:
+    """ANSWER_SCHEMA with citations limited to the ids sent: the 3B model invents ids like "omeprazole#important"."""
+    citations = ANSWER_SCHEMA["properties"]["citations"] | {"items": {"type": "string", "enum": ids}}
+    return ANSWER_SCHEMA | {"properties": ANSWER_SCHEMA["properties"] | {"citations": citations}}
+
+
 class Triage(BaseModel):
-    urgent: bool
+    """One narrow yes/no per NHS 999 sign: the 3B model missed a stroke when asked for one overall judgement."""
+    chest_pain: bool
+    breathing: bool
+    stroke: bool
+    allergy: bool
+    overdose: bool
+    bleeding: bool
+    collapse: bool
+    self_harm: bool
+
+    @property
+    def urgent(self) -> bool:
+        return any(self.model_dump().values())
 
 
 TRIAGE_SCHEMA = Triage.model_json_schema()
@@ -120,7 +140,7 @@ def validate(raw: str, sent: dict[str, str], doses: str) -> LlmAnswer | str:
             return "You gave no citations. Cite the ids of the passages you used."
         if unsent := [i for i in answer.citations if i not in sent]:
             return f"These citations were not among the passages: {', '.join(unsent)}. Cite only the ids given."
-        allowed = {"999"} | numbers(doses) | numbers(" ".join(sent[i] for i in answer.citations))
+        allowed = {"999", "111"} | numbers(doses) | numbers(" ".join(sent[i] for i in answer.citations))
         if invented := sorted(numbers(shown_text(answer)) - allowed):
             return f"These numbers are not in the cited passages: {', '.join(invented)}. Use only numbers from them."
     return answer
@@ -132,7 +152,7 @@ def ask_llm(question: str, medicines: list[MedicineEntry], hits: list[Hit], gene
     doses = " ".join(m.dose for m in medicines)
     for _ in range(ATTEMPTS):
         try:
-            raw = generate(messages, ANSWER_SCHEMA)
+            raw = generate(messages, answer_schema(list(sent)))
         except Exception:  # Ollama down, slow or model missing: the page must still get an answer
             log.warning("chat call failed", exc_info=True)
             return None

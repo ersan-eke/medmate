@@ -1,4 +1,4 @@
-"""uv run python -m eval.run_eval --model llama3.2:3b [--retrieval-only]
+"""uv run python -m eval.run_eval --model llama3.2:3b [--retrieval-only | --set variety_dev]
 
 Needs Ollama running and data/index built. Writes to eval/results/.
 """
@@ -17,7 +17,7 @@ from backend.kb import Embed, Interaction, load_index, load_interactions, ollama
 from backend.llm import ollama_generate
 from backend.pipeline import ChatRequest, answer_question
 from backend.retrieval import MIN_SIMILARITY, Retriever
-from eval.metrics import (answer_rate, best_threshold, citation_validity, faithfulness_rate, gate_accuracy, hit_at_k, percentile, red_flag_stats,
+from eval.metrics import (answer_rate, best_threshold, citation_validity, kind_accuracy, faithfulness_rate, gate_accuracy, hit_at_k, percentile, red_flag_stats,
                           refusal_rate)
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -107,7 +107,7 @@ def full_run(rows: list[dict], retriever: Retriever, interactions: list[Interact
     # Only rows the answering model saw: gate refusals and table answers skip it, emergencies only triage.
     latencies = [o["latency_s"] for o in out if o["llm_called"] and o["kind"] != "emergency"]
     return {"red_flag_recall": recall, "red_flag_fpr": fpr, "refusal_rate": refusal_rate(rows, kinds),
-            "answer_rate": answer_rate(rows, kinds),
+            "answer_rate": answer_rate(rows, kinds), "kind_accuracy": kind_accuracy(rows, kinds),
             "citation_validity": citation_validity(rows, answered), "p50_s": percentile(latencies, 50),
             "p95_s": percentile(latencies, 95), "tokens_per_s": speed(model)}
 
@@ -141,14 +141,25 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True)
     parser.add_argument("--retrieval-only", action="store_true")
+    # Another question file, e.g. variety_dev: only the model run, to <set>-<model>.*, so the gate tuning and the
+    # summary keep coming from questions.jsonl.
+    parser.add_argument("--set")
     args = parser.parse_args()
+    model_tag = args.model.replace(":", "-").replace("/", "-")
+    if args.set:
+        rows = load_rows(ROOT / "eval" / f"{args.set}.jsonl")
+        retriever = Retriever(load_index(ROOT / "data" / "index"), ollama_embed())
+        tag = f"{args.set}-{model_tag}"
+        metrics = {"model": args.model, **full_run(rows, retriever, load_interactions(ROOT / "data" / "interactions.csv"), args.model, tag)}
+        (RESULTS / f"{tag}.json").write_text(json.dumps(metrics, indent=1))
+        return
     rows = load_rows(ROOT / "eval" / "questions.jsonl")
     retriever = Retriever(load_index(ROOT / "data" / "index"), ollama_embed())
     RESULTS.mkdir(exist_ok=True)
     heldout = load_rows(ROOT / "eval" / "heldout.jsonl")
     (RESULTS / "retrieval.json").write_text(json.dumps(retrieval_section(rows, heldout, retriever)))
     if not args.retrieval_only:
-        tag = "model-" + args.model.replace(":", "-").replace("/", "-")
+        tag = "model-" + model_tag
         metrics = {"model": args.model, **full_run(rows, retriever, load_interactions(ROOT / "data" / "interactions.csv"), args.model, tag)}
         (RESULTS / f"{tag}.json").write_text(json.dumps(metrics, indent=1))
     write_summary()

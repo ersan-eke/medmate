@@ -45,7 +45,7 @@ def spies(fake_embed):
 
 @pytest.fixture
 def triage(spies):
-    return Counting(lambda m, s: '{"urgent": false}')
+    return Counting(lambda m, s: '{"chest_pain": false, "breathing": false, "stroke": false, "allergy": false, "overdose": false, "bleeding": false, "collapse": false, "self_harm": false}')
 
 
 @pytest.fixture
@@ -89,6 +89,23 @@ def test_pair_completed_by_medicine_list(client, spies):
     assert [s.calls for s in spies] == [0, 0]
 
 
+def test_list_pair_follows_the_answer_to_the_asked_medicines(client, spies, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    body = chat(client, "Can I take metformin with amoxicillin?", [{"name": "warfarin"}]).json()
+    assert body["kind"] == "answer"
+    assert body["answer"] == f"Take it with food. You also take Warfarin. {PAIR_ANSWER}"
+    assert [s["id"] for s in body["sources"]] == [SIDE_EFFECTS, METFORMIN, "warfarin#other-medicines"]
+    assert spies[1].calls == 1  # the asked pair went to the model
+
+
+def test_list_pair_follows_a_refusal_without_repeating_the_advice(client, spies, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    spies[1].fn = lambda m, s: reply(answer="Yes, they are safe together.")
+    body = chat(client, "Can I take metformin with amoxicillin?", [{"name": "warfarin"}]).json()
+    assert body["kind"] == "not_covered"
+    assert body["answer"] == f"{UNCONFIRMED_COMBINATION} You also take Warfarin. Ask first."
+
+
 @pytest.mark.parametrize("q, medicines", [
     ("When should I take metformin?", [{"name": "Warfarin"}]),  # not about combining
     ("What is warfarin for? What is metformin for?", []),  # no combining word
@@ -115,7 +132,7 @@ ELEPHANT = "it feels like an elephant is sitting on me"
 
 def test_urgent_triage_is_an_emergency_before_retrieval(client, spies, triage):
     assert chat(client, ELEPHANT).json()["kind"] == "not_covered"  # below the retrieval gate, no rule matches
-    triage.fn = lambda m, s: '{"urgent": true}'
+    triage.fn = lambda m, s: '{"chest_pain": false, "breathing": false, "stroke": true, "allergy": false, "overdose": false, "bleeding": false, "collapse": false, "self_harm": false}'
     before = [s.calls for s in spies]
     body = chat(client, ELEPHANT).json()
     assert body["kind"] == "emergency" and body["answer"] == EMERGENCY
@@ -123,7 +140,7 @@ def test_urgent_triage_is_an_emergency_before_retrieval(client, spies, triage):
     assert [s.calls for s in spies] == before  # no embedder, no answer call
 
 
-@pytest.mark.parametrize("raw", ["not json", "{}", '{"urgent": "maybe"}'])
+@pytest.mark.parametrize("raw", ["not json", "{}", '{"stroke": "maybe"}'])
 def test_bad_triage_reply_continues(client, triage, monkeypatch, raw):
     monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
     triage.fn = lambda m, s: raw
@@ -201,9 +218,11 @@ def test_llm_not_covered_and_off_topic(client, spies, monkeypatch):
     assert body["kind"] == "not_covered" and body["answer"] == NOT_COVERED
     assert body["llm_called"] is True and body["sources"] == [] and body["card"] is None
     spies[1].fn = lambda m, s: reply(in_scope=False, citations=[])
-    body = chat(client, "Should I take metformin before or after dinner?").json()
+    body = chat(client, "Should I take it before or after dinner?").json()
     assert body["kind"] == "off_topic" and body["answer"] == OFF_TOPIC
     assert body["card"] is None and body["sources"] == []
+    # Naming a leaflet medicine keeps the question in scope.
+    assert chat(client, "Should I take metformin before or after dinner?").json()["answer"] == NOT_COVERED
 
 
 
@@ -213,6 +232,12 @@ def test_model_calling_a_combination_safe_is_referred(client, spies, monkeypatch
     body = chat(client, "Can I take metformin with turmeric?").json()
     assert body["kind"] == "not_covered" and body["answer"] == UNCONFIRMED_COMBINATION
     assert body["sources"] == [] and body["card"] is None
+
+def test_question_about_a_leaflet_medicine_skips_the_gate(client, spies):
+    # Far below the gate with the fake embedder, but about Metformin: the model decides.
+    assert chat(client, "oh dear my diabetes tablet, what now", [{"name": "Metformin"}]).json()["kind"] == "answer"
+    assert spies[1].calls == 1
+
 
 def test_unrelated_question_not_covered(client, spies):
     body = chat(client, "what is the capital of France").json()
@@ -337,7 +362,7 @@ def test_failures_and_refusals_are_logged(client, spies, monkeypatch, caplog):
     assert any("not_covered" in m for m in refusals) and not any(Q in m for m in refusals)
 
 
-@pytest.mark.parametrize("flags,kind", [({"covered": False}, "not_covered"), ({"in_scope": False, "covered": False}, "off_topic")])
+@pytest.mark.parametrize("flags,kind", [({"covered": False}, "not_covered"), ({"in_scope": False, "covered": False}, "not_covered")])
 def test_bare_refusal_is_a_refusal_after_one_call(client, spies, monkeypatch, flags, kind):
     monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
     spies[1].fn = lambda m, s: json.dumps({"in_scope": True, "covered": True} | flags)

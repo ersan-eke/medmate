@@ -2,7 +2,7 @@ import json
 
 from types import SimpleNamespace
 
-from backend.llm import (ANSWER_SCHEMA, TIMEOUT_SECONDS, WARMUP_TIMEOUT_SECONDS, TRIAGE_SCHEMA, TRIAGE_TIMEOUT_SECONDS, MedicineEntry,
+from backend.llm import (ANSWER_SCHEMA, answer_schema, TIMEOUT_SECONDS, WARMUP_TIMEOUT_SECONDS, TRIAGE_SCHEMA, TRIAGE_TIMEOUT_SECONDS, MedicineEntry,
                          build_messages, ollama_generate, validate)
 from backend.kb import Chunk
 from backend.retrieval import TOP_K, Hit
@@ -187,3 +187,15 @@ def test_generate_timeout_can_be_raised_for_warm_up(monkeypatch):
     monkeypatch.setattr("ollama.Client", FakeClient)
     assert ollama_generate("m", timeout=WARMUP_TIMEOUT_SECONDS)([], ANSWER_SCHEMA) == str(WARMUP_TIMEOUT_SECONDS)
     assert WARMUP_TIMEOUT_SECONDS > TIMEOUT_SECONDS
+
+
+
+def test_citations_label_left_in_the_answer_is_dropped():
+    answer = validate(raw(answer="Take it with meals. Citations: [metformin#how-and-when-to-take-it],"), SENT, "")
+    assert answer.answer == "Take it with meals."
+
+def test_answer_schema_limits_citations_to_the_ids_sent():
+    schema = answer_schema(list(SENT))
+    assert schema["properties"]["citations"]["items"]["enum"] == list(SENT)
+    assert schema["properties"]["citations"]["maxItems"] == TOP_K
+    assert "enum" not in ANSWER_SCHEMA["properties"]["citations"]["items"]  # the shared schema is untouched

@@ -9,6 +9,7 @@ from eval.metrics import (
     faithfulness_rate,
     gate_accuracy,
     hit_at_k,
+    kind_accuracy,
     percentile,
     red_flag_stats,
     refusal_rate,
@@ -121,3 +122,10 @@ def test_expected_chunks_exist():
     ids = {c["id"] for c in json.loads(path.read_text())}
     for row in load_rows(ROOT / "eval/questions.jsonl") + load_rows(ROOT / "eval/heldout.jsonl"):
         assert set(row["expect_chunks"]) <= ids, row["id"]
+
+
+def test_kind_accuracy_treats_both_refusal_kinds_alike():
+    rows = [{"id": "a", "expect_kind": "answer"}, {"id": "b", "expect_kind": "not_covered"},
+            {"id": "c", "expect_kind": "off_topic"}, {"id": "d", "expect_kind": "emergency"}]
+    kinds = {"a": "answer", "b": "off_topic", "c": "not_covered", "d": "not_covered"}
+    assert kind_accuracy(rows, kinds) == 0.75
