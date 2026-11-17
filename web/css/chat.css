@@ -58,36 +58,6 @@
 @media (prefers-reduced-motion: reduce) { .face-svg, .status-dot { animation: none !important; } }
 /* The pill is the live region, so under 1024 px it stays in the accessibility tree without being drawn. */
 @media (max-width: 63.99em) { .status-pill { display: flex; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; padding: 0; border: 0; white-space: nowrap; } }
-#mic { min-height: 3.5rem; } }
-.counter { display: grid; gap: .9rem; justify-items: center; }
-.hatch {
-  position: relative;
-  width: min(100%, 11rem);
-  padding: .4rem .4rem 0;
-  border-radius: 50% 50% .3rem .3rem / 40% 40% .3rem .3rem;
-  background: var(--border-stone);
-}
-/* On a phone the hatch shrinks so the mic and the reply stay near the top. */
-@media (max-width: 39.99em) { .hatch { width: 7rem; } }
-.hatch canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1;
-  border-radius: 50% 50% 0 0 / 40% 40% 0 0;
-  background: var(--blue-tint);
-}
-/* The counter ledge the pharmacist leans on. */
-.hatch::after {
-  content: "";
-  position: absolute;
-  left: -.8rem;
-  right: -.8rem;
-  bottom: -.6rem;
-  height: .6rem;
-  border-radius: .3rem;
-  background: var(--blue-primary);
-}
 #mic {
   display: flex;
   flex-direction: column;
