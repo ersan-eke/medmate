@@ -121,15 +121,15 @@ MedMate is a single-page web app with two top-level views—**MedMate** (ask a q
 
 ```mermaid
 flowchart TD
-    Q["🎙️ Voice or Text Question"] --> E{"1. Emergency Check<br/>(NHS 999 red-flag signs)"}
-    E -- "Match" --> E999["🚨 Reply with 999 emergency message"]
-    E -- "Clear" --> G{"2. Similarity Gate<br/>(Close to a leaflet or medicine?)"}
+    Q["🎙️ Voice or Text Question"] --> E["<b>1. Emergency Check</b> — NHS 999 red-flag signs"]
+    E -- "Match" --> E999["🚨 Reply with 999 message"]
+    E -- "Clear" --> G["<b>2. Similarity Gate</b> — Close to a leaflet or medicine?"]
     G -- "Off-topic" --> REF["🛑 Refuse question"]
-    G -- "In-scope" --> R["3. Hybrid Retrieval<br/>(BM25 + Vector search)"]
-    R --> L["4. Grounded Answer<br/>(llama3.2:3b with passage citations)"]
-    L --> N{"5. Number Check<br/>(Numbers match passages / doses / 999?)"}
-    N -- "Unverified number" --> L
-    N -- "Verified" --> S["6. Speech & Avatar<br/>(Kokoro TTS + Web Audio lip-sync)"]
+    G -- "In-scope" --> R["<b>3. Hybrid Retrieval</b> — BM25 + Vector search"]
+    R --> L["<b>4. Grounded Answer</b> — llama3.2:3b with citations"]
+    L --> N["<b>5. Number Check</b> — Matches passages, doses, or 999?"]
+    N -- "Unverified" --> L
+    N -- "Verified" --> S["<b>6. Speech & Avatar</b> — Kokoro TTS + Web Audio lip-sync"]
 ```
 
 1. **Emergency check.** Matches fixed phrases for each NHS 999 sign, then asks the model (`yes`/`no`) for each sign. Any match immediately returns the 999 message.
