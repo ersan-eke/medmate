@@ -41,6 +41,11 @@ def citation_validity(rows: list[dict], sources: dict[str, list[str]]) -> float:
     return _share(ok)
 
 
+def faithfulness_rate(grades: list[str]) -> float:
+    """Share of the hand-graded answers (1 to 3) that scored 3; blank cells are not graded yet."""
+    return _share([g.strip() == "3" for g in grades if g.strip()])
+
+
 def percentile(values: list[float], p: float) -> float:
     """Linear interpolation between the closest ranks."""
     if not values:

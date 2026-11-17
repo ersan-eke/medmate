@@ -6,6 +6,7 @@ from eval.metrics import (
     answer_rate,
     best_threshold,
     citation_validity,
+    faithfulness_rate,
     gate_accuracy,
     hit_at_k,
     percentile,
@@ -89,6 +90,14 @@ def test_citation_validity():
     rows = [{"id": "a", "expect_chunks": ["metformin#how"]}, {"id": "b", "expect_chunks": ["warfarin#how"]}]
     sources = {"a": ["metformin#side-effects"], "b": ["aspirin#what"]}
     assert citation_validity(rows, sources) == 0.5
+
+
+def test_faithfulness_rate_is_the_share_of_graded_answers_scoring_3():
+    assert faithfulness_rate(["3", "2", "", "3", "1"]) == 0.5  # the blank is not graded yet
+
+
+def test_faithfulness_rate_is_nan_before_any_grade():
+    assert math.isnan(faithfulness_rate(["", ""]))
 
 
 def test_question_file_covers_every_category():

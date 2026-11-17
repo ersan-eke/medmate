@@ -26,6 +26,10 @@ _Avoid_: in-KB question, covered question
 The share of answerable questions that got a real answer, not a refusal or a fallback.
 _Avoid_: coverage, recall
 
+**Faithful answer**:
+An answer whose every claim and piece of advice is stated by the passages it cites.
+_Avoid_: accurate, correct
+
 **Tuning set**:
 The evaluation questions the similarity gate's threshold is chosen on.
 _Avoid_: training set, calibration set

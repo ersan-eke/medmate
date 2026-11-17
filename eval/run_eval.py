@@ -17,7 +17,7 @@ from backend.kb import Embed, Interaction, load_index, load_interactions, ollama
 from backend.llm import ollama_generate
 from backend.pipeline import ChatRequest, answer_question
 from backend.retrieval import MIN_SIMILARITY, Retriever
-from eval.metrics import (answer_rate, best_threshold, citation_validity, gate_accuracy, hit_at_k, percentile, red_flag_stats,
+from eval.metrics import (answer_rate, best_threshold, citation_validity, faithfulness_rate, gate_accuracy, hit_at_k, percentile, red_flag_stats,
                           refusal_rate)
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -125,6 +125,10 @@ def write_summary() -> None:
         m = json.loads(path.read_text())
         lines.append(f"| {m['model']} | {m['red_flag_recall']:.2f} | {m['red_flag_fpr']:.2f} | {m['refusal_rate']:.2f} "
                      f"| {m.get('answer_rate', float('nan')):.2f} | {m['citation_validity']:.2f} | {m['p50_s']:.1f} | {m['p95_s']:.1f} | {m['tokens_per_s']:.1f} |")
+    graded = {path.stem.removeprefix("model-"): [r["faithfulness"] for r in csv.DictReader(path.open(encoding="utf-8"))]
+              for path in sorted(RESULTS.glob("model-*.csv"))}
+    lines += ["", "Faithful answers (graded 3 of 3 by hand, blank until graded; not part of the model choice): "
+              + ", ".join(f"{m} {faithfulness_rate(g):.2f} ({sum(bool(x.strip()) for x in g)} graded)" for m, g in graded.items())]
     lines += ["", "Model choice: red-flag recall and refusal must be 1.00 and p95 under 15 s; then the highest answer rate; "
               "then the lowest p95.",
               "Off-topic questions are all refused by the similarity gate before a model sees them, so the refusal "
