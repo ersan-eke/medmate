@@ -93,3 +93,13 @@ export function clearThread(storage) {
 }
 
 export const showSuggestions = (thread) => thread.length === 0;
+
+export const countLabel = (n) => `${n} ${n === 1 ? "medicine" : "medicines"}`;
+
+export const todayLabel = (date) => date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+
+// A list with `item` put back at `index` (clamped when the list has shrunk since).
+export function reinsertAt(list, item, index) {
+  const at = Math.min(Math.max(0, index), list.length);
+  return [...list.slice(0, at), item, ...list.slice(at)];
+}

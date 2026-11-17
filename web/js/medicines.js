@@ -1,4 +1,4 @@
-import { TIMES, buildSchedule, findInteractions, loadMedicines, saveMedicines } from "./logic.js";
+import { TIMES, buildSchedule, countLabel, findInteractions, loadMedicines, reinsertAt, saveMedicines, todayLabel } from "./logic.js";
 import { el, leafletLink } from "./dom.js";
 
 // The My medicines view: the form, the list, interaction warnings and Today.
@@ -26,7 +26,22 @@ export function initMedicines() {
     saveButton.textContent = "Add medicine";
     cancelButton.hidden = true;
   };
+  const undo = document.getElementById("undo");
+  let undoTimer;
+  const hideUndo = () => { clearTimeout(undoTimer); undo.replaceChildren(); };
+  const showUndo = (removed, index) => {
+    clearTimeout(undoTimer);
+    undo.replaceChildren(`Removed ${removed.name}.`, button("Undo", `Undo removing ${removed.name}`, () => {
+      hideUndo();
+      medicines = reinsertAt(medicines, removed, index);
+      saveMedicines(localStorage, medicines);
+      render();
+    }));
+    undoTimer = setTimeout(hideUndo, 6000);
+  };
+  document.getElementById("today-date").textContent = todayLabel(new Date());
   const render = () => {
+    document.getElementById("med-count").textContent = countLabel(medicines.length);
     document.getElementById("warnings").replaceChildren(...findInteractions(medicines, interactions).map((i) => {
       const p = el("p");
       p.append(el("strong", { textContent: `${i.a} + ${i.b}` }), el("br"), i.warning, el("br"), "Source: ", leafletLink(i.source));
@@ -55,6 +70,7 @@ export function initMedicines() {
           saveMedicines(localStorage, medicines);
           resetForm();
           render();
+          showUndo(m, i);
         }),
       );
       li.append(details, actions);

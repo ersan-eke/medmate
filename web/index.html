@@ -58,7 +58,10 @@
   </section>
 </main>
 <section id="view-meds" class="view mine" aria-labelledby="meds-title" hidden>
-  <h2 id="meds-title">My medicines</h2>
+  <div class="mine-head">
+    <h2 id="meds-title">My medicines</h2>
+    <span id="med-count" class="badge"></span>
+  </div>
   <form id="med-form">
     <label for="med-name">Medicine</label>
     <select id="med-name" required></select>
@@ -77,10 +80,11 @@
     <button id="med-cancel" type="button" hidden>Cancel</button></p>
   </form>
   <div class="mine-list">
+    <div id="undo" role="status"></div>
     <ul id="meds"></ul>
     <div id="warnings"></div>
     <section id="today" aria-labelledby="today-title">
-      <h2 id="today-title">Today</h2>
+      <h2 id="today-title">Today <span id="today-date"></span></h2>
       <div id="schedule"></div>
     </section>
   </div>

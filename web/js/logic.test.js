@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildSchedule, mouthFrame, findInteractions, loadMedicines, saveMedicines,
   replyCard, medicinesTag, loadThread, saveThread, showSuggestions,
+  countLabel, todayLabel, reinsertAt,
 } from "./logic.js";
 
 const KEY = "medmate.medicines";
@@ -142,4 +143,18 @@ test("a blocked store does not stop saving or loading", () => {
 test("suggestions show only for an empty thread", () => {
   assert.equal(showSuggestions([]), true);
   assert.equal(showSuggestions([{ role: "user", text: "hi" }]), false);
+});
+
+test("the count reads naturally for none, one and many", () => {
+  assert.deepEqual([0, 1, 3].map(countLabel), ["0 medicines", "1 medicine", "3 medicines"]);
+});
+
+test("today's date is written out in full", () => {
+  assert.equal(todayLabel(new Date(2026, 10, 17)), "Tuesday 17 November");
+});
+
+test("an undone medicine goes back to its old position, clamped to the list", () => {
+  assert.deepEqual(reinsertAt(["a", "c"], "b", 1), ["a", "b", "c"]);
+  assert.deepEqual(reinsertAt(["a"], "b", 5), ["a", "b"]);
+  assert.deepEqual(reinsertAt([], "b", 0), ["b"]);
 });
