@@ -31,7 +31,7 @@ Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
 
 Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
 
-- [ ] Hold "Hold to talk", ask "When should I take metformin?", release: the question appears in full in the question box, "You asked about ..." is spoken, then it is sent and the answer is spoken with a card and sources
+- [ ] Hold "Hold to talk", ask "When should I take metformin?", release: the question appears in full as your bubble in the thread, "You asked about ..." is spoken, then it is sent and the answer is spoken with a card and sources
 - [x] Space on the focused mic button starts recording, Space again stops it
 - [x] Right after the page loads (nothing focused), Space starts recording and Space again stops it
 - [x] With focus in the question box, the Dose or Note box, a checkbox or another button, Space does its usual job and does not start recording

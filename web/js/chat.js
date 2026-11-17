@@ -120,6 +120,7 @@ export function initChat(meds, isShown) {
     if (example) ask(example.textContent);
   });
   reset.addEventListener("click", () => {
+    avatar.stop();
     entries = [];
     clearThread(sessionStorage);
     draw();
