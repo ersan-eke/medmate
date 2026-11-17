@@ -1,39 +1,83 @@
 import { Avatar } from "./avatar.js";
 import { startRecording } from "./voice.js";
 import { el, leafletLink } from "./dom.js";
+import { loadThread, saveThread, replyCard, medicinesTag, showSuggestions } from "./logic.js";
 
 // The MedMate view: ask by text or voice, show the reply. `meds()` gives the current medicines list
 // and `isShown()` says whether this view is the visible one (Space must not start the mic from the other view).
 export function initChat(meds, isShown) {
-  const answer = document.getElementById("answer");
-  const sources = document.getElementById("sources");
-  const card = document.getElementById("card");
-  const reply = document.getElementById("reply");
-  const replyTitle = document.getElementById("reply-title");
+  const thread = document.getElementById("thread");
+  const empty = document.getElementById("empty");
   const avatar = new Avatar(document.getElementById("avatar"));
-  // Every reply kind but a plain answer gets a visible title (and an icon in CSS), so meaning never rests on colour alone.
-  const TITLES = {
-    loading: "Looking in your leaflets",
-    emergency: "Call 999 now",
-    not_covered: "Not in my leaflets",
-    off_topic: "Medicines only",
-    fallback: "Check with your pharmacist",
-    not_heard: "Let's try again",
-    type_instead: "Please type instead",
-    error: "Let's try again",
+  let entries = loadThread(sessionStorage);
+  let pending = null;  // the "One moment…" card while a request is out
+
+  // A section with no text shows no heading.
+  const section = (title, items, cls = "") => {
+    items = [].concat(items).filter((t) => t && t.trim());
+    if (!items.length) return [];
+    const sec = el("section", { className: cls });
+    const ul = el("ul");
+    ul.append(...items.map((t) => el("li", { textContent: t })));
+    sec.append(el("h2", { textContent: title }), ul);
+    return [sec];
   };
-  // Shows a new reply and clears the previous answer's card and sources.
-  const show = (kind, text) => {
-    reply.dataset.kind = kind;
-    replyTitle.textContent = TITLES[kind] ?? "";
-    answer.textContent = text;
-    answer.className = kind;
-    card.replaceChildren();
-    sources.replaceChildren();
-    reply.classList.remove("print");
-    void reply.offsetWidth;  // restart the print-out animation
-    reply.classList.add("print");
+  const replyNode = (r) => {
+    const { tone, title, icon } = replyCard(r.kind);
+    const node = el("article", { className: "label msg medmate" });
+    node.dataset.kind = r.kind;
+    node.dataset.tone = tone;
+    node.dataset.icon = icon;
+    node.append(el("p", { className: "label-title", textContent: title }), el("div", { className: "answer", textContent: r.answer }));
+    const cardSections = r.card ? [
+      ...section("Summary", r.card.summary),
+      ...section("What to do", r.card.what_to_do),
+      ...section("Get help if", r.card.get_help_if, "help"),
+    ] : [];
+    if (cardSections.length) node.append(el("div", { className: "card" }, cardSections));
+    if (r.sources?.length) {
+      const list = el("ul");
+      list.append(...r.sources.map((s) => {
+        const li = el("li");
+        li.append(leafletLink(s));
+        return li;
+      }));
+      const box = el("div", { className: "sources" });
+      box.append(el("p", { className: "sources-title", textContent: "From the NHS leaflets" }), list);
+      const tag = medicinesTag(r.sources, meds());
+      if (tag) box.append(el("p", { className: "tag", textContent: tag }));
+      node.append(box);
+    }
+    return node;
   };
+  const entryNode = (e) => (e.role === "user" ? el("div", { className: "msg user", textContent: e.text }) : replyNode(e));
+  // Puts a node at the end of the thread and brings it into view; the new reply "prints out".
+  const place = (node) => {
+    thread.append(node);
+    node.classList.add("print");
+    thread.scrollTop = thread.scrollHeight;
+  };
+  const draw = () => {
+    pending = null;
+    thread.replaceChildren(empty, ...entries.map(entryNode));
+    empty.hidden = !showSuggestions(entries);
+    thread.scrollTop = thread.scrollHeight;
+  };
+  const add = (entry) => {
+    entries.push(entry);
+    saveThread(sessionStorage, entries);
+    empty.hidden = !showSuggestions(entries);
+    pending?.remove();
+    pending = null;
+    place(entryNode(entry));
+  };
+  // A waiting card has no entry: it is never saved, and the real reply replaces it.
+  const wait = (text) => {
+    pending?.remove();
+    pending = replyNode({ kind: "loading", answer: text });
+    place(pending);
+  };
+  const show = (kind, answer) => add({ role: "medmate", kind, answer, sources: [] });
   // Speaks the reply; if every TTS engine fails the caption is already on screen, so just stay silent.
   const speak = async (text) => {
     try {
@@ -49,12 +93,13 @@ export function initChat(meds, isShown) {
   const heard = document.getElementById("heard");
   const input = document.getElementById("q");
   const send = document.getElementById("send");
+  const reset = document.getElementById("reset");
   let busy = false;  // one request at a time: a second Send or recording is ignored until this one ends
   const exclusive = async (fn) => {
     if (busy) return;
     busy = true;
-    send.disabled = true;
-    try { await fn(); } finally { busy = false; send.disabled = false; }
+    send.disabled = reset.disabled = true;
+    try { await fn(); } finally { busy = false; send.disabled = reset.disabled = false; }
   };
   const ask = (question) => exclusive(() => { heard.textContent = ""; return askQuestion(question); });
   document.getElementById("form").addEventListener("submit", (e) => {
@@ -69,11 +114,14 @@ export function initChat(meds, isShown) {
     }
   });
   // The example questions in the empty state ask themselves.
-  answer.addEventListener("click", (e) => {
+  empty.addEventListener("click", (e) => {
     const example = e.target.closest(".example");
-    if (!example) return;
-    input.value = example.textContent;
-    ask(example.textContent);
+    if (example) ask(example.textContent);
+  });
+  reset.addEventListener("click", () => {
+    entries = [];
+    sessionStorage.removeItem("medmate.thread");
+    draw();
   });
 
   const mic = document.getElementById("mic");
@@ -106,7 +154,7 @@ export function initChat(meds, isShown) {
     mic.textContent = "Hold to talk";
     exclusive(async () => {
       avatar.setState("thinking");
-      show("loading", "Working out what you said…");
+      wait("Working out what you said…");
       const body = new FormData();
       body.append("audio", await stop(), "question.webm");
       const res = await fetch("/api/transcribe", { method: "POST", body }).catch(() => null);
@@ -119,7 +167,6 @@ export function initChat(meds, isShown) {
       const { text } = await res.json();
       // The transcript lands in the question box, as if typed, then is sent;
       // #heard is a hidden live region so screen readers still hear it.
-      input.value = text;
       // A blank question gets the "didn't catch that" reply from /api/chat.
       if (text.trim()) {
         heard.textContent = `You asked: ${text}`;
@@ -146,7 +193,10 @@ export function initChat(meds, isShown) {
   async function askQuestion(question) {
     avatar.stop();
     avatar.setState("thinking");
-    show("loading", "One moment…");
+    input.value = "";
+    // A blank question gets the "didn't catch that" reply without a bubble of its own.
+    if (question.trim()) add({ role: "user", text: question });
+    wait("One moment…");
     let data;
     try {
       const res = await fetch("/api/chat", {
@@ -161,27 +211,7 @@ export function initChat(meds, isShown) {
       show("error", "Sorry, something went wrong. Please try again.");
       return;
     }
-    show(data.kind, data.answer);
-    // A section with no text shows no heading.
-    const section = (title, items, cls = "") => {
-      items = [].concat(items).filter((t) => t && t.trim());
-      if (!items.length) return [];
-      const sec = el("section", { className: cls });
-      const ul = el("ul");
-      ul.append(...items.map((t) => el("li", { textContent: t })));
-      sec.append(el("h2", { textContent: title }), ul);
-      return [sec];
-    };
-    card.replaceChildren(...(data.card ? [
-      ...section("Summary", data.card.summary),
-      ...section("What to do", data.card.what_to_do),
-      ...section("Get help if", data.card.get_help_if, "help"),
-    ] : []));
-    sources.replaceChildren(...data.sources.map((s) => {
-      const li = el("li");
-      li.append(leafletLink(s));
-      return li;
-    }));
+    add({ role: "medmate", kind: data.kind, answer: data.answer, card: data.card, sources: data.sources });
     await speak(data.answer);
   }
 }

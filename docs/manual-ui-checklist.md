@@ -31,7 +31,7 @@ Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
 
 Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
 
-- [x] Hold "Hold to talk", ask "When should I take metformin?", release: "You asked: ..." shows and is spoken, then the answer is spoken with a card and sources
+- [ ] Hold "Hold to talk", ask "When should I take metformin?", release: the question appears in full in the question box, "You asked about ..." is spoken, then it is sent and the answer is spoken with a card and sources
 - [x] Space on the focused mic button starts recording, Space again stops it
 - [x] Right after the page loads (nothing focused), Space starts recording and Space again stops it
 - [x] With focus in the question box, the Dose or Note box, a checkbox or another button, Space does its usual job and does not start recording
@@ -54,6 +54,8 @@ Run `uv run uvicorn --factory backend.app:default_app` in Chrome. Check each ite
 
 - [x] The red "In an emergency call 999" strip stays at the top while scrolling, and on a phone tapping 999 offers to call
 - [x] No sideways scrolling at 360 px, even at the largest text size
+- [ ] On a laptop screen at the smallest text size, the first screen shows the portrait, the mic, the question box and the reply, and My medicines starts only when you scroll down
+- [ ] In the question box, Enter sends the question and a long question wraps onto the next line instead of scrolling sideways
 - [x] Before any question, the reply label shows a greeting and three example questions; pressing one asks it
 - [x] While waiting, the label says "Looking in your leaflets" with "One moment…", and the old card and sources are gone
 - [x] A normal answer prints out as a white label with the card under it and "From the NHS leaflets" links along the bottom
@@ -62,6 +64,18 @@ Run `uv run uvicorn --factory backend.app:default_app` in Chrome. Check each ite
 - [x] Holding the mic turns the button white with a green border, it reads "Listening…" and a ring pulses; with reduced motion turned on, the ring is still but visible
 - [x] Two medicines that interact (Warfarin and Ibuprofen) show an amber warning with a triangle and a "Source: Medicine › Section" link
 - [x] Today shows one pill-box compartment per time of day that has a dose, each with its name on a coloured lid; with no doses it says "No doses added yet."
-- [x] With no medicines, My medicines says "No medicines yet. Add yours above so I can answer about them."
+- [x] With no medicines, My medicines says "No medicines yet. Add yours here so I can answer about them."
 - [x] Keyboard only: Tab reaches 999, Text size, the mic, the question box, Send, the example questions, the links, and every medicine control in that order, and the focus ring is always visible
 - [x] The page works with the network off after the first load (font is served from `web/fonts/`)
+
+## Chat thread (#49)
+
+Not yet run in a browser. Run `uv run uvicorn --factory backend.app:default_app` in Chrome.
+
+- [ ] Questions and replies build up as a thread; only the thread scrolls and the question box stays at the bottom, and the newest message is in view
+- [ ] Shift+Enter adds a line, Enter sends
+- [ ] The three suggestions are outlined, unfilled bubbles on the right; tapping one sends it, and they vanish after the first question
+- [ ] Each reply kind: answer (blue, "From your leaflets"), emergency (red "Call 999 now"), the rest amber with their titles; every title has an icon
+- [ ] An answer shows its NHS links and "In your medicines" (Metformin on the list) or "Not in your medicines"; a reply without sources shows no tag
+- [ ] Reload keeps the thread; a new tab starts empty; Reset chat empties it and brings the suggestions back
+- [ ] In DevTools set `sessionStorage["medmate.thread"]` to `{bad` and reload: the page loads with an empty thread

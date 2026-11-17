@@ -41,3 +41,51 @@ export function findInteractions(list, interactions) {
 export function mouthFrame(rms) {
   return rms < 0.02 ? "closed" : rms < 0.08 ? "half" : "open";
 }
+
+// How each reply kind is drawn: card tone, visible title and icon name (meaning never rests on colour alone).
+// The page styles `data-tone` and `data-icon`; an unknown kind from a newer server is shown like an error.
+const CARDS = {
+  answer: { tone: "answer", title: "From your leaflets", icon: "doc" },
+  emergency: { tone: "emergency", title: "Call 999 now", icon: "phone" },
+  not_covered: { tone: "amber", title: "Not in my leaflets", icon: "person" },
+  off_topic: { tone: "amber", title: "Medicines only", icon: "person" },
+  fallback: { tone: "amber", title: "Check with your pharmacist", icon: "question" },
+  not_heard: { tone: "amber", title: "Let's try again", icon: "mic" },
+  type_instead: { tone: "amber", title: "Please type instead", icon: "keyboard" },
+  error: { tone: "amber", title: "Let's try again", icon: "retry" },
+  loading: { tone: "answer", title: "Looking in your leaflets", icon: "search" },  // shown while waiting, never saved
+};
+export const replyCard = (kind) => CARDS[kind] ?? CARDS.error;
+
+// "In your medicines" when a source leaflet is for a medicine on the list; no tag for a reply without sources.
+export function medicinesTag(sources, list) {
+  if (!Array.isArray(sources) || !sources.length) return null;
+  const have = new Set(list.filter((m) => typeof m?.name === "string").map((m) => m.name.toLowerCase()));
+  return sources.some((s) => have.has(String(s.medicine).toLowerCase())) ? "In your medicines" : "Not in your medicines";
+}
+
+// The chat thread: entries are { role: "user", text } or { role: "medmate", kind, answer, card, sources }.
+// It lives in sessionStorage, so a reload keeps it and a new tab starts empty.
+const THREAD_KEY = "medmate.thread";
+const isEntry = (e) =>
+  e?.role === "user" ? typeof e.text === "string" : e?.role === "medmate" && typeof e.kind === "string" && typeof e.answer === "string";
+
+export function loadThread(storage) {
+  try {
+    const thread = JSON.parse(storage.getItem(THREAD_KEY) ?? "[]");
+    if (Array.isArray(thread)) {
+      return thread.filter(isEntry).map((e) => (e.role === "medmate" ? { ...e, sources: Array.isArray(e.sources) ? e.sources : [] } : e));
+    }
+    storage.removeItem(THREAD_KEY);
+  } catch {
+    try { storage.removeItem(THREAD_KEY); } catch {}
+  }
+  return [];
+}
+
+// Saving is best effort: a full or blocked store must not stop the chat.
+export function saveThread(storage, thread) {
+  try { storage.setItem(THREAD_KEY, JSON.stringify(thread)); } catch {}
+}
+
+export const showSuggestions = (thread) => thread.length === 0;

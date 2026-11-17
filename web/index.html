@@ -31,6 +31,23 @@
     </div>
     <button id="mic" type="button" aria-pressed="false" aria-describedby="mic-hint">Hold to talk</button>
     <p id="mic-hint" class="hint">Hold while you speak, then let go. With a keyboard, press Space to start and Space again to stop.</p>
+    <p id="heard" class="visually-hidden" aria-live="polite"></p>
+  </div>
+  <section class="chat" aria-label="Chat">
+    <div class="chat-head">
+      <button id="reset" type="button">Reset chat</button>
+    </div>
+    <div id="thread" class="thread" role="log" aria-live="polite">
+      <div id="empty" class="msg medmate">
+        <p>Hello. I can tell you about your medicines from NHS leaflets. Hold the blue button and speak, or type your question.</p>
+        <p class="examples-title">You could ask:</p>
+        <ul class="examples">
+          <li><button type="button" class="example">When should I take metformin?</button></li>
+          <li><button type="button" class="example">What are the side effects of amlodipine?</button></li>
+          <li><button type="button" class="example">Can I drink alcohol with metformin?</button></li>
+        </ul>
+      </div>
+    </div>
     <form id="form">
       <label for="q">Or type your question</label>
       <div class="ask-row">
@@ -38,25 +55,7 @@
         <button id="send" type="submit">Send</button>
       </div>
     </form>
-    <p id="heard" class="visually-hidden" aria-live="polite"></p>
-  </div>
-  <article id="reply" class="label" data-kind="empty">
-    <p id="reply-title" class="label-title"></p>
-    <div id="answer" aria-live="polite">
-      <p>Hello. I can tell you about your medicines from NHS leaflets. Hold the blue button and speak, or type your question.</p>
-      <p class="examples-title">You could ask:</p>
-      <ul class="examples">
-        <li><button type="button" class="example">When should I take metformin?</button></li>
-        <li><button type="button" class="example">What are the side effects of amlodipine?</button></li>
-        <li><button type="button" class="example">Can I drink alcohol with metformin?</button></li>
-      </ul>
-    </div>
-    <div id="card"></div>
-    <div class="sources">
-      <p class="sources-title">From the NHS leaflets</p>
-      <ul id="sources"></ul>
-    </div>
-  </article>
+  </section>
 </main>
 <section id="view-meds" class="view mine" aria-labelledby="meds-title" hidden>
   <h2 id="meds-title">My medicines</h2>
