@@ -11,15 +11,14 @@
 .side { display: contents; }
 .chat { grid-area: chat; }
 #form { grid-area: form; }
-.counter, .divider { display: none; }
+.counter { display: none; }
 .face-box { grid-area: chat; z-index: 1; justify-self: start; display: flex; flex-direction: column; align-items: center; width: 4.5rem; }
 @media (min-width: 64em) {
-  .ask { grid-template-areas: "side chat"; grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 1rem 2rem; align-items: start; }
-  .side { grid-area: side; display: flex; flex-direction: column; gap: .7rem; max-height: 100%; overflow-y: auto; padding: .2rem; }
+  .ask { grid-template-areas: "side chat"; grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 1rem 2rem; padding-block: .8rem 1rem; }
+  .side { grid-area: side; display: flex; flex-direction: column; gap: .5rem; padding: .2rem; min-height: 0; }
   .side > * { flex: none; }
   .counter { display: block; }
-  .divider { display: flex; margin: .3rem 0; }
-  .face-box { z-index: auto; justify-self: stretch; width: auto; padding: .9rem; border: .12rem solid var(--border-stone); border-radius: 1.15rem; background: rgba(242, 236, 225, .72); }
+  .face-box { z-index: auto; justify-self: stretch; width: auto; padding: .6rem; border: .12rem solid var(--border-stone); border-radius: 1.15rem; background: rgba(242, 236, 225, .72); }
 }
 
 /* The face: the prototype's arched window, a sill and a status pill (the pill is only for the face column). */
@@ -33,13 +32,14 @@
   border-radius: 999px 999px 1.35rem 1.35rem;
   background: linear-gradient(180deg, #fdecc8 0%, #faf3e3 58%, var(--blue-tint) 100%);
   transition: box-shadow .25s ease, border-color .25s ease;
+  clip-path: inset(-2rem -2rem 0 -2rem); /* the halo spreads up and sideways, never below the arch */
 }
-@media (min-width: 64em) { .face-arch { width: 9.25rem; } }
-.face-svg { width: 100%; height: auto; animation: breathe 4.5s ease-in-out infinite; }
+@media (min-width: 64em) { .face-arch { width: clamp(7rem, 24dvh, 13rem); } }
+.face-canvas { width: 100%; height: auto; animation: breathe 4.5s ease-in-out infinite; }
 @keyframes breathe { 50% { transform: translateY(-2.5px); } }
 .face-box[data-state="listening"] .face-arch { border-color: var(--amber-border); box-shadow: 0 0 0 .4rem rgba(245, 158, 11, .34); }
-.face-box[data-state="speaking"] .face-arch { border-color: var(--blue-primary); box-shadow: 0 0 0 .4rem rgba(27, 77, 126, .22); }
-.face-sill { width: 115%; height: .45rem; margin-top: -.2rem; border-radius: 999px; background: var(--blue-primary); }
+.face-box[data-state="speaking"] .face-arch { border-color: var(--blue-primary); box-shadow: 0 0 0 calc(.3rem + var(--halo, 0) * .8rem) rgba(27, 77, 126, .22); transition: border-color .25s ease; }
+.face-sill { position: relative; z-index: 1; width: 115%; height: .45rem; margin-top: -.2rem; border-radius: 999px; background: var(--blue-primary); }
 .status-pill {
   display: none;
   align-items: center;
@@ -50,14 +50,24 @@
   border-radius: 999px;
   background: var(--bg-alabaster);
   font-weight: 700;
+  position: relative;
 }
 .status-dot { width: .6rem; height: .6rem; border-radius: 999px; background: var(--blue-primary); }
 .face-box[data-state="listening"] .status-pill { background: var(--amber-tint); border-color: var(--amber-border); color: var(--amber-dark); }
 .face-box[data-state="listening"] .status-dot { background: var(--amber-border); animation: pulse 1s infinite; }
 .face-box[data-state="speaking"] .status-pill { background: var(--blue-tint); border-color: var(--blue-primary); color: var(--blue-dark); }
+/* Thinking: warm parchment pill with three dots that swell in turn. Each dot is its own flex item (pill ::before, the status dot, pill ::after) so each scales in place. */
+.face-box[data-state="thinking"] .status-pill { gap: .4rem; background: #f3efe6; border-color: #a8a29e; color: #292524; }
+.face-box[data-state="thinking"] .status-pill::before,
+.face-box[data-state="thinking"] .status-pill::after,
+.face-box[data-state="thinking"] .status-dot { content: ""; flex: none; width: .55rem; height: .55rem; border-radius: 999px; background: #57534e; animation: swell 1.3s ease-in-out infinite; }
+.face-box[data-state="thinking"] .status-dot { animation-delay: .18s; }
+.face-box[data-state="thinking"] .status-pill::after { animation-delay: .36s; margin-right: .2rem; }
+.face-box[data-state="thinking"] #face-status-text { order: 1; }
+@keyframes swell { 0%, 100% { transform: scale(.55); opacity: .35; } 50% { transform: scale(1.15); opacity: 1; } }
 @keyframes pulse { 50% { opacity: .45; transform: scale(1.3); } }
 @media (min-width: 64em) { .status-pill { display: inline-flex; } }
-@media (prefers-reduced-motion: reduce) { .face-svg, .status-dot { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .face-canvas, .status-dot, .status-pill::before, .status-pill::after { animation: none !important; } }
 /* The pill is the live region, so under 1024 px it stays in the accessibility tree without being drawn. */
 @media (max-width: 63.99em) { .status-pill { display: flex; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; padding: 0; border: 0; white-space: nowrap; } }
 .talk { position: relative; }
@@ -77,42 +87,35 @@
 #mic[data-listening] .talk-icon::before { display: none; }
 .talk-text { display: block; font-size: 1.45rem; line-height: 1.15; }
 .talk-sub { display: block; margin-top: .15rem; font-size: .92rem; font-weight: 400; }
-#mic:hover { background: var(--blue-dark); }
-#mic[data-listening]:hover { background: var(--bg-cream); }
-/* Recording: both talk buttons turn inside out, a ring pulses and wave bars move. */
+#mic:hover, #mic-small:hover { background: var(--blue-dark); }
+/* #mic-small is a plain button with no text, so it gets the mic from a mask. */
 #mic-small { grid-area: mic; width: 100%; min-height: 2.75rem; padding: 0; display: grid; place-items: center; }
-#mic-small::before { content: ""; width: 1.4rem; height: 1.4rem; background: currentColor; -webkit-mask: var(--icon-mic) center / contain no-repeat; mask: var(--icon-mic) center / contain no-repeat; color: inherit; }
-#mic-small:hover { background: var(--blue-dark); }
-#mic-small[data-listening]:hover { background: var(--bg-cream); }
-#mic-small[data-listening] { border-width: .2rem; }
+#mic-small::before { content: ""; width: 1.4rem; height: 1.4rem; background: currentColor; -webkit-mask: var(--icon-mic) center / contain no-repeat; mask: var(--icon-mic) center / contain no-repeat; }
 #mic-small[data-listening]::before, .bars { display: none; }
-.talk[data-listening] .bars { display: flex; align-items: center; gap: .18rem; height: 1.4rem; }
-.bars i { width: .22rem; height: 100%; border-radius: 1px; background: currentColor; animation: wave .9s ease-in-out infinite; }
-.bars i:nth-child(2) { animation-delay: .15s; } .bars i:nth-child(3) { animation-delay: .3s; } .bars i:nth-child(4) { animation-delay: .45s; }
-@keyframes wave { 50% { transform: scaleY(.3); } }
-.talk[data-listening] {
-  background: var(--bg-alabaster);
-  color: var(--blue-primary);
-  border-width: .25rem;
-  animation: listening 1.2s ease-out infinite;
+/* Recording, as in the prototype: amber (never red), pressed down, wave bars in place of the mic. */
+#mic[data-listening], #mic-small[data-listening] {
+  background: var(--amber-primary, #b45309);
+  color: #fffdf9;
+  border: .125rem solid #78350f;
+  box-shadow: 0 4px 0 #78350f, 0 0 0 .45rem rgba(245, 158, 11, .28);
+  transform: translateY(2px);
 }
-@keyframes listening {
-  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--blue-primary) 55%, transparent); }
-  to { box-shadow: 0 0 0 1rem transparent; }
-}
-/* Phone: a bar of fixed height: the field on the left, the mic stacked above Send on the right.
-   The field starts one line high, centred, and grows to three lines (chat.js sets --q-height), then scrolls. */
-#form { display: grid; grid-template-areas: "field mic" "field send"; grid-template-columns: minmax(0, 1fr) 5rem; grid-template-rows: repeat(2, 2.75rem); gap: .4rem .5rem; }
-#form label { display: none; }
-#q { grid-area: field; align-self: center; resize: none; line-height: 1.35; height: var(--q-height, auto); max-height: calc(3 * 1.35em + .9rem); overflow-y: auto; }
-#send { grid-area: send; }
+.talk[data-listening] .bars { display: flex; align-items: center; justify-content: center; gap: .3rem; width: 100%; height: 100%; }
+.bars i { width: .32rem; height: 1.55rem; border-radius: 999px; background: #fff; animation: wave .85s ease-in-out infinite; }
+.bars i:nth-child(2) { height: 2rem; animation-delay: .15s; } .bars i:nth-child(3) { height: 1.3rem; animation-delay: .3s; } .bars i:nth-child(4) { height: 1.8rem; animation-delay: .12s; }
+#mic-small .bars { gap: .22rem; } #mic-small .bars i { width: .24rem; height: 1.1rem; }
+@keyframes wave { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+/* Phone: one row: the field, then the mic, then Send. The field stays one line and scrolls sideways when long. */
+#form { display: grid; grid-template-areas: "field mic send"; grid-template-columns: minmax(0, 1fr) 2.75rem 3.5rem; grid-template-rows: 2.75rem; gap: .4rem; }
+#q { grid-area: field; resize: none; line-height: 1.35; white-space: nowrap; overflow: auto hidden; }
+#send { grid-area: send; padding-inline: 0; }
+#q::placeholder { font-size: .8rem; }
 /* From 1024 px: the prototype's question box. */
 @media (min-width: 64em) {
-  #form { display: flex; flex-direction: column; gap: .7rem; padding: 1rem; border: .12rem solid var(--blue-border); border-radius: 1.15rem; background: rgba(235, 243, 250, .55); }
-  #form label { display: block; margin: 0; font-size: .95rem; }
-  #q { height: auto; min-height: 5rem; max-height: none; padding: .6rem .8rem; font-size: 1.12rem; }
+  #form { display: flex; flex-direction: column; gap: .5rem; padding: .7rem; border: .12rem solid var(--blue-border); border-radius: 1.15rem; background: rgba(235, 243, 250, .55); }
+  #q { min-height: 5.5rem; padding: .5rem .8rem; font-size: 1.12rem; white-space: pre-wrap; overflow: hidden auto; }
   #mic-small { display: none; }
-  #send { min-height: 3.35rem; border-radius: .85rem; font-size: 1.1rem; }
+  #send { min-height: 3rem; border-radius: .85rem; font-size: 1.1rem; }
 }
 
 /* The chat: the thread scrolls on its own and the question box stays at the bottom.

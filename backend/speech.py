@@ -80,14 +80,15 @@ def synthesize(text: str, engines: list[Engine]) -> bytes:
 _whisper = None
 
 
-def transcribe(audio: bytes) -> str:
-    """Whatever MediaRecorder sends (webm/opus); faster-whisper decodes it via PyAV."""
+def transcribe(audio: bytes, prompt: str | None = None) -> str:
+    """Whatever MediaRecorder sends (webm/opus); faster-whisper decodes it via PyAV.
+    `prompt` primes Whisper with words it should expect, such as rare medicine names."""
     global _whisper
     if _whisper is None:
         from faster_whisper import WhisperModel
 
         _whisper = WhisperModel("small.en", device="cpu", compute_type="int8")
-    segments, _ = _whisper.transcribe(io.BytesIO(audio), language="en", vad_filter=True)
+    segments, _ = _whisper.transcribe(io.BytesIO(audio), language="en", vad_filter=True, initial_prompt=prompt)
     return " ".join(s.text.strip() for s in segments).strip()
 
 

@@ -1,4 +1,4 @@
-import { Avatar } from "./face.js";
+import { Avatar } from "./avatar.js";
 import { startRecording } from "./voice.js";
 import { el, leafletLink } from "./dom.js";
 import { loadThread, saveThread, clearThread, replyCard, medicinesTag, showSuggestions } from "./logic.js";
@@ -73,7 +73,13 @@ export function initChat(meds, isShown) {
     empty.hidden = !showSuggestions(entries);
     thread.scrollTop = thread.scrollHeight;
   };
+  // "Didn't hear you" cards go away once a real answer arrives, so they don't stack up.
+  const NOT_HEARD = ["not_heard", "type_instead"];
   const add = (entry) => {
+    if (entry.role === "medmate" && !NOT_HEARD.includes(entry.kind) && entry.kind !== "error" && entries.some((e) => NOT_HEARD.includes(e.kind))) {
+      entries = entries.filter((e) => !NOT_HEARD.includes(e.kind));
+      draw();
+    }
     entries.push(entry);
     saveThread(sessionStorage, entries);
     empty.hidden = !showSuggestions(entries);
@@ -134,12 +140,6 @@ export function initChat(meds, isShown) {
   const toBottom = () => { thread.scrollTop = thread.scrollHeight; };
   input.addEventListener("focus", toBottom);
   window.addEventListener("resize", () => { if (document.activeElement === input) toBottom(); });
-  // On a phone the field grows from one line to three inside a bar of fixed height (the CSS caps it).
-  const grow = () => {
-    input.style.removeProperty("--q-height");
-    input.style.setProperty("--q-height", `${input.scrollHeight + input.offsetHeight - input.clientHeight}px`);
-  };
-  input.addEventListener("input", grow);
   // The example questions in the empty state ask themselves.
   empty.addEventListener("click", (e) => {
     const example = e.target.closest(".example");
@@ -154,6 +154,7 @@ export function initChat(meds, isShown) {
 
   const mics = [...document.querySelectorAll(".talk")];  // the big button and the small one share one recorder
   const bigText = document.querySelector("#mic .talk-text");
+  const bigSub = document.querySelector("#mic .talk-sub");
   let stopRecording = null;
   let starting = false;   // waiting for getUserMedia
   const showListening = (on) => {
@@ -161,7 +162,8 @@ export function initChat(meds, isShown) {
       m.toggleAttribute("data-listening", on);
       m.setAttribute("aria-label", on ? "Stop listening" : m.id === "mic" ? "Tap to talk" : "Talk");
     }
-    bigText.textContent = on ? "Stop listening" : "Tap to talk";
+    bigText.textContent = on ? "Listening... tap to send" : "Tap to talk";
+    bigSub.textContent = on ? "Speak clearly at your own pace" : "Tap once to start, tap again to send";
   };
   const startMic = async () => {
     stopSpeech();
@@ -221,7 +223,6 @@ export function initChat(meds, isShown) {
     stopSpeech();
     avatar.setState("thinking");
     input.value = "";
-    grow();
     // A blank question gets the "didn't catch that" reply without a bubble of its own.
     if (question.trim()) add({ role: "user", text: question });
     wait("One moment…");

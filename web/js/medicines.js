@@ -1,10 +1,12 @@
-import { TIMES, buildSchedule, countLabel, findInteractions, loadMedicines, reinsertAt, saveMedicines, todayLabel } from "./logic.js";
+import { TIMES, buildSchedule, countLabel, findInteractions, loadMedicines, loadTaken, reinsertAt, saveMedicines, saveTaken, todayLabel } from "./logic.js";
 import { el, leafletLink } from "./dom.js";
 
 // The My medicines view: the form, the list, interaction warnings and Today.
 export function initMedicines() {
   let medicines = loadMedicines(localStorage);
   let interactions = [];
+  const day = new Date().toDateString();
+  const taken = loadTaken(localStorage, day);
   let editing = -1;  // index being edited, or -1 when adding
   const medForm = document.getElementById("med-form");
   const nameSelect = document.getElementById("med-name");
@@ -41,6 +43,8 @@ export function initMedicines() {
   };
   document.getElementById("today-date").textContent = todayLabel(new Date());
   const render = () => {
+    // Alphabetical so repeats of one medicine stay together; the sort is stable and the indexes below follow it.
+    medicines.sort((a, b) => a.name.localeCompare(b.name));
     document.getElementById("med-count").textContent = countLabel(medicines.length);
     document.getElementById("warnings").replaceChildren(...findInteractions(medicines, interactions).map((i) => {
       const p = el("p");
@@ -57,7 +61,11 @@ export function initMedicines() {
       details.append(title);
       if (m.times?.length) {
         const chips = el("span", { className: "chips" });
-        chips.append(...m.times.map((t) => el("span", { className: "chip", textContent: t[0].toUpperCase() + t.slice(1) })));
+        chips.append(...m.times.map((t) => {
+          const chip = el("span", { className: "chip", textContent: t[0].toUpperCase() + t.slice(1) });
+          chip.dataset.time = t;
+          return chip;
+        }));
         details.append(chips);
       }
       if (m.note) details.append(el("span", { className: "note", textContent: `Note: ${m.note}` }));
@@ -92,7 +100,19 @@ export function initMedicines() {
       const head = el("h4");
       head.append(medForm.querySelector(`label[data-time="${t}"] .when-icon`).cloneNode(true), t[0].toUpperCase() + t.slice(1));
       const items = schedule[t].length ? el("ul") : el("p", { className: "empty", textContent: "No medicines" });
-      items.append(...schedule[t].map((e) => el("li", { textContent: e })));
+      items.append(...schedule[t].map((e, n) => {
+        const key = `${t}|${n}|${e}`;
+        const box = el("input", { type: "checkbox", checked: taken.has(key) });
+        box.addEventListener("change", () => {
+          if (box.checked) taken.add(key); else taken.delete(key);
+          saveTaken(localStorage, day, taken);
+        });
+        const label = el("label");
+        label.append(box, e);
+        const li = el("li");
+        li.append(label);
+        return li;
+      }));
       slot.append(head, items);
       return slot;
     }));

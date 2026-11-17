@@ -99,6 +99,8 @@ def default_app() -> FastAPI:
             [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": "warm up"}], ANSWER_SCHEMA),
         "speech": lambda: warm_speech(engines),
     })
+    # Whisper mishears rare names like "amlodipine" unless primed with them.
+    hint = "Questions about " + ", ".join(sorted({c.medicine for c in index.chunks})) + "."
     return create_app(index, embed, generate,
                       load_interactions(ROOT / "data" / "interactions.csv"),
-                      engines=engines, transcribe=transcribe)
+                      engines=engines, transcribe=lambda audio: transcribe(audio, hint))

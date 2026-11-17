@@ -102,6 +102,19 @@ export const countLabel = (n) => `${n} ${n === 1 ? "medicine" : "medicines"}`;
 
 export const todayLabel = (date) => date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
+// Ticks on the Today cards belong to one day: another day's ticks load as none. Saving is best effort.
+const TAKEN_KEY = "medmate.taken";
+export function loadTaken(storage, day) {
+  try {
+    const saved = JSON.parse(storage.getItem(TAKEN_KEY) ?? "{}");
+    if (saved?.day === day && Array.isArray(saved.keys)) return new Set(saved.keys);
+  } catch {}
+  return new Set();
+}
+export function saveTaken(storage, day, keys) {
+  try { storage.setItem(TAKEN_KEY, JSON.stringify({ day, keys: [...keys] })); } catch {}
+}
+
 // A list with `item` put back at `index` (clamped when the list has shrunk since).
 export function reinsertAt(list, item, index) {
   const at = Math.min(Math.max(0, index), list.length);

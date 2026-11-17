@@ -1,16 +1,13 @@
-// The MedMate | My medicines switch: exactly one view is shown, and this switch is the only way to change it.
+// The MedMate | My medicines switch: one toggle button, exactly one view is shown, and this toggle is the only way to change it.
 export function initViews() {
-  const views = [
-    { button: document.getElementById("tab-ask"), view: document.getElementById("view-ask") },
-    { button: document.getElementById("tab-meds"), view: document.getElementById("view-meds") },
-  ];
-  const show = (chosen) => {
-    for (const v of views) {
-      const on = v === chosen;
-      v.button.setAttribute("aria-pressed", String(on));
-      v.view.hidden = !on;
-    }
-  };
-  for (const v of views) v.button.addEventListener("click", () => show(v));
+  const toggle = document.getElementById("view-switch");
+  const ask = document.getElementById("view-ask");
+  const meds = document.getElementById("view-meds");
+  toggle.addEventListener("click", () => {
+    const showMeds = toggle.getAttribute("aria-checked") !== "true";
+    toggle.setAttribute("aria-checked", String(showMeds));
+    ask.hidden = showMeds;
+    meds.hidden = !showMeds;
+  });
   return { isShown: (id) => !document.getElementById(id).hidden };
 }

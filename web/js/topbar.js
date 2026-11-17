@@ -38,7 +38,18 @@ function initMenu() {
   });
 }
 
+// On narrow screens the face lives in the top bar (between the wordmark and Menu); otherwise it goes back to the ask view's side column.
+function initFacePlacement() {
+  const face = document.getElementById("avatar");
+  const home = document.querySelector("#view-ask .side");
+  const narrow = matchMedia("(max-width: 47.99em)");
+  const place = () => (narrow.matches ? document.querySelector(".topbar").insertBefore(face, document.getElementById("menu-btn")) : home.prepend(face));
+  narrow.addEventListener("change", place);
+  place();
+}
+
 export function initTopbar() {
+  initFacePlacement();
   initTextSize();
   initMenu();
 }

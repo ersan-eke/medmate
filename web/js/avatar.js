@@ -1,8 +1,8 @@
 import { mouthFrame } from "./logic.js";
 
-// A drawn face whose mouth follows the audio volume through a Web Audio analyser.
-// With web/avatar/{portrait,mouth_half,mouth_open,eyes_closed}.png present it shows those frames;
-// if any is missing it draws a simple face instead.
+// MedMate's portrait: the mouth follows the audio volume through a Web Audio analyser and the eyes blink.
+// The frames are web/avatar/{portrait,mouth_half,mouth_open,eyes_closed}.png; the state shows in the status pill and the arch's ring.
+const STATUS = { idle: "Ready to listen", listening: "Listening", thinking: "Thinking", speaking: "Speaking" };
 const FRAMES = { closed: "portrait", half: "mouth_half", open: "mouth_open", blink: "eyes_closed" };
 const loadFrames = () => Promise.all(Object.entries(FRAMES).map(([key, name]) => new Promise((resolve, reject) => {
   const img = new Image();
@@ -12,11 +12,13 @@ const loadFrames = () => Promise.all(Object.entries(FRAMES).map(([key, name]) =>
 }))).then(Object.fromEntries, () => null);
 
 export class Avatar {
-  constructor(canvas) {
-    this.ctx = canvas.getContext("2d");
-    this.canvas = canvas;
-    this.state = "idle";
+  constructor(root) {
+    this.root = root;
+    this.canvas = root.querySelector("canvas");
+    this.ctx = this.canvas.getContext("2d");
+    this.text = root.querySelector("#face-status-text");
     this.rms = 0;
+    this.halo = 0;
     this.blinkUntil = 0;
     this.source = null;
     this.audio = new AudioContext();
@@ -26,10 +28,15 @@ export class Avatar {
     this.frames = null;
     loadFrames().then((frames) => { this.frames = frames; });
     this.scheduleBlink();
+    this.setState("idle");
     requestAnimationFrame(() => this.draw());
   }
 
-  setState(state) { this.state = state; }
+  setState(state) {
+    this.state = state;
+    this.root.dataset.state = state;
+    this.text.textContent = STATUS[state];
+  }
 
   scheduleBlink() {
     setTimeout(() => {
@@ -64,33 +71,15 @@ export class Avatar {
     } else {
       this.rms = 0;
     }
+    // The halo follows the volume: quick to swell, slow to settle, so it breathes with the voice.
+    this.halo += (Math.min(this.rms * 6, 1) - this.halo) * (this.rms > this.halo / 6 ? 0.4 : 0.1);
+    this.root.style.setProperty("--halo", this.halo.toFixed(3));
     const { ctx, canvas } = this;
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0, 0, w, h);
     if (this.frames) {
       const blinking = performance.now() < this.blinkUntil;
       ctx.drawImage(this.frames[blinking ? "blink" : mouthFrame(this.rms)], 0, 0, w, h);
-      return requestAnimationFrame(() => this.draw());
-    }
-    ctx.fillStyle = "#f3d3b5";
-    ctx.beginPath();
-    ctx.arc(w / 2, h / 2, w * 0.45, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = ctx.strokeStyle = "#222";
-    ctx.lineWidth = 3;
-    const blinking = performance.now() < this.blinkUntil;
-    for (const x of [0.35, 0.65]) {
-      ctx.beginPath();
-      if (blinking) { ctx.moveTo(w * x - 8, h * 0.4); ctx.lineTo(w * x + 8, h * 0.4); ctx.stroke(); }
-      else { ctx.arc(w * x, h * 0.4, 6, 0, Math.PI * 2); ctx.fill(); }
-    }
-    const open = { closed: 0.02, half: 0.07, open: 0.14 }[mouthFrame(this.rms)];
-    ctx.beginPath();
-    ctx.ellipse(w / 2, h * 0.68, w * 0.12, h * open, 0, 0, Math.PI * 2);
-    ctx.fill();
-    if (this.state === "thinking") {
-      ctx.font = "32px sans-serif";
-      ctx.fillText("…", w * 0.75, h * 0.2);
     }
     requestAnimationFrame(() => this.draw());
   }

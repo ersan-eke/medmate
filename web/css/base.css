@@ -56,10 +56,6 @@ button[type="submit"]:hover { background: var(--blue-dark); }
 .btn-stone:hover { background: var(--bg-linen); border-color: #9e9282; }
 .btn-stone:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border-stone-strong); }
 
-/* The prototype's section divider: a rule, a pill label, a rule. */
-.divider { display: flex; align-items: center; gap: 1rem; margin: 2.5rem 0 2rem; }
-.divider::before, .divider::after { content: ""; flex: 1; height: .1rem; background: var(--border-stone); }
-.divider > span { padding: .35rem 1rem; border: .1rem solid var(--border-stone); border-radius: 999px; background: var(--bg-alabaster); color: var(--blue-primary); font-size: .88rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 
 button:disabled { opacity: .55; cursor: wait; }
 input, select, textarea {
@@ -74,5 +70,4 @@ label { display: block; font-weight: 700; margin: .9rem 0 .25rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  .talk[data-listening] { box-shadow: 0 0 0 .4rem color-mix(in srgb, var(--blue-primary) 45%, transparent); }
 }
