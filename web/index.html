@@ -19,7 +19,7 @@
   <h1 class="wordmark">MedMate</h1>
   <div class="switch" role="group" aria-label="View">
     <button type="button" id="tab-ask" aria-pressed="true">MedMate</button>
-    <button type="button" id="tab-meds" aria-pressed="false">My medicines</button>
+    <button type="button" id="tab-meds">My medicines</button>
   </div>
   <button id="menu-btn" type="button" aria-label="More" aria-haspopup="true" aria-expanded="false" aria-controls="tools"><span aria-hidden="true">⋯</span></button>
   <div id="tools" class="tools">
@@ -43,8 +43,8 @@
     <p id="face-status" class="status-pill" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span id="face-status-text">Ready to listen</span></p>
   </div>
   <div class="counter">
-    <button id="mic" type="button" aria-pressed="false" aria-describedby="mic-hint">Hold to talk</button>
-    <p id="mic-hint" class="hint">Hold while you speak, then let go. With a keyboard, press Space to start and Space again to stop.</p>
+    <button id="mic" class="talk" type="button" aria-describedby="mic-hint"><span class="talk-text">Tap to talk</span><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button>
+    <p id="mic-hint" class="hint">Tap to start, speak, then tap again to stop. With a keyboard, press Space to start and Space again to stop.</p>
     <p id="heard" class="visually-hidden" aria-live="polite"></p>
   </div>
   <section class="chat" aria-label="Chat">
@@ -53,7 +53,7 @@
     </div>
     <div id="thread" class="thread" role="log" aria-live="polite">
       <div id="empty" class="msg medmate">
-        <p>Hello. I can tell you about your medicines from NHS leaflets. Hold the blue button and speak, or type your question.</p>
+        <p>Hello. I can tell you about your medicines from NHS leaflets. Tap the blue button and speak, or type your question.</p>
         <p class="examples-title">You could ask:</p>
         <ul class="examples">
           <li><button type="button" class="example">When should I take metformin?</button></li>
@@ -66,6 +66,7 @@
       <label for="q">Or type your question</label>
       <div class="ask-row">
         <textarea id="q" rows="3" maxlength="500"></textarea>
+        <button id="mic-small" class="talk" type="button" aria-label="Talk"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span></button>
         <button id="send" type="submit">Send</button>
       </div>
     </form>

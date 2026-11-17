@@ -133,15 +133,21 @@ export function initChat(meds, isShown) {
     draw();
   });
 
-  const mic = document.getElementById("mic");
+  const mics = [...document.querySelectorAll(".talk")];  // the big button and the small one share one recorder
+  const bigText = document.querySelector("#mic .talk-text");
   let stopRecording = null;
   let starting = false;   // waiting for getUserMedia
-  let released = false;   // the button came up while starting
+  const showListening = (on) => {
+    for (const m of mics) {
+      m.toggleAttribute("data-listening", on);
+      m.setAttribute("aria-label", on ? "Stop listening" : m.id === "mic" ? "Tap to talk" : "Talk");
+    }
+    bigText.textContent = on ? "Stop listening" : "Tap to talk";
+  };
   const startMic = async () => {
     stopSpeech();
-    if (busy || stopRecording || starting) return;
+    if (busy || starting) return;
     starting = true;
-    released = false;
     try {
       stopRecording = await startRecording();
     } catch {
@@ -151,17 +157,13 @@ export function initChat(meds, isShown) {
     } finally {
       starting = false;
     }
-    mic.setAttribute("aria-pressed", "true");
+    showListening(true);
     avatar.setState("listening");
-    mic.textContent = "Listening…";
-    if (released) stopMic();  // let go before the microphone opened
   };
   const stopMic = () => {
     const stop = stopRecording;
-    if (!stop) { released = true; return; }
     stopRecording = null;
-    mic.setAttribute("aria-pressed", "false");
-    mic.textContent = "Hold to talk";
+    showListening(false);
     exclusive(async () => {
       avatar.setState("thinking");
       wait("Working out what you said…");
@@ -186,18 +188,15 @@ export function initChat(meds, isShown) {
       await askQuestion(text);
     });
   };
-  mic.addEventListener("pointerdown", (e) => { e.preventDefault(); startMic(); });
-  for (const ev of ["pointerup", "pointercancel"]) mic.addEventListener(ev, stopMic);
-  // Keyboard users press Space to start and again to stop, anywhere on the page except where Space
-  // already does something (typing, ticking a box, pressing another button or link).
-  const spaceIsTaken = (t) => t !== mic && t.closest("input, textarea, select, button, a, [contenteditable]");
+  const toggleMic = () => (stopRecording ? stopMic() : startMic());
+  for (const m of mics) m.addEventListener("click", toggleMic);
+  // Space toggles the mic anywhere on the page except where Space already does something (typing,
+  // ticking a box, pressing a button or link; the talk buttons toggle themselves on Space).
   document.addEventListener("keydown", (e) => {
-    if (e.key !== " " || !isShown() || spaceIsTaken(e.target)) return;
+    if (e.key !== " " || !isShown() || e.target.closest("input, textarea, select, button, a, [contenteditable]")) return;
     e.preventDefault();
-    if (e.repeat) return;
-    if (stopRecording) stopMic(); else startMic();
+    if (!e.repeat) toggleMic();
   });
-  mic.addEventListener("keyup", (e) => { if (e.key === " ") e.preventDefault(); });
 
   async function askQuestion(question) {
     stopSpeech();

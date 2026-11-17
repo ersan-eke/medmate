@@ -41,7 +41,7 @@ button {
   cursor: pointer;
 }
 button:hover { background: var(--bg-cream); }
-button[type="submit"], #mic {
+button[type="submit"], #mic, #mic-small {
   border-color: var(--blue-primary);
   background: var(--blue-primary);
   color: var(--on-blue);
@@ -61,5 +61,5 @@ label { display: block; font-weight: 700; margin: .9rem 0 .25rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  #mic[aria-pressed="true"] { box-shadow: 0 0 0 .4rem color-mix(in srgb, var(--blue-primary) 45%, transparent); }
+  .talk[data-listening] { box-shadow: 0 0 0 .4rem color-mix(in srgb, var(--blue-primary) 45%, transparent); }
 }

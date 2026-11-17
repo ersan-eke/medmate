@@ -58,6 +58,7 @@
 @media (prefers-reduced-motion: reduce) { .face-svg, .status-dot { animation: none !important; } }
 /* The pill is the live region, so under 1024 px it stays in the accessibility tree without being drawn. */
 @media (max-width: 63.99em) { .status-pill { display: flex; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; padding: 0; border: 0; white-space: nowrap; } }
+.talk { position: relative; }
 #mic {
   display: flex;
   flex-direction: column;
@@ -69,14 +70,21 @@
   margin-top: .6rem;
   border-radius: 1.5rem;
   font-size: 1.2rem;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
 }
 #mic::before { --icon: var(--icon-mic); width: 1.8rem; height: 1.8rem; }
 #mic:hover { background: var(--blue-dark); }
-/* Recording: the button turns inside out and a ring pulses, alongside the "Listening…" text. */
-#mic[aria-pressed="true"] {
+/* Recording: both talk buttons turn inside out, a ring pulses and wave bars move. */
+#mic-small { flex: none; width: 2.75rem; height: 2.75rem; min-height: 2.75rem; padding: 0; display: grid; place-items: center; border-radius: 50%; }
+#mic-small::before { content: ""; width: 1.4rem; height: 1.4rem; background: currentColor; -webkit-mask: var(--icon-mic) center / contain no-repeat; mask: var(--icon-mic) center / contain no-repeat; color: inherit; }
+#mic-small:hover { background: var(--blue-dark); }
+#mic-small[data-listening]:hover { background: var(--bg-cream); }
+#mic-small[data-listening] { border-width: .2rem; }
+#mic-small[data-listening]::before, .bars { display: none; }
+.talk[data-listening] .bars { display: flex; align-items: center; gap: .18rem; height: 1.4rem; }
+.bars i { width: .22rem; height: 100%; border-radius: 1px; background: currentColor; animation: wave .9s ease-in-out infinite; }
+.bars i:nth-child(2) { animation-delay: .15s; } .bars i:nth-child(3) { animation-delay: .3s; } .bars i:nth-child(4) { animation-delay: .45s; }
+@keyframes wave { 50% { transform: scaleY(.3); } }
+.talk[data-listening] {
   background: var(--bg-alabaster);
   color: var(--blue-primary);
   border-width: .25rem;
