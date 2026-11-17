@@ -101,97 +101,104 @@
 #q { resize: none; line-height: 1.35; }
 .ask-row textarea { flex: 1; min-width: 0; }
 
-/* The chat: the thread scrolls on its own and the question box stays at the bottom. */
+/* The chat: the thread scrolls on its own and the question box stays at the bottom.
+   Messages never shrink to fit the thread's height (flex: none), so a long reply is never clipped. */
 .chat { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: .6rem; height: 100%; min-height: 0; }
-.thread { display: flex; flex-direction: column; gap: 1rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .2rem .4rem .6rem .2rem; }
-.msg { max-width: 36em; }
-.msg.user { align-self: flex-end; padding: .6rem 1rem; border-radius: 1rem 1rem .2rem 1rem; background: var(--blue-primary); color: var(--on-blue); font-size: 1.2rem; white-space: pre-wrap; overflow-wrap: anywhere; }
-#empty { display: grid; gap: .6rem; padding: .8rem 1rem; border-radius: 1rem 1rem 1rem .2rem; background: var(--bg-alabaster); border: .1rem solid var(--border-stone); font-size: 1.15rem; }
-#empty[hidden] { display: none; }
-.examples-title { font-weight: 700; }
-.examples { list-style: none; margin: 0; padding: 0; display: grid; justify-items: end; gap: .5rem; }
-/* Suggestions sit on the user's side, outlined and unfilled, so they don't look like questions already sent. */
-.example { max-width: 100%; text-align: left; border-radius: 1rem 1rem .2rem 1rem; border-color: var(--blue-primary); border-style: dashed; background: transparent; color: var(--blue-primary); font-weight: 700; }
+.thread { display: flex; flex-direction: column; gap: 1.2rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .2rem .4rem .6rem .2rem; }
+.thread > * { flex: none; }
+.msg { max-width: 40em; }
 
-/* A reply is a dispensing label: keylined, with a title strip, the answer, the card and the leaflet sources. */
-.label {
+/* A question: the prototype's light "YOU ASKED" bubble. */
+.msg.user { align-self: flex-end; max-width: 88%; padding: .9rem 1.2rem; border: .1rem solid var(--blue-border); border-radius: 1.45rem 1.45rem .35rem 1.45rem; background: var(--blue-tint); box-shadow: 0 3px 0 rgba(184, 209, 232, .65); overflow-wrap: anywhere; }
+.user-tag { margin-bottom: .2rem; text-align: right; font-size: .82rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--blue-dark); }
+.user-text { font-size: 1.18rem; font-weight: 700; line-height: 1.38; white-space: pre-wrap; }
+
+/* The greeting and the suggestions, shown only while the thread is empty. */
+#empty { display: grid; gap: 1.2rem; }
+#empty[hidden] { display: none; }
+.greeting { padding: .9rem 1.2rem; border: .1rem solid var(--border-stone); border-radius: 1.45rem 1.45rem 1.45rem .35rem; background: var(--bg-alabaster); font-size: 1.15rem; }
+.suggest { justify-self: end; max-width: 100%; }
+.suggest-label { margin-bottom: .5rem; text-align: right; font-size: .82rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-secondary); }
+.examples { list-style: none; margin: 0; padding: 0; display: grid; justify-items: end; gap: .6rem; }
+.example { max-width: 100%; text-align: left; border-radius: .85rem; color: var(--blue-dark); }
+
+/* The prototype's buttons: raised stone tablets. */
+.btn-stone { min-height: 3.35rem; }
+
+/* A reply card: an answer is a stone card, a refusal amber, an emergency red. */
+.reply {
   --tone: var(--blue-primary);
-  border: .15rem solid var(--tone);
-  border-radius: .6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  width: 100%;
+  max-width: 96%;
+  padding: 1.25rem;
+  border: .12rem solid var(--border-stone);
+  border-radius: 1.45rem 1.45rem 1.45rem .35rem;
   background: var(--bg-alabaster);
-  box-shadow: .3rem .3rem 0 var(--border-stone);
-  overflow: hidden;
+  box-shadow: 0 4px 0 var(--border-stone);
 }
-.label.print { animation: print .45s ease-out; }
+.reply.print { animation: print .45s ease-out; }
 @keyframes print {
   from { clip-path: inset(0 0 100% 0); transform: translateY(-.4rem); }
   to { clip-path: inset(0 0 0 0); transform: none; }
 }
-.label-title {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .5rem 1.1rem;
-  border-bottom: .1rem solid var(--tone);
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--tone);
-}
-.label-title::before { --icon: var(--icon-doc); }
-.answer { padding: 1rem 1.1rem; font-size: 1.4rem; line-height: 1.45; white-space: pre-wrap; }
+.reply-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; padding-bottom: .85rem; border-bottom: .1rem solid var(--border-stone); }
+.reply-id { display: flex; align-items: center; gap: .75rem; }
+.reply-name { display: block; font-size: 1.05rem; font-weight: 700; }
+.reply-sub { display: block; font-size: .88rem; color: var(--ink-secondary); }
+.mini-avatar { display: grid; place-items: center; flex: none; width: 2.65rem; height: 2.65rem; border: .12rem solid var(--blue-border); border-radius: 999px; background: var(--blue-tint); color: var(--blue-primary); }
+.mini-avatar::before { --icon: var(--icon-doc); width: 1.35rem; height: 1.35rem; }
+.reply[data-icon="phone"] .mini-avatar::before { --icon: var(--icon-phone); }
+.reply[data-icon="person"] .mini-avatar::before { --icon: var(--icon-person); }
+.reply[data-icon="question"] .mini-avatar::before { --icon: var(--icon-question); }
+.reply[data-icon="mic"] .mini-avatar::before { --icon: var(--icon-mic); }
+.reply[data-icon="keyboard"] .mini-avatar::before { --icon: var(--icon-keyboard); }
+.reply[data-icon="retry"] .mini-avatar::before { --icon: var(--icon-retry); }
+.reply[data-icon="search"] .mini-avatar::before { --icon: var(--icon-search); }
 
-.label[data-kind="loading"] .label-title::after {
-  content: "…";
-  animation: dots 1.2s steps(4, end) infinite;
-  display: inline-block;
-  width: 1.2em;
-  overflow: hidden;
-  vertical-align: bottom;
-}
-.label[data-kind="loading"] .answer { color: var(--ink-secondary); }
+.read-aloud { display: inline-flex; align-items: center; gap: .55rem; padding: .45rem 1rem; border-radius: .85rem; color: var(--blue-dark); }
+.read-aloud::before { --icon: var(--icon-speaker); width: 1.25rem; height: 1.25rem; }
+
+.reply[data-kind="loading"] .reply-sub::after { content: "…"; display: inline-block; width: 1.2em; overflow: hidden; vertical-align: bottom; animation: dots 1.2s steps(4, end) infinite; }
+.reply[data-kind="loading"] .answer { color: var(--ink-secondary); }
 @keyframes dots { from { width: 0; } to { width: 1.2em; } }
 
-.label[data-tone="emergency"] { --tone: var(--safety-red); border-width: .3rem; box-shadow: .3rem .3rem 0 var(--safety-tint); }
-.label[data-tone="emergency"] .label-title {
-  background: var(--emergency-bg); color: #fff; border-color: var(--emergency-bg); font-size: 1.4rem; padding-block: .7rem;
-}
-.label[data-tone="emergency"] .label-title::before { width: 1.5em; height: 1.5em; }
-.label[data-tone="emergency"] .answer { font-weight: 700; font-size: 1.6rem; }
+.tag { align-self: flex-start; padding: .55rem .9rem; border: .1rem solid var(--blue-border); border-radius: .85rem; background: var(--blue-tint); color: var(--blue-dark); font-size: .96rem; font-weight: 700; }
+.tag.not-listed { border-color: var(--border-stone-strong); background: var(--bg-linen); color: var(--ink-secondary); }
+
+/* The spoken answer: a serif quote with a left rule. */
+.answer { margin: 0; font-size: 1.15rem; line-height: 1.5; white-space: pre-wrap; }
+blockquote.answer { padding: 1rem 1.2rem; border-left: .3rem solid var(--blue-primary); border-radius: 0 1rem 1rem 0; background: var(--bg-cream); font-family: var(--font-serif); font-size: 1.38rem; font-weight: 600; line-height: 1.45; }
+
+.reply section h3, .reply .help h3 { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; font-size: 1.12rem; }
+.reply section h3::before { content: ""; width: .65rem; height: .65rem; border-radius: 999px; background: var(--blue-primary); }
+.reply ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+.reply section li { display: flex; align-items: flex-start; gap: .7rem; font-size: 1.08rem; line-height: 1.45; }
+.reply section li::before { content: "✓" / ""; display: grid; place-items: center; flex: none; width: 1.45rem; height: 1.45rem; margin-top: .15rem; border: .1rem solid var(--blue-border); border-radius: .45rem; background: var(--blue-tint); color: var(--blue-primary); font-size: .85rem; font-weight: 700; }
+
+/* Red is only for the emergency card and "Get help if". */
+.reply .help { padding: 1rem 1.2rem; border: .12rem solid var(--safety-red); border-left-width: .5rem; border-radius: 1rem; background: var(--safety-tint); }
+.reply .help h3 { color: var(--emergency-bg); }
+.reply .help h3::before { --icon: var(--icon-warning); width: 2.15rem; height: 2.15rem; padding: .4rem; border-radius: .6rem; background: var(--safety-red); color: #fff; }
+.reply .help li { display: flex; gap: .6rem; font-size: 1.08rem; font-weight: 700; }
+.reply .help li::before { content: "•" / ""; color: var(--safety-red); font-size: 1.35rem; line-height: 1.1; }
+
+.sources { display: grid; gap: .6rem; padding-top: .85rem; border-top: .1rem dashed var(--border-stone-strong); }
+.sources-title { font-size: .92rem; font-weight: 700; color: var(--ink-secondary); }
+.pills { display: flex; flex-wrap: wrap; gap: .75rem; }
+.pill { display: inline-flex; align-items: center; padding: .5rem .95rem; border-radius: .85rem; font-size: .96rem; color: var(--blue-dark); text-decoration: underline; text-decoration-thickness: .1rem; text-underline-offset: .2rem; }
 
 /* Refusals and "try again" are amber, never red or blue. */
-.label[data-tone="amber"] { --tone: var(--amber-dark); border-color: var(--amber-border); background: var(--amber-tint); box-shadow: none; }
-.label[data-tone="amber"] .label-title { border-color: var(--amber-border); }
+.reply[data-tone="amber"] { border-color: var(--amber-border); border-left-width: .5rem; background: rgba(254, 243, 199, .72); box-shadow: 0 4px 0 rgba(217, 119, 6, .25); }
+.reply[data-tone="amber"] .reply-head { border-color: rgba(180, 83, 9, .25); }
+.reply[data-tone="amber"] .mini-avatar { background: var(--amber-tint); border-color: var(--amber-border); color: var(--amber-dark); }
+.reply[data-tone="amber"] .reply-sub { color: var(--amber-dark); font-weight: 700; }
+.reply[data-tone="amber"] .answer { font-size: 1.1rem; }
 
-.label[data-icon="phone"] .label-title::before { --icon: var(--icon-phone); }
-.label[data-icon="person"] .label-title::before { --icon: var(--icon-person); }
-.label[data-icon="question"] .label-title::before { --icon: var(--icon-question); }
-.label[data-icon="mic"] .label-title::before { --icon: var(--icon-mic); }
-.label[data-icon="keyboard"] .label-title::before { --icon: var(--icon-keyboard); }
-.label[data-icon="retry"] .label-title::before { --icon: var(--icon-retry); }
-.label[data-icon="search"] .label-title::before { --icon: var(--icon-search); }
-
-.card { display: grid; gap: 1rem; padding: 0 1.1rem 1rem; }
-.card h2 { font-size: 1.15rem; margin-bottom: .3rem; }
-.card ul { margin: 0; padding-left: 1.3rem; display: grid; gap: .25rem; }
-.card .help {
-  border: .2rem solid var(--safety-red);
-  border-left-width: .6rem;
-  border-radius: .5rem;
-  padding: .7rem 1rem;
-  background: var(--safety-tint);
-}
-.card .help h2 { display: flex; align-items: center; gap: .4rem; color: var(--safety-red); }
-.card .help h2::before { --icon: var(--icon-warning); }
-
-.sources {
-  padding: .6rem 1.1rem .7rem;
-  border-top: .1rem dashed var(--border-stone);
-  font-size: .9rem;
-  color: var(--ink-secondary);
-}
-.sources-title { font-weight: 700; }
-.sources ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .1rem 1.2rem; }
-.sources a { display: inline-block; padding-block: .5rem; }
-.tag { display: inline-block; padding: .1rem .7rem; border: .1rem solid var(--blue-border); border-radius: 1rem; background: var(--blue-tint); color: var(--blue-primary); font-weight: 700; }
-
-.read-aloud { margin: 0 1.1rem 1rem; }
+.reply[data-tone="emergency"] { border: .2rem solid var(--safety-red); border-left-width: .5rem; background: var(--safety-tint); box-shadow: 0 4px 0 rgba(185, 28, 28, .25); }
+.reply[data-tone="emergency"] .reply-head { border-color: rgba(185, 28, 28, .3); }
+.reply[data-tone="emergency"] .mini-avatar { background: var(--emergency-bg); border-color: var(--emergency-bg); color: #fff; }
+.reply[data-tone="emergency"] .reply-sub { color: var(--emergency-bg); font-weight: 700; font-size: 1.15rem; }
+.reply[data-tone="emergency"] .answer { font-size: 1.4rem; font-weight: 700; }

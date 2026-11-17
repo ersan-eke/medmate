@@ -89,6 +89,7 @@ test("every reply kind has a title and an icon, and only some are red or blue", 
     assert.equal(c.tone, tone, kind);
     assert.ok(c.title && c.icon, kind);
   }
+  assert.equal(replyCard("answer").title, "From your NHS leaflets");
   assert.equal(replyCard("emergency").title, "Call 999 now");
   assert.equal(replyCard("not_covered").title, "Not in my leaflets");
   assert.equal(replyCard("off_topic").title, "Medicines only");
@@ -97,10 +98,10 @@ test("every reply kind has a title and an icon, and only some are red or blue", 
   assert.deepEqual(replyCard("something_new"), replyCard("error"));
 });
 
-test("medicines tag: listed, unlisted and no sources", () => {
-  const list = [{ name: "metformin" }, { name: "Warfarin" }];
-  assert.equal(medicinesTag([{ medicine: "Metformin" }], list), "In your medicines");
-  assert.equal(medicinesTag([{ medicine: "Ramipril" }, { medicine: "Warfarin" }], list), "In your medicines");
+test("medicines tag: listed with and without times, unlisted and no sources", () => {
+  const list = [{ name: "metformin", times: ["morning", "evening"] }, { name: "Warfarin", times: [] }];
+  assert.equal(medicinesTag([{ medicine: "Metformin" }], list), "In your medicines: metformin (Morning, Evening)");
+  assert.equal(medicinesTag([{ medicine: "Ramipril" }, { medicine: "Warfarin" }], list), "In your medicines: Warfarin");
   assert.equal(medicinesTag([{ medicine: "Ramipril" }], list), "Not in your medicines");
   assert.equal(medicinesTag([{ medicine: "Ramipril" }], []), "Not in your medicines");
   assert.equal(medicinesTag([], list), null);

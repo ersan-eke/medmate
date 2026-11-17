@@ -16,42 +16,51 @@ export function initChat(meds, isShown) {
   const section = (title, items, cls = "") => {
     items = [].concat(items).filter((t) => t && t.trim());
     if (!items.length) return [];
-    const sec = el("section", { className: cls });
+    const sec = el(cls ? "aside" : "section", { className: cls });
+    if (cls) sec.setAttribute("aria-label", `Important safety warning: ${title}`);
     const ul = el("ul");
     ul.append(...items.map((t) => el("li", { textContent: t })));
-    sec.append(el("h2", { textContent: title }), ul);
+    sec.append(el("h3", { textContent: title }), ul);
     return [sec];
   };
   const replyNode = (r) => {
     const { tone, title, icon } = replyCard(r.kind);
-    const node = el("article", { className: "label msg medmate" });
+    const node = el("article", { className: "msg medmate reply" });
     node.dataset.kind = r.kind;
     node.dataset.tone = tone;
     node.dataset.icon = icon;
-    node.append(el("p", { className: "label-title", textContent: title }), el("div", { className: "answer", textContent: r.answer }));
-    if (r.kind !== "loading") node.append(el("button", { type: "button", className: "read-aloud", textContent: "Read aloud", onclick: () => speak(r.answer) }));
+    const head = el("header", { className: "reply-head" });
+    const who = el("div", { className: "reply-id" });
+    const name = el("div");
+    name.append(el("span", { className: "reply-name", textContent: "MedMate" }), el("span", { className: "reply-sub", textContent: title }));
+    who.append(el("span", { className: "mini-avatar" }), name);
+    head.append(who);
+    if (r.kind !== "loading") head.append(el("button", { type: "button", className: "read-aloud btn-stone", textContent: "Read aloud", onclick: () => speak(r.answer) }));
+    node.append(head);
+    const tag = r.sources?.length && medicinesTag(r.sources, meds());
+    if (tag) node.append(el("p", { className: tag.startsWith("Not") ? "tag not-listed" : "tag", textContent: tag }));
+    node.append(el(r.kind === "answer" ? "blockquote" : "p", { className: "answer", textContent: r.answer }));
     const cardSections = r.card ? [
-      ...section("Summary", r.card.summary),
+      ...section("Summary", r.card.summary, ""),
       ...section("What to do", r.card.what_to_do),
       ...section("Get help if", r.card.get_help_if, "help"),
     ] : [];
-    if (cardSections.length) node.append(el("div", { className: "card" }, cardSections));
+    node.append(...cardSections);
     if (r.sources?.length) {
-      const list = el("ul");
-      list.append(...r.sources.map((s) => {
-        const li = el("li");
-        li.append(leafletLink(s));
-        return li;
-      }));
+      const pills = el("div", { className: "pills" });
+      pills.append(...r.sources.map((s) => Object.assign(leafletLink(s), { className: "btn-stone pill" })));
       const box = el("div", { className: "sources" });
-      box.append(el("p", { className: "sources-title", textContent: "From the NHS leaflets" }), list);
-      const tag = medicinesTag(r.sources, meds());
-      if (tag) box.append(el("p", { className: "tag", textContent: tag }));
+      box.append(el("p", { className: "sources-title", textContent: "From the NHS leaflets:" }), pills);
       node.append(box);
     }
     return node;
   };
-  const entryNode = (e) => (e.role === "user" ? el("div", { className: "msg user", textContent: e.text }) : replyNode(e));
+  const entryNode = (e) => {
+    if (e.role !== "user") return replyNode(e);
+    const bubble = el("div", { className: "msg user" });
+    bubble.append(el("p", { className: "user-tag", textContent: "You asked" }), el("p", { className: "user-text", textContent: `“${e.text}”` }));
+    return bubble;
+  };
   // Puts a node at the end of the thread and brings it into view; the new reply "prints out".
   const place = (node) => {
     thread.append(node);

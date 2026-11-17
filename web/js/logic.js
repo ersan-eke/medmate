@@ -45,7 +45,7 @@ export function mouthFrame(rms) {
 // How each reply kind is drawn: card tone, visible title and icon name (meaning never rests on colour alone).
 // The page styles `data-tone` and `data-icon`; an unknown kind from a newer server is shown like an error.
 const CARDS = {
-  answer: { tone: "answer", title: "From your leaflets", icon: "doc" },
+  answer: { tone: "answer", title: "From your NHS leaflets", icon: "doc" },
   emergency: { tone: "emergency", title: "Call 999 now", icon: "phone" },
   not_covered: { tone: "amber", title: "Not in my leaflets", icon: "person" },
   off_topic: { tone: "amber", title: "Medicines only", icon: "person" },
@@ -57,11 +57,15 @@ const CARDS = {
 };
 export const replyCard = (kind) => CARDS[kind] ?? CARDS.error;
 
-// "In your medicines" when a source leaflet is for a medicine on the list; no tag for a reply without sources.
+// "In your medicines: Name (Morning, Evening)" when a source leaflet is for a medicine on the list;
+// no tag for a reply without sources.
 export function medicinesTag(sources, list) {
   if (!Array.isArray(sources) || !sources.length) return null;
-  const have = new Set(list.filter((m) => typeof m?.name === "string").map((m) => m.name.toLowerCase()));
-  return sources.some((s) => have.has(String(s.medicine).toLowerCase())) ? "In your medicines" : "Not in your medicines";
+  const listed = (s) => list.find((m) => typeof m?.name === "string" && m.name.toLowerCase() === String(s.medicine).toLowerCase());
+  const med = sources.map(listed).find(Boolean);
+  if (!med) return "Not in your medicines";
+  const times = (med.times ?? []).map((t) => t[0].toUpperCase() + t.slice(1)).join(", ");
+  return `In your medicines: ${med.name}${times ? ` (${times})` : ""}`;
 }
 
 // The chat thread: entries are { role: "user", text } or { role: "medmate", kind, answer, card, sources }.

@@ -53,14 +53,16 @@
   </div>
   <section class="chat" aria-label="Chat">
     <div id="thread" class="thread" role="log" aria-live="polite">
-      <div id="empty" class="msg medmate">
-        <p>Hello. I can tell you about your medicines from NHS leaflets. Tap the blue button and speak, or type your question.</p>
-        <p class="examples-title">You could ask:</p>
-        <ul class="examples">
-          <li><button type="button" class="example">When should I take metformin?</button></li>
-          <li><button type="button" class="example">What are the side effects of amlodipine?</button></li>
-          <li><button type="button" class="example">Can I drink alcohol with metformin?</button></li>
-        </ul>
+      <div id="empty">
+        <p class="msg medmate greeting">Hello. I can tell you about your medicines from NHS leaflets. Tap the blue button and speak, or type your question.</p>
+        <div class="suggest">
+          <p class="suggest-label">Try asking</p>
+          <ul class="examples">
+            <li><button type="button" class="example btn-stone">When should I take metformin?</button></li>
+            <li><button type="button" class="example btn-stone">What are the side effects of amlodipine?</button></li>
+            <li><button type="button" class="example btn-stone">Can I drink alcohol with metformin?</button></li>
+          </ul>
+        </div>
       </div>
     </div>
     <form id="form">
