@@ -18,11 +18,14 @@ TIMEOUT_SECONDS = 20  # a warm 3B answer takes a few seconds; the first-answer g
 WARMUP_TIMEOUT_SECONDS = 120  # a cold model load can take a minute
 TRIAGE_TIMEOUT_SECONDS = 5  # a yes/no reply from a warm model; a cold one skips triage and the rules still apply
 log = logging.getLogger(__name__)
-WORD_NUMBERS = {w: str(n) for n, w in enumerate(
-    "one two three four five six seven eight nine ten eleven twelve".split(), start=1)} | {"twice": "2", "half": "0.5"} | {
-    w: str(n) for n, w in zip(range(20, 100, 10), "twenty thirty forty fifty sixty seventy eighty ninety".split())}
+ONES = "one two three four five six seven eight nine".split()
+TENS = "twenty thirty forty fifty sixty seventy eighty ninety".split()
+WORD_NUMBERS = {w: str(n) for n, w in enumerate(ONES + ["ten", "eleven", "twelve"], start=1)} | {
+    "twice": "2", "half": "0.5"} | {w: str(n) for n, w in zip(range(20, 100, 10), TENS)}
+# "twenty-five" comes first so it is read as 25, not as 20 and 5.
 # "one" is a pronoun more often than a count ("one of the side effects"), so it counts only before a unit.
-NUMBER = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\bone(?=\s+(?:tablet|dose|capsule|time)s?\b)|\b(?:"
+NUMBER = re.compile(r"\b(?:" + "|".join(TENS) + r")[ -]+(?:" + "|".join(ONES) + r")\b"
+                    r"|\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\bone(?=\s+(?:tablet|dose|capsule|time)s?\b)|\b(?:"
                     + "|".join(w for w in WORD_NUMBERS if w != "one") + r")\b", re.IGNORECASE)
 
 
@@ -86,8 +89,16 @@ def build_messages(question: str, medicines: list[MedicineEntry], hits: list[Hit
     return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
 
 
+def _value(match: str) -> str:
+    """The number a match stands for, as digits: "twenty-five" -> "25", "1,500" -> "1500"."""
+    words = re.split(r"[ -]+", match.lower())
+    if len(words) == 2:
+        return str(sum(int(WORD_NUMBERS[w]) for w in words))
+    return WORD_NUMBERS.get(words[0], match.replace(",", ""))
+
+
 def numbers(text: str) -> set[str]:
-    return {WORD_NUMBERS.get(m.lower(), m.replace(",", "")) for m in NUMBER.findall(text)}
+    return {_value(m) for m in NUMBER.findall(text)}
 
 
 def shown_text(answer: LlmAnswer) -> str:
