@@ -199,8 +199,8 @@ None of the commands below are needed to run the application.
 
 | Command | What it checks | Prerequisites |
 | :--- | :--- | :--- |
-| `uv run pytest` | Runs **338 fast unit tests** (~1 s) covering API endpoints, leaflet indexing/retrieval, emergency phrases, prompt building, answer validation, speech text, evaluation metrics, and data files using stand-in models | `uv sync` only |
-| `uv run python -m scripts.preflight` | Runs demo-morning release gates with Hugging Face offline: verifies both Ollama models, runs all Python tests (including **11 integration tests** calling real models for the demo script, spoken emergencies, and first-answer latency), and runs web logic tests (`PASS` / `FAIL`) | Ollama running, models fetched, Node.js |
+| `uv run pytest` | Runs **499 fast unit tests** (~5 s) covering API endpoints, leaflet indexing/retrieval, emergency phrases, prompt building, answer validation, speech text, evaluation metrics, and data files using stand-in models | `uv sync` only |
+| `uv run python -m scripts.preflight` | Runs demo-morning release gates with Hugging Face offline: verifies both Ollama models, runs all Python tests (including **12 integration tests** calling real models for the demo script, spoken emergencies, and first-answer latency), and runs web logic tests (`PASS` / `FAIL`) | Ollama running, models fetched, Node.js |
 | `uv run python -m eval.run_eval --model llama3.2:3b` | Evaluates the **47 benchmark questions** end-to-end with the real model and writes recall, refusal, answer rate, citation validity, and latency tables to `eval/results/` | Ollama running |
 
 > [!TIP]
@@ -212,21 +212,21 @@ None of the commands below are needed to run the application.
 
 ### End-to-End Performance (`llama3.2:3b`)
 
-Evaluated on the **47-question main set** on the Apple M4 reference laptop:
+Evaluated on the **frozen final set** (165 questions: 127 single questions and 38 chat turns, `final-llama3.2-3b-report.md`) on the Apple M4 reference laptop:
 
 | Measure | Result | Note |
 | :--- | :---: | :--- |
-| **Retrieval hit@4 (hybrid)** | **1.00** | BM25 alone: `0.89` · Vectors alone: `1.00` |
-| **Red-flag recall** | **1.00** | Emergencies that triggered the `999` message |
-| **Red-flag false alarms** | **0.05** | Non-emergencies that triggered the `999` message |
-| **Refusal rate** | **1.00** | Out-of-scope questions correctly refused |
-| **Answer rate** | **0.81** | Answerable questions that received a real answer |
-| **Faithful answers** | **0.82** | Manually graded on a 22-answer subset |
-| **Citation validity** | **1.00** | All cited passage IDs verified against the index |
-| **Latency (`p50` / `p95`)** | **8.2 s / 12.5 s** | End-to-end on Apple M4 (24 GB) |
+| **Retrieval hit@4 (hybrid)** | **0.91** | On the 77 single answerable questions |
+| **Red-flag recall** | **0.92** | 68 of 74 emergencies got the `999` message |
+| **Red-flag false alarms** | **0.04** | 6 of 165 rows got the `999` message when not expected (2%–8%) |
+| **Refusal rate** | **0.75** | Out-of-scope questions correctly refused (not covered and off-topic) |
+| **Answer rate** | **0.79** | Answerable questions that received a real answer |
+| **Faithful answers** | **0.22–0.54** | Share of 78 graded answers scoring 3 of 3, by four graders (friend 1: 0.35, friend 2: 0.31 on 26, friend 3: 0.54, Claude: 0.22) |
+| **Citation validity** | **0.99** | Cited passage IDs verified against the index |
+| **Latency (`p50` / `p95`)** | **9.3 s / 13.6 s** | End-to-end on Apple M4 (24 GB) |
 
 > [!NOTE]
-> The `1.00` red-flag recall above is on the development set tuned during rule creation. On a held-out emergency test set written after rules were frozen, recall is **0.92** with **1 false alarm in 8 near-misses**.
+> The final set was frozen before the run and includes multi-turn chats. The earlier 47-question development numbers (recall `1.00`, refusal `1.00`, answer rate `0.81`, `p50` / `p95` `8.2 s / 12.5 s`) were measured on questions the rules were tuned on, so they are higher.
 
 ### Model Selection Comparison
 
