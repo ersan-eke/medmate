@@ -6,11 +6,13 @@ export async function startRecording() {
   const chunks = [];
   recorder.ondataavailable = (e) => chunks.push(e.data);
   recorder.start();
-  return () => new Promise((resolve) => {
+  return () => new Promise((resolve, reject) => {
+    const release = () => stream.getTracks().forEach((t) => t.stop());
     recorder.onstop = () => {
-      stream.getTracks().forEach((t) => t.stop());
+      release();
       resolve(new Blob(chunks, { type: recorder.mimeType }));
     };
-    recorder.stop();
+    // stop() throws if the recorder already died; release the mic and let the caller handle it.
+    try { recorder.stop(); } catch (e) { release(); reject(e); }
   });
 }
