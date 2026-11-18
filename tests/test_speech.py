@@ -1,4 +1,7 @@
 import sys
+import threading
+import time
+import types
 
 import pytest
 from fastapi.testclient import TestClient
@@ -170,3 +173,68 @@ def test_warm_speech_loads_whisper_and_first_engine(monkeypatch):
     assert calls == ["whisper", "tts"]
     with pytest.raises(RuntimeError):  # no quiet fall-through to the next engine
         speech.warm_speech([failing, lambda t: b"RIFF"])
+
+
+def hammer(fn, n=6):
+    threads = [threading.Thread(target=fn) for _ in range(n)]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+
+
+class Overlap:
+    """Counts how many threads are inside a fake model call at once, and how many loads happened."""
+
+    def __init__(self):
+        self.active = self.peak = self.loads = 0
+        self.guard = threading.Lock()
+
+    def load(self):
+        with self.guard:
+            self.loads += 1
+        time.sleep(0.1)
+
+    def work(self):  # a generator body: runs lazily, like the real segments / audio generators
+        with self.guard:
+            self.active += 1
+            self.peak = max(self.peak, self.active)
+        time.sleep(0.05)
+        yield
+        with self.guard:
+            self.active -= 1
+
+
+def test_transcribe_serialises_threads_and_loads_whisper_once(monkeypatch):
+    from backend import speech
+
+    o = Overlap()
+
+    class FakeWhisper:
+        def __init__(self, *a, **k):
+            o.load()
+
+        def transcribe(self, *a, **k):
+            return (types.SimpleNamespace(text=" hi ") for _ in o.work()), types.SimpleNamespace(duration=1)
+
+    monkeypatch.setitem(sys.modules, "faster_whisper", types.SimpleNamespace(WhisperModel=FakeWhisper))
+    monkeypatch.setattr(speech, "_whisper", None)
+    hammer(lambda: transcribe(b"x"))
+    assert (o.peak, o.loads) == (1, 1)
+
+
+def test_kokoro_engine_serialises_threads_and_loads_once(monkeypatch):
+    import numpy as np
+
+    o = Overlap()
+
+    class FakePipeline:
+        def __init__(self, **k):
+            o.load()
+
+        def __call__(self, *a, **k):
+            for _ in o.work():
+                yield 0, 0, np.zeros(10, dtype="float32")
+
+    monkeypatch.setitem(sys.modules, "kokoro", types.SimpleNamespace(KPipeline=FakePipeline))
+    engine = kokoro_engine()
+    hammer(lambda: engine("hello"))
+    assert (o.peak, o.loads) == (1, 1)

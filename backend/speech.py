@@ -3,6 +3,7 @@ import logging
 import re
 import subprocess
 import tempfile
+import threading
 from typing import Callable
 
 log = logging.getLogger(__name__)
@@ -20,17 +21,19 @@ DOSE = re.compile(rf"({DOSE_NUMBER})\s*({DOSE_UNIT})\b(?:\s*/\s*({DOSE_NUMBER})?
 
 def kokoro_engine(voice: str = "af_heart", speed: float = 0.9) -> Engine:
     pipeline = None
+    lock = threading.Lock()  # one pipeline shared by the handler threads; also stops a double lazy load
 
     def speak(text: str) -> bytes:
         nonlocal pipeline
         import numpy as np
         import soundfile
 
-        if pipeline is None:
-            from kokoro import KPipeline
+        with lock:
+            if pipeline is None:
+                from kokoro import KPipeline
 
-            pipeline = KPipeline(lang_code="a")
-        parts = [np.asarray(audio) for _, _, audio in pipeline(text, voice=voice, speed=speed)]
+                pipeline = KPipeline(lang_code="a")
+            parts = [np.asarray(audio) for _, _, audio in pipeline(text, voice=voice, speed=speed)]
         if not parts:
             raise RuntimeError("kokoro produced no audio")
         buf = io.BytesIO()
@@ -85,20 +88,22 @@ class AudioTooLong(Exception):
 
 
 _whisper = None
+_whisper_lock = threading.Lock()  # one model shared by the handler threads; also stops a double lazy load
 
 
 def transcribe(audio: bytes, prompt: str | None = None) -> str:
     """Whatever MediaRecorder sends (webm/opus); faster-whisper decodes it via PyAV.
     `prompt` primes Whisper with words it should expect, such as rare medicine names."""
     global _whisper
-    if _whisper is None:
-        from faster_whisper import WhisperModel
+    with _whisper_lock:  # held while `segments` is consumed: it is lazy and does the real work
+        if _whisper is None:
+            from faster_whisper import WhisperModel
 
-        _whisper = WhisperModel("small.en", device="cpu", compute_type="int8")
-    segments, info = _whisper.transcribe(io.BytesIO(audio), language="en", vad_filter=True, initial_prompt=prompt)
-    if info.duration > MAX_AUDIO_SECONDS:  # `segments` is lazy: nothing has been transcribed yet
-        raise AudioTooLong
-    return " ".join(s.text.strip() for s in segments).strip()
+            _whisper = WhisperModel("small.en", device="cpu", compute_type="int8")
+        segments, info = _whisper.transcribe(io.BytesIO(audio), language="en", vad_filter=True, initial_prompt=prompt)
+        if info.duration > MAX_AUDIO_SECONDS:  # nothing has been transcribed yet
+            raise AudioTooLong
+        return " ".join(s.text.strip() for s in segments).strip()
 
 
 def warm_speech(engines: list[Engine]) -> None:
