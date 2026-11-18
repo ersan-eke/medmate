@@ -94,9 +94,13 @@ def card_text(card) -> str:
                       "Get help if:", *(f"- {x}" for x in card.get_help_if)])
 
 
-def full_run(rows: list[dict], retriever: Retriever, interactions: list[Interaction], model: str, tag: str) -> dict:
+def refuse_chats(rows: list[dict]) -> None:
     if any("history" in r for r in rows):  # sending message 2 alone would score every chat without its context
         raise SystemExit("chats need the follow-up feature (docs/adr/0001-rewrite-follow-ups-then-check.md)")
+
+
+def full_run(rows: list[dict], retriever: Retriever, interactions: list[Interaction], model: str, tag: str) -> dict:
+    refuse_chats(rows)
     generate = ollama_generate(model, timeout=120)  # measure the slow models instead of timing them out
     generate([{"role": "user", "content": "hi"}], {"type": "object"})  # load the model before timing
     out = []
@@ -191,6 +195,7 @@ def main() -> None:
         rows = load_rows(ROOT / "eval" / f"{args.set}.jsonl")
         retriever = Retriever(load_index(ROOT / "data" / "index"), ollama_embed())
         tag = f"{args.set}-{model_tag}"
+        refuse_chats(rows)  # before freeze(): a refused run must not use up the one-shot marker
         run = freeze(args.model, RESULTS / f"{tag}.json") if args.set == "final" else {}
         metrics = {"model": args.model, **run, **full_run(rows, retriever, load_interactions(ROOT / "data" / "interactions.csv"), args.model, tag)}
         # Retrieval alone, after the timed run so its embeds don't count; chats wait for the rewritten question.
