@@ -20,7 +20,7 @@ function initTextSize() {
 }
 
 // The Menu button opens a disclosure of the three tools; Escape or a click elsewhere closes it and returns focus to the button.
-// It stays open behind the leaflets dialog so focus can return to the button that opened it.
+// It stays open behind the leaflets dialog; closing the dialog closes the Menu and returns focus to its button.
 function initMenu() {
   const button = document.getElementById("menu-btn");
   const tools = document.getElementById("tools");
@@ -30,6 +30,7 @@ function initMenu() {
   };
   button.addEventListener("click", () => set(tools.hidden));
   document.getElementById("reset").addEventListener("click", () => set(false));
+  document.getElementById("leaflets").addEventListener("close", () => { set(false); button.focus(); });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !document.querySelector("dialog[open]") && !tools.hidden) { set(false); button.focus(); }
   });
