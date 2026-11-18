@@ -91,6 +91,10 @@ def claims_safe_combination(question: str, answer: str, named: set[str] = frozen
     return bool(SAFE_CLAIM.search(answer) or not NOT_A_MEDICINE.search(question) and CAN_CLAIM.search(answer))
 
 
+# "with my other tablets" asks about the list; "my Metformin ... and my stomach" does not.
+MY_OTHERS = re.compile(r"\bmy (other|usual|regular|daily)\b|\bmy (tablets|medicines?|medications?|meds|pills)\b", re.IGNORECASE)
+
+
 def check_interactions(question: str, named: set[str], listed: set[str],
                        interactions: list[Interaction]) -> tuple[list[Interaction], list[Interaction]]:
     """Known pairs of a combination question: (asked, also). Asked pairs join two named medicines, or one named
@@ -103,6 +107,6 @@ def check_interactions(question: str, named: set[str], listed: set[str],
     pairs = [(i, {i.medicine_a.lower(), i.medicine_b.lower()}) for i in interactions]
     between_named = [i for i, pair in pairs if pair <= in_question]
     with_list = [i for i, pair in pairs if pair <= in_question | on_list and pair & in_question and pair & on_list]
-    if len(in_question) == 1 and re.search(r"\bmy\b", question, re.IGNORECASE):
+    if len(in_question) == 1 and MY_OTHERS.search(question):
         return with_list, []
     return between_named, with_list

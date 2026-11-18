@@ -126,6 +126,9 @@ WARF_IBU = Interaction("Warfarin", "Ibuprofen", "w2", "c2")
     ("Can I take omeprazole with amoxicillin?", {"Omeprazole"}, {"Levothyroxine"}, [], [LEVO_OMEP]),
     # "my" with one named medicine asks about the list.
     ("Is ibuprofen OK with my other tablets?", {"Ibuprofen"}, {"Warfarin"}, [WARF_IBU], []),
+    ("Is ibuprofen OK with my tablets?", {"Ibuprofen"}, {"Warfarin"}, [WARF_IBU], []),
+    # "my" before the named medicine is not a question about the list.
+    ("Do I take my ibuprofen before dinner, and my stomach hurts?", {"Ibuprofen"}, {"Warfarin"}, [], [WARF_IBU]),
     ("Can I take warfarin with ibuprofen?", {"Warfarin", "Ibuprofen"}, {"Levothyroxine"}, [WARF_IBU], []),
     ("When do I take omeprazole?", {"Omeprazole"}, {"Levothyroxine"}, [], []),  # not a combination question
     ("Can I take ibuprofen after warfarin?", {"Warfarin", "Ibuprofen"}, set(), [WARF_IBU], []),  # one after the other
