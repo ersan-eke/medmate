@@ -12,7 +12,7 @@ from backend.kb import load_index, load_interactions
 from eval.run_eval import RESULTS, ROOT, load_rows
 
 GRADING = ROOT / "eval" / "grading"
-GRADERS = ["claude", "friend1", "friend2"]
+GRADERS = ["friend1", "friend2", "friend3"]
 
 
 def sheet_rows(rows: list[dict], run: list[dict], chunks: dict, interactions: list) -> list[dict]:
@@ -55,7 +55,7 @@ def main() -> None:
     # Graders see no run id, source, label or model.
     write(GRADING / f"{args.set}-sheet.csv", out,
           ["item", "earlier_message", "question", "answer_to_grade", "cited_passages", "grade_1_2_3", "what_was_wrong"])
-    write(grades, out, ["item", "run_id", *GRADERS, *(f"{g}_note" for g in GRADERS[1:])])
+    write(grades, out, ["item", "run_id", *GRADERS, *(f"{g}_note" for g in GRADERS)])
     print(f"{len(out)} answers to grade; {sum(o['kind'] == 'answer' for o in run) - len(out)} answered from the table")
 
 

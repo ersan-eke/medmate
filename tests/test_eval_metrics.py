@@ -275,12 +275,12 @@ def test_report_counts_by_expected_reply_and_lists_every_miss():
     run = [{"id": "a", "kind": "emergency", "red_flag": "model_triage", "llm_called": "True"},
            {"id": "b", "kind": "off_topic", "red_flag": "", "llm_called": "True"},
            {"id": "c", "kind": "emergency", "red_flag": "chest_pain", "llm_called": "False"}]
-    grades = [{"claude": "3", "friend1": "3", "friend2": "2"}, {"claude": "2", "friend1": "2", "friend2": ""}]
+    grades = [{"friend1": "3", "friend2": "3", "friend3": "2"}, {"friend1": "2", "friend2": "2", "friend3": ""}]
     text = report(rows, run, {"model": "m"}, grades)
     assert "| emergency | 1 of 1 " in text and "| not_covered | – | 1 of 1 " in text  # either refusal passes
     assert "Over-triggering (the 999 reply on a row that does not expect it): 1 of 2" in text
     assert "only by the model's yes/no step: 1" in text and "| c | answer | emergency | qc |" in text
-    assert "claude and friend1: same grade on 2 of 2" in text and "claude and friend2: same grade on 0 of 1" in text
+    assert "friend1 and friend2: same grade on 2 of 2" in text and "friend1 and friend3: same grade on 0 of 1" in text
 
 
 def test_card_text_reads_like_the_page():
