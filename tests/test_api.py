@@ -9,7 +9,7 @@ from backend.app import create_app
 from backend.kb import Interaction
 from backend.llm import REWRITE_SCHEMA, TRIAGE_SCHEMA, MedicineEntry
 from backend.pipeline import known_medicines
-from backend.messages import (ATTRIBUTION, EMERGENCY, FALLBACK, GATE_REFUSAL, NOT_COVERED, NOT_HEARD, OFF_TOPIC,
+from backend.messages import (ATTRIBUTION, CLARIFY, EMERGENCY, FALLBACK, GATE_REFUSAL, NOT_COVERED, NOT_HEARD, OFF_TOPIC,
                               UNCONFIRMED_COMBINATION)
 from tests.test_safety import FIRES
 
@@ -663,11 +663,33 @@ def test_rewrite_naming_a_table_pair_is_answered_from_the_table(follow, spies, r
     lambda m, s: rewrite_reply("Can I take metformin with food?", clear=False),
     lambda m, s: rewrite_reply("Can I take warfarin with food?"),  # drops metformin, which the follow-up named
     lambda m, s: rewrite_reply("Can I take metformin 500 times?"),  # adds a number
+], ids=["not-clear", "dropped-medicine", "added-number"])
+def test_unsure_rewrite_asks_back_without_an_answer_call(follow, spies, rewrites, fn):
+    _, answer = spies
+    rewrites.fn = fn
+    body = follow_up(follow, "what about metformin?", "Can I take warfarin with food?").json()
+    assert body["kind"] == "clarify" and body["answered"] is None and answer.calls == 0
+    assert body["answer"] == "Do you mean Metformin on its own, or Metformin with Warfarin?"
+
+
+def test_clarify_without_a_medicine_in_each_question_is_the_fixed_sentence(follow, rewrites):
+    rewrites.fn = lambda m, s: rewrite_reply("x", clear=False)
+    body = follow_up(follow, "and at night?", "Can I take warfarin with food?").json()
+    assert body["kind"] == "clarify" and body["answer"] == CLARIFY
+
+
+def test_rewrite_adding_a_medicine_asks_back(follow, rewrites):
+    rewrites.fn = lambda m, s: rewrite_reply("Can I take metformin at night?")
+    body = follow_up(follow, "and at night?", "Can I take warfarin with food?").json()
+    assert body["kind"] == "clarify" and body["answer"] == CLARIFY
+
+
+@pytest.mark.parametrize("fn", [
     lambda m, s: rewrite_reply("x" * 501),
     lambda m, s: "not json",
     lambda m, s: (_ for _ in ()).throw(TimeoutError("slow")),
-], ids=["not-clear", "dropped-medicine", "added-number", "too-long", "bad-json", "raises"])
-def test_unusable_rewrite_answers_the_follow_up_as_typed(follow, spies, rewrites, fn):
+], ids=["too-long", "bad-json", "raises"])
+def test_failed_rewrite_answers_the_follow_up_as_typed(follow, spies, rewrites, fn):
     _, answer = spies
     rewrites.fn = fn
     body = follow_up(follow, "what about metformin?", "Can I take warfarin with food?").json()
@@ -693,3 +715,9 @@ def test_rewrite_that_builds_an_emergency_is_an_emergency(follow, rewrites):
 def test_rewrite_equal_to_the_follow_up_is_answered_as_typed(follow, rewrites):
     rewrites.fn = lambda m, s: rewrite_reply("Can I take metformin with food?")
     assert follow_up(follow, "Can I take metformin with food?", "Is warfarin OK?").json()["answered"] is None
+
+
+def test_one_word_answer_to_a_clarify_question_gets_a_real_answer(follow, rewrites):
+    rewrites.fn = lambda m, s: rewrite_reply(TABLE_PAIR)
+    body = follow_up(follow, "with warfarin", "what about metformin?").json()
+    assert body["kind"] == "answer" and body["answered"] == TABLE_PAIR

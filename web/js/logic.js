@@ -77,6 +77,7 @@ const CARDS = {
   not_covered: { tone: "amber", title: "Not in my leaflets", icon: "person" },
   off_topic: { tone: "amber", title: "Medicines only", icon: "person" },
   fallback: { tone: "amber", title: "Check with your pharmacist", icon: "question" },
+  clarify: { tone: "amber", title: "Which do you mean?", icon: "question" },
   not_heard: { tone: "amber", title: "Let's try again", icon: "mic" },
   type_instead: { tone: "amber", title: "Please type instead", icon: "keyboard" },
   error: { tone: "amber", title: "Let's try again", icon: "retry" },

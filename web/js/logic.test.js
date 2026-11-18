@@ -112,6 +112,7 @@ test("every reply kind has a title and an icon, and only some are red or blue", 
   assert.equal(replyCard("not_covered").title, "Not in my leaflets");
   assert.equal(replyCard("off_topic").title, "Medicines only");
   assert.equal(replyCard("fallback").title, "Check with your pharmacist");
+  assert.deepEqual(replyCard("clarify"), { tone: "amber", title: "Which do you mean?", icon: "question" });
   assert.equal(replyCard("type_instead").title, "Please type instead");
   assert.deepEqual(replyCard("something_new"), replyCard("error"));
 });

@@ -8,6 +8,8 @@ FALLBACK = "I'm not sure. Please ask your pharmacist."
 UNCONFIRMED_COMBINATION = "I can't confirm that combination from my leaflets. Please check with your pharmacist before taking them together."
 INTERACTION_ADVICE = "Please check with your pharmacist before taking them together."
 ALSO_TAKE = "You also take {}."  # leads the warnings for My medicines the question didn't name
+CLARIFY = "I'm not sure what you mean. Please ask the whole question again, with the medicine's name."
+CLARIFY_TEMPLATE = "Do you mean {now} on its own, or {now} with {before}?"
 NOT_HEARD = "Sorry, I didn't catch that. Please try again or type your question."
 ATTRIBUTION = (
     "Information from the NHS website, licensed under the Open Government Licence v3.0. "

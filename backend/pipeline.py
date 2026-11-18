@@ -31,7 +31,7 @@ class Source(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    kind: Literal["emergency", "answer", "not_covered", "off_topic", "fallback", "not_heard"]
+    kind: Literal["emergency", "answer", "not_covered", "off_topic", "fallback", "not_heard", "clarify"]
     answer: str
     sources: list[Source] = []
     card: Card | None = None
@@ -60,6 +60,8 @@ def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate,
     if triage(typed, generate):  # before retrieval: a novel wording matches no leaflet and would stop at the gate
         return ChatResponse(kind="emergency", answer=messages.EMERGENCY, red_flag="model_triage", llm_called=True)
     answered = _answered(req.previous, typed, retriever, generate)
+    if isinstance(answered, ChatResponse):
+        return answered
     # A rewrite can join the count from the follow-up to the medicine from the previous question ("took 30 paracetamol").
     if answered and (flag := check_red_flags(answered)):
         return ChatResponse(kind="emergency", answer=messages.EMERGENCY, red_flag=flag.id, llm_called=True)
@@ -80,15 +82,27 @@ def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate,
     return response
 
 
-def _answered(previous: str | None, followup: str, retriever: Retriever, generate: Generate) -> str | None:
-    """The follow-up rewritten to stand alone, or None when there is no previous question or the rewrite is unusable."""
+def _answered(previous: str | None, followup: str, retriever: Retriever,
+              generate: Generate) -> str | ChatResponse | None:
+    """The follow-up rewritten to stand alone; None when there is no previous question or the rewrite call failed
+    (the follow-up is then answered as typed); a `clarify` reply when the model is unsure or the Rewrite check fails."""
     if not previous or not previous.strip():
         return None
     rw = rewrite(previous.strip(), followup, generate)
-    answered = rw.answered.strip() if rw else ""
-    if answered and answered != followup and rw.clear and check_rewrite(followup, previous, answered, retriever.named):
-        return answered
-    return None
+    if rw is None:
+        return None
+    answered = rw.answered.strip()
+    if rw.clear and answered and check_rewrite(followup, previous, answered, retriever.named):
+        return None if answered == followup else answered
+    return ChatResponse(kind="clarify", answer=_clarify(previous, followup, retriever), llm_called=True)
+
+
+def _clarify(previous: str, followup: str, retriever: Retriever) -> str:
+    """Asks back with names the person said; the model never writes this text."""
+    now, before = retriever.named(followup), retriever.named(previous)
+    if len(now) == 1 and len(before) == 1 and now != before:
+        return messages.CLARIFY_TEMPLATE.format(now=next(iter(now)), before=next(iter(before)))
+    return messages.CLARIFY
 
 
 def _warnings(pairs: list[Interaction]) -> str:
