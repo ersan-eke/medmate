@@ -150,6 +150,15 @@ CLASS_NAMES = {
     "Metformin": [r"medicines for diabetes"],
     "Sertraline": [r"antidepressants", r"medicines to treat depression"],
 }
+# In a leaflet of the same class the other phrases describe the leaflet's own medicine ("amlodipine ... lower blood
+# pressure"), so only "other ..." names a different one.
+SAME_CLASS_NAMES = {"Amlodipine": [r"other blood pressure"], "Ramipril": [r"other blood pressure"]}
+
+
+def _class_names(name: str, source: str) -> list[str]:
+    """Phrases that name `name` in the leaflet of `source`."""
+    same_class = name != source and CLASS_NAMES.get(name) == CLASS_NAMES.get(source)
+    return (SAME_CLASS_NAMES if same_class else CLASS_NAMES).get(name, [])
 
 
 def validate_interactions(interactions: list[Interaction], index: Index) -> None:
@@ -168,7 +177,7 @@ def validate_interactions(interactions: list[Interaction], index: Index) -> None
             raise ValueError(f"interaction source '{row.source_chunk}' is not a chunk")
         # The cited passage must name both medicines, or a class plainly containing one; the wording is checked by hand.
         if chunk.medicine not in (row.medicine_a, row.medicine_b) or not all(
-            re.search(rf"\b({'|'.join([re.escape(n), *CLASS_NAMES.get(n, [])])})\b", chunk.text, re.IGNORECASE)
+            re.search(rf"\b({'|'.join([re.escape(n), *_class_names(n, chunk.medicine)])})\b", chunk.text, re.IGNORECASE)
             for n in (row.medicine_a, row.medicine_b)
         ):
             raise ValueError(f"'{row.source_chunk}' does not name both {row.medicine_a} and {row.medicine_b}")

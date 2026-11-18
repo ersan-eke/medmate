@@ -149,6 +149,7 @@ def test_same_chunk_id_in_two_leaflets_raises(tmp_path, fake_embed):
 @pytest.mark.parametrize("text, ok", [
     ("These include:\n- other blood pressure medicines", True),
     ("- medicines for high blood pressure or heart disease, such as diltiazem or verapamil", False),  # other examples
+    ("Amlodipine is used to lower blood pressure.", False),  # its own leaflet describing itself
 ])
 def test_a_class_plainly_containing_the_medicine_counts_as_naming_it(text, ok):
     chunks = [Chunk("amlodipine#other", "Amlodipine", "Other", "Amlodipine — Other\n" + text, "u"),
