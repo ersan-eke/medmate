@@ -52,6 +52,10 @@ def test_bad_json_invalid():
     assert isinstance(validate("nope", {}, ""), str)
 
 
+def test_no_content_from_ollama_invalid():
+    assert isinstance(validate(None, {}, ""), str)
+
+
 def test_bracketed_citation_accepted():
     answer = validate(raw(citations=["[metformin#how-and-when-to-take-it]"]), SENT, "")
     assert answer.citations == ["metformin#how-and-when-to-take-it"]

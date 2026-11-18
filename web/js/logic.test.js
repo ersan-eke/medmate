@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildSchedule, mouthFrame, findInteractions, loadMedicines, saveMedicines,
   replyCard, medicinesTag, loadThread, saveThread, showSuggestions,
-  countLabel, todayLabel, reinsertAt, store,
+  countLabel, todayLabel, reinsertAt, store, loadTaken, saveTaken,
 } from "./logic.js";
 
 const KEY = "medmate.medicines";
@@ -54,6 +54,18 @@ test("malformed entries are dropped or repaired, not passed on", () => {
   const saved = [null, 7, { dose: "5 mg" }, { name: "Metformin", dose: 500, times: ["morning", "noon", 3], note: null }];
   const [m] = loadMedicines(fakeStorage({ [KEY]: JSON.stringify(saved) }));
   assert.deepEqual({ ...m, id: "x" }, { id: "x", name: "Metformin", dose: "", times: ["morning"], note: "" });
+});
+
+test("long text is clipped to what the server accepts", () => {
+  const [m] = loadMedicines(fakeStorage({ [KEY]: JSON.stringify([{ id: "m", name: "Metformin", dose: "x".repeat(200) }]) }));
+  assert.equal(m.dose.length, 100);
+});
+
+test("ticks load for the same day only", () => {
+  const s = fakeStorage();
+  saveTaken(s, "Mon", new Set(["morning|m|Mon"]));
+  assert.deepEqual([...loadTaken(s, "Mon")], ["morning|m|Mon"]);
+  assert.equal(loadTaken(s, "Tue").size, 0);
 });
 
 test("entries without an id get one that is saved, so it survives a reload", () => {

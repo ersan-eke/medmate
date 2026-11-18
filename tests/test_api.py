@@ -65,6 +65,10 @@ def test_oversized_medicines_are_refused_not_clipped(client, meds):
     assert chat(client, "hi", meds).status_code == 422
 
 
+def test_question_over_500_characters_is_refused(client):
+    assert chat(client, "a" * 501).status_code == 422
+
+
 def test_demo_red_flag_skips_llm(client, spies, triage):
     r = chat(client, "Now my chest feels tight.")
     assert r.status_code == 200

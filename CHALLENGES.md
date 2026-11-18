@@ -50,3 +50,7 @@ Add real problems as you hit them: date, who, what happened, what fixed it.
 
 - **Known limit of the 3B model.** The number check only sees digits, so an answer can add advice or a claim with no numbers in it. `per1` (metformin, unsettled stomach): "wait until your next meal to take it", which the leaflet does not say. `nea3` (bleeding gums, warfarin): "bleeding gums can be a side effect", where the leaflet lists increased bleeding. The prompt already forbids this; the model ignores it sometimes.
 - **What we did.** We did not add a runtime check: it would be a word-overlap heuristic that refuses good answers. We added a measure instead: the hand-graded `faithfulness` column (1 to 3, 3 = a faithful answer) now feeds `faithfulness_rate` in `summary.md`. Reopen a check or a prompt change when the graded rate is known.
+
+## 2026-11-18 — Emergency check language (audit finding 1)
+
+- **English only.** The red-flag rules match English phrases. A question in another language, such as "胸痛" (chest pain), is not caught by the rules and relies on the triage model. MedMate is English only, so no other-language patterns were added.
