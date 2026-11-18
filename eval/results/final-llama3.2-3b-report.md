@@ -76,7 +76,11 @@ Share of graded answers scoring 3 of 3, per grader:
 - friend1: 27 of 78 (25%–46%)
 - friend2: 8 of 26 (17%–50%)
 - friend3: 42 of 78 (43%–64%)
+- claude: 17 of 78 (14%–32%)
 
 - friend1 and friend2: same grade on 16 of 26, Cohen's kappa 0.42
 - friend1 and friend3: same grade on 51 of 78, Cohen's kappa 0.46
+- friend1 and claude: same grade on 57 of 78, Cohen's kappa 0.58
 - friend2 and friend3: same grade on 13 of 26, Cohen's kappa 0.27
+- friend2 and claude: same grade on 19 of 26, Cohen's kappa 0.60
+- friend3 and claude: same grade on 45 of 78, Cohen's kappa 0.38

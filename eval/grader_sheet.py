@@ -12,7 +12,7 @@ from backend.kb import load_index, load_interactions
 from eval.run_eval import RESULTS, ROOT, load_rows
 
 GRADING = ROOT / "eval" / "grading"
-GRADERS = ["friend1", "friend2", "friend3"]
+GRADERS = ["friend1", "friend2", "friend3", "claude"]
 
 
 def sheet_rows(rows: list[dict], run: list[dict], chunks: dict, interactions: list) -> list[dict]:

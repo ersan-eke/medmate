@@ -275,7 +275,7 @@ def test_report_counts_by_expected_reply_and_lists_every_miss():
     run = [{"id": "a", "kind": "emergency", "red_flag": "model_triage", "llm_called": "True"},
            {"id": "b", "kind": "off_topic", "red_flag": "", "llm_called": "True"},
            {"id": "c", "kind": "emergency", "red_flag": "chest_pain", "llm_called": "False"}]
-    grades = [{"friend1": "3", "friend2": "3", "friend3": "2"}, {"friend1": "2", "friend2": "2", "friend3": ""}]
+    grades = [{"friend1": "3", "friend2": "3", "friend3": "2", "claude": ""}, {"friend1": "2", "friend2": "2", "friend3": "", "claude": ""}]
     text = report(rows, run, {"model": "m"}, grades)
     assert "| emergency | 1 of 1 " in text and "| not_covered | – | 1 of 1 " in text  # either refusal passes
     assert "Over-triggering (the 999 reply on a row that does not expect it): 1 of 2" in text

@@ -79,8 +79,8 @@ Where both friends agreed and Claude did not, Claude was softer on items 3 and 2
 definite) and differed by one on items 13 and 28 (1 against 2, and 2 against 1).
 The final run's answers are graded by both friends and Claude, all blind, and the report gives all three and their
 agreement. Disagreements are reported, not argued away.
-As run: three friends graded instead (friend1 and friend3 all 78 answers, friend2 the first 26); no Claude grade,
-since Claude had seen the labels and misses by then. Raw sheets are in `content/`, merged into `final-grades.csv`.
+As run: three friends graded (friend1 and friend3 all 78 answers, friend2 the first 26), plus a Claude grade of all 78
+made in a separate session from the sheet and the rubric. Raw sheets are in `content/`, merged into `final-grades.csv`.
 
 ### What each grader gets for the final run
 
