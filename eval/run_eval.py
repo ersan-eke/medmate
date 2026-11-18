@@ -97,7 +97,14 @@ def full_run(rows: list[dict], retriever: Retriever, interactions: list[Interact
                     "kind": resp.kind, "llm_called": resp.llm_called, "latency_s": round(time.perf_counter() - start, 2),
                     "sources": " ".join(s.id for s in resp.sources), "answer": resp.answer, "faithfulness": ""})
         print(f"{r['id']:8} {resp.kind:12} {out[-1]['latency_s']:5.1f}s")
-    with (RESULTS / f"{tag}.csv").open("w", encoding="utf-8", newline="") as f:
+    path = RESULTS / f"{tag}.csv"
+    if path.exists():  # a hand grade belongs to one answer text, so it carries over only while the answer is unchanged
+        old = {r["id"]: r for r in csv.DictReader(path.open(encoding="utf-8"))}
+        for o in out:
+            if o["answer"] == old.get(o["id"], {}).get("answer"):
+                o["faithfulness"] = old[o["id"]]["faithfulness"]
+        print(f"kept {sum(bool(o['faithfulness'].strip()) for o in out)} of {sum(bool(r['faithfulness'].strip()) for r in old.values())} hand grades")
+    with path.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(out[0]))
         w.writeheader()
         w.writerows(out)

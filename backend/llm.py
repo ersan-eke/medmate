@@ -1,5 +1,6 @@
 import logging
 import re
+import unicodedata
 from collections.abc import Callable
 from pathlib import Path
 
@@ -19,12 +20,15 @@ TRIAGE_TIMEOUT_SECONDS = 5  # a yes/no reply from a warm model; a cold one skips
 log = logging.getLogger(__name__)
 ONES = "one two three four five six seven eight nine".split()
 TENS = "twenty thirty forty fifty sixty seventy eighty ninety".split()
-WORD_NUMBERS = {w: str(n) for n, w in enumerate(ONES + ["ten", "eleven", "twelve"], start=1)} | {
-    "twice": "2", "half": "0.5"} | {w: str(n) for n, w in zip(range(20, 100, 10), TENS)}
+TEENS = "ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
+WORD_NUMBERS = {w: str(n) for n, w in enumerate(ONES + TEENS, start=1)} | {
+    "twice": "2", "half": "0.5", "quarter": "0.25", "hundred": "100", "thousand": "1000"} | {w: str(n) for n, w in zip(range(20, 100, 10), TENS)}
 WORD_NUMBERS |= {f"{t} {o}": str(int(WORD_NUMBERS[t]) + int(WORD_NUMBERS[o])) for t in TENS for o in ONES}
+WORD_NUMBERS |= {f"{o} {m}": str(int(WORD_NUMBERS[o]) * int(WORD_NUMBERS[m])) for o in ONES for m in ("hundred", "thousand")}
 # "twenty-five" comes first so it is read as 25, not as 20 and 5.
 # "one" is a pronoun more often than a count ("one of the side effects"), so it counts only before a unit.
 NUMBER = re.compile(r"\b(?:" + "|".join(TENS) + r")[ -]+(?:" + "|".join(ONES) + r")\b"
+                    r"|\b(?:" + "|".join(ONES) + r")[ -]+(?:hundred|thousand)\b"
                     r"|\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\bone(?=\s+(?:tablet|dose|capsule|time)s?\b)|\b(?:"
                     + "|".join(w for w in WORD_NUMBERS if w != "one" and " " not in w) + r")\b", re.IGNORECASE)
 
@@ -113,7 +117,8 @@ def _as_digits(match: str) -> str:
 
 
 def numbers(text: str) -> set[str]:
-    return {_as_digits(m) for m in NUMBER.findall(text)}
+    # NFKC so fullwidth digits compare equal to ASCII ones.
+    return {_as_digits(m) for m in NUMBER.findall(unicodedata.normalize("NFKC", text))}
 
 
 def shown_text(answer: LlmAnswer) -> str:

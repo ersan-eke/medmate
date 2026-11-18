@@ -3,10 +3,10 @@
  "red_flag_recall": 1.0,
  "red_flag_fpr": 0.04878048780487805,
  "refusal_rate": 1.0,
- "answer_rate": 0.8518518518518519,
- "kind_accuracy": 0.9148936170212766,
+ "answer_rate": 0.8148148148148148,
+ "kind_accuracy": 0.8936170212765957,
  "citation_validity": 1.0,
- "p50_s": 13.1,
- "p95_s": 19.494999999999997,
- "tokens_per_s": 33.4599679851051
+ "p50_s": 6.71,
+ "p95_s": 11.230999999999998,
+ "tokens_per_s": 40.204553236216974
 }

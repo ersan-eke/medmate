@@ -199,3 +199,9 @@ def test_answer_schema_limits_citations_to_the_ids_sent():
     assert schema["properties"]["citations"]["items"]["enum"] == list(SENT)
     assert schema["properties"]["citations"]["maxItems"] == TOP_K
     assert "enum" not in ANSWER_SCHEMA["properties"]["citations"]["items"]  # the shared schema is untouched
+
+
+def test_teens_hundreds_quarter_and_fullwidth_digits_are_numbers():
+    from backend.llm import numbers
+    assert numbers("fifteen tablets, a hundred mg, two hundred mg, a quarter tablet") == {"15", "100", "200", "0.25"}
+    assert numbers("take １５ tablets") == numbers("take 15 tablets") == {"15"}

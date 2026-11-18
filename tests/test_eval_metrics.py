@@ -129,3 +129,22 @@ def test_kind_accuracy_treats_both_refusal_kinds_alike():
             {"id": "c", "expect_kind": "off_topic"}, {"id": "d", "expect_kind": "emergency"}]
     kinds = {"a": "answer", "b": "off_topic", "c": "not_covered", "d": "not_covered"}
     assert kind_accuracy(rows, kinds) == 0.75
+
+
+def test_full_run_keeps_a_hand_grade_only_while_the_answer_is_unchanged(tmp_path, monkeypatch, capsys):
+    import csv
+    from types import SimpleNamespace
+
+    from eval import run_eval
+
+    monkeypatch.setattr(run_eval, "RESULTS", tmp_path)
+    monkeypatch.setattr(run_eval, "ollama_generate", lambda *a, **k: lambda *x: None)
+    monkeypatch.setattr(run_eval, "speed", lambda m: 1.0)
+    answers = {"a": "same", "b": "new"}
+    monkeypatch.setattr(run_eval, "answer_question", lambda req, *a: SimpleNamespace(
+        kind="answer", llm_called=True, sources=[], answer=answers[req.question]))
+    (tmp_path / "t.csv").write_text("id,answer,faithfulness\na,same,3\nb,old,2\n")
+    rows = [{"id": q, "category": "c", "question": q, "medicines": [], "expect_kind": "answer", "expect_chunks": []} for q in "ab"]
+    run_eval.full_run(rows, None, [], "m", "t")
+    graded = {r["id"]: r["faithfulness"] for r in csv.DictReader((tmp_path / "t.csv").open())}
+    assert graded == {"a": "3", "b": ""}
