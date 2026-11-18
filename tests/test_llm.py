@@ -1,8 +1,10 @@
 import json
 
+import pytest
+
 from types import SimpleNamespace
 
-from backend.llm import (ANSWER_SCHEMA, answer_schema, TIMEOUT_SECONDS, WARMUP_TIMEOUT_SECONDS, TRIAGE_SCHEMA, TRIAGE_TIMEOUT_SECONDS, MedicineEntry,
+from backend.llm import (ANSWER_SCHEMA, REWRITE_SCHEMA, check_rewrite, answer_schema, TIMEOUT_SECONDS, WARMUP_TIMEOUT_SECONDS, TRIAGE_SCHEMA, TRIAGE_TIMEOUT_SECONDS, MedicineEntry,
                          build_messages, ollama_generate, validate)
 from backend.kb import Chunk
 from backend.retrieval import TOP_K, Hit
@@ -176,6 +178,7 @@ def test_triage_gets_a_shorter_timeout_than_the_answer(monkeypatch):
     monkeypatch.setattr("ollama.Client", FakeClient)
     generate = ollama_generate("m")
     assert generate([], TRIAGE_SCHEMA) == str(TRIAGE_TIMEOUT_SECONDS)
+    assert generate([], REWRITE_SCHEMA) == str(TRIAGE_TIMEOUT_SECONDS)
     assert generate([], ANSWER_SCHEMA) == str(TIMEOUT_SECONDS)
     assert TRIAGE_TIMEOUT_SECONDS < TIMEOUT_SECONDS
 
@@ -209,3 +212,21 @@ def test_teens_hundreds_quarter_and_fullwidth_digits_are_numbers():
     from backend.llm import numbers
     assert numbers("fifteen tablets, a hundred mg, two hundred mg, a quarter tablet") == {"15", "100", "200", "0.25"}
     assert numbers("take １５ tablets") == numbers("take 15 tablets") == {"15"}
+
+
+def named(question):
+    return {m for m in ("Metformin", "Warfarin", "Ibuprofen") if m.lower() in question.lower()}
+
+
+@pytest.mark.parametrize("followup, previous, answered, ok", [
+    ("what about ibuprofen?", "Is paracetamol OK with alcohol?", "Is ibuprofen OK with alcohol?", True),
+    ("and at night?", "How much metformin?", "How much metformin at night?", True),
+    ("what about ibuprofen?", "Is metformin OK?", "Is metformin OK?", False),  # drops the medicine the follow-up named
+    ("and at night?", "How much metformin?", "How much metformin and warfarin at night?", False),  # adds a medicine
+    ("and at night?", "How much metformin?", "How much metformin at night, 500 mg?", False),  # adds a number
+    ("and 500 mg?", "How much metformin?", "How much metformin, 500 mg?", True),
+    ("and at night?", "Metformin 500 mg?", "Metformin 500 mg at night?", True),  # a number only the previous question had
+    ("and at night?", "How much metformin?", "How much metformin at night, twice?", False),  # a written number
+])
+def test_rewrite_check(followup, previous, answered, ok):
+    assert check_rewrite(followup, previous, answered, named) is ok

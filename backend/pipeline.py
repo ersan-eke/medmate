@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from . import messages
 from .kb import Chunk, Interaction
-from .llm import Card, Generate, MedicineEntry, ask_llm, shown_text, triage
+from .llm import Card, Generate, MedicineEntry, ask_llm, check_rewrite, rewrite, shown_text, triage
 from .retrieval import MIN_SIMILARITY, Retriever
 from .safety import check_interactions, check_red_flags, claims_safe_combination
 
@@ -15,6 +15,7 @@ MAX_MEDICINES = 20
 
 class ChatRequest(BaseModel):
     question: str = Field(max_length=500)
+    previous: str | None = Field(None, max_length=500)  # the question before this one, as the browser answered it
     medicines: list[MedicineEntry] = Field([], max_length=50)
 
 
@@ -36,6 +37,7 @@ class ChatResponse(BaseModel):
     card: Card | None = None
     red_flag: str | None = None
     llm_called: bool = False
+    answered: str | None = None  # the follow-up rewritten to stand alone; null when it was answered as typed
 
 
 def known_medicines(entries: list[MedicineEntry], names: dict[str, str]) -> list[MedicineEntry]:
@@ -49,13 +51,19 @@ def known_medicines(entries: list[MedicineEntry], names: dict[str, str]) -> list
 
 def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate,
                     interactions: list[Interaction]) -> ChatResponse:
-    question = req.question.strip()
-    if not question:
+    typed = req.question.strip()
+    if not typed:
         return ChatResponse(kind="not_heard", answer=messages.NOT_HEARD)
-    if flag := check_red_flags(question):
+    # The previous message too, so a rewrite can never hide an emergency.
+    if flag := check_red_flags(typed) or check_red_flags(req.previous or ""):
         return ChatResponse(kind="emergency", answer=messages.EMERGENCY, red_flag=flag.id)
-    if triage(question, generate):  # before retrieval: a novel wording matches no leaflet and would stop at the gate
+    if triage(typed, generate):  # before retrieval: a novel wording matches no leaflet and would stop at the gate
         return ChatResponse(kind="emergency", answer=messages.EMERGENCY, red_flag="model_triage", llm_called=True)
+    answered = _answered(req.previous, typed, retriever, generate)
+    # A rewrite can join the count from the follow-up to the medicine from the previous question ("took 30 paracetamol").
+    if answered and (flag := check_red_flags(answered)):
+        return ChatResponse(kind="emergency", answer=messages.EMERGENCY, red_flag=flag.id, llm_called=True)
+    question = answered or typed
     medicines = known_medicines(req.medicines, retriever.medicines)
     named = retriever.named(question)
     asked, also = check_interactions(question, named, {m.name for m in medicines}, interactions)
@@ -68,7 +76,19 @@ def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate,
         response.sources = list({s.id: s for s in response.sources + _sources(also, retriever)}.values())
     if (asked or also) and messages.INTERACTION_ADVICE not in response.answer:
         response.answer += " " + messages.INTERACTION_ADVICE
+    response.answered = answered
     return response
+
+
+def _answered(previous: str | None, followup: str, retriever: Retriever, generate: Generate) -> str | None:
+    """The follow-up rewritten to stand alone, or None when there is no previous question or the rewrite is unusable."""
+    if not previous or not previous.strip():
+        return None
+    rw = rewrite(previous.strip(), followup, generate)
+    answered = rw.answered.strip() if rw else ""
+    if answered and answered != followup and rw.clear and check_rewrite(followup, previous, answered, retriever.named):
+        return answered
+    return None
 
 
 def _warnings(pairs: list[Interaction]) -> str:

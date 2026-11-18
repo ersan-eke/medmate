@@ -1,4 +1,4 @@
-// Pure page logic, kept free of the DOM so `node --test web/logic.test.js` can run it.
+// Pure page logic, kept free of the DOM so `node --test web/js/logic.test.js` can run it.
 const KEY = "medmate.medicines";
 // The server refuses longer text and longer lists (backend/llm.py MedicineEntry, pipeline.py ChatRequest).
 const MAX_TEXT = 100;
@@ -95,7 +95,7 @@ export function medicinesTag(sources, list) {
   return `In your medicines: ${med.name}${times ? ` (${times})` : ""}`;
 }
 
-// The chat thread: entries are { role: "user", text } or { role: "medmate", kind, answer, card, sources }.
+// The chat thread: entries are { role: "user", text, answered? } or { role: "medmate", kind, answer, card, sources }.
 // It lives in sessionStorage, so a reload keeps it and a new tab starts empty.
 const THREAD_KEY = "medmate.thread";
 const isEntry = (e) =>
@@ -130,6 +130,13 @@ export function loadThread(storage) {
 // Saving is best effort: a full or blocked store must not stop the chat.
 export function saveThread(storage, thread) {
   try { storage.setItem(THREAD_KEY, JSON.stringify(thread)); } catch {}
+}
+
+// The question the server rewrites the next follow-up against: the last question as MedMate answered it, else as typed.
+// The server refuses more than 500 characters (backend/pipeline.py ChatRequest).
+export function previousQuestion(thread) {
+  const last = thread.findLast((e) => e.role === "user");
+  return last ? (typeof last.answered === "string" ? last.answered : last.text).slice(0, 500) : null;
 }
 
 export function clearThread(storage) {

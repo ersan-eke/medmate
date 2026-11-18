@@ -28,7 +28,7 @@ def main() -> int:
         "Ollama models present": models_present,
         # -rs lists any skipped live test with its reason: a skipped gate is not a passed gate.
         "Python tests, slow included, offline": lambda: run(sys.executable, "-m", "pytest", "-m", "slow or not slow", "-rs"),
-        "Node tests": lambda: run("node", "--test", "web/logic.test.js"),
+        "Node tests": lambda: run("node", "--test", "web/js/logic.test.js"),
     }
     results = {}
     for name, gate in gates.items():

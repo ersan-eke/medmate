@@ -12,11 +12,13 @@ from .retrieval import TOP_K, Hit
 Generate = Callable[[list[dict], dict], str]
 
 SYSTEM_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "system.txt").read_text(encoding="utf-8")
+REWRITE_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "rewrite.txt").read_text(encoding="utf-8")
 TRIAGE_PROMPT = (Path(__file__).resolve().parent.parent / "prompts" / "triage.txt").read_text(encoding="utf-8")
 ATTEMPTS = 2
 TIMEOUT_SECONDS = 20  # a warm 3B answer takes a few seconds; the first-answer gate is 10 s
 WARMUP_TIMEOUT_SECONDS = 120  # a cold model load can take a minute
 TRIAGE_TIMEOUT_SECONDS = 5  # a yes/no reply from a warm model; a cold one skips triage and the rules still apply
+# The rewrite call is one short sentence, so it gets the same limit; a cold or slow model answers the follow-up as typed.
 log = logging.getLogger(__name__)
 ONES = "one two three four five six seven eight nine".split()
 TENS = "twenty thirty forty fifty sixty seventy eighty ninety".split()
@@ -99,6 +101,14 @@ class Triage(BaseModel):
 TRIAGE_SCHEMA = Triage.model_json_schema()
 
 
+class Rewrite(BaseModel):
+    answered: str = Field(max_length=500)  # the most the browser sends back as the previous question
+    clear: bool  # false when the follow-up refers to something the two questions do not say
+
+
+REWRITE_SCHEMA = Rewrite.model_json_schema()
+
+
 def _plain(text: str) -> str:
     """One line with no passage markers, so user-typed text can't pose as instructions or passages."""
     return " ".join(re.sub(r"[\x00-\x1f\x7f]", " ", text).replace("[", "").replace("]", "").split())
@@ -177,14 +187,34 @@ def triage(question: str, generate: Generate) -> bool:
         return False
 
 
+def rewrite(previous: str, followup: str, generate: Generate) -> Rewrite | None:
+    """The follow-up as a question that stands on its own. It sees the two questions only, never an answer.
+    Any failure is None: the follow-up is then answered as typed."""
+    user = f"Previous question: {_plain(previous)}\nFollow-up: {_plain(followup)}"
+    messages = [{"role": "system", "content": REWRITE_PROMPT}, {"role": "user", "content": user}]
+    try:
+        return Rewrite.model_validate_json(generate(messages, REWRITE_SCHEMA))
+    except Exception:
+        log.warning("rewrite failed", exc_info=True)
+        return None
+
+
+def check_rewrite(followup: str, previous: str, answered: str, named: Callable[[str], set[str]]) -> bool:
+    """The Rewrite check: the answered question keeps every medicine the follow-up named and adds no medicine
+    or number that neither question has. `named` gives the leaflet medicines a text names."""
+    said = named(followup) | named(previous)
+    return (named(followup) <= named(answered) and named(answered) <= said
+            and numbers(answered) <= numbers(followup) | numbers(previous))
+
+
 def ollama_generate(model: str, timeout: float = TIMEOUT_SECONDS) -> Generate:
     import ollama
 
     answer_client = ollama.Client(timeout=timeout)
-    triage_client = ollama.Client(timeout=TRIAGE_TIMEOUT_SECONDS)
+    short_client = ollama.Client(timeout=TRIAGE_TIMEOUT_SECONDS)
 
     def generate(messages: list[dict], schema: dict) -> str:
-        response = (triage_client if schema is TRIAGE_SCHEMA else answer_client).chat(
+        response = (short_client if schema is TRIAGE_SCHEMA or schema is REWRITE_SCHEMA else answer_client).chat(
             model=model, messages=messages, format=schema, options={"temperature": 0}, keep_alive="30m"
         )
         return response.message.content

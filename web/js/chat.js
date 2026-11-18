@@ -1,7 +1,7 @@
 import { Avatar } from "./avatar.js";
 import { startRecording } from "./voice.js";
 import { el, leafletLink } from "./dom.js";
-import { store, loadThread, saveThread, clearThread, replyCard, medicinesTag, showSuggestions } from "./logic.js";
+import { store, loadThread, saveThread, clearThread, previousQuestion, replyCard, medicinesTag, showSuggestions } from "./logic.js";
 
 // The MedMate view: ask by text or voice, show the reply. `meds()` gives the current medicines list
 // and `isShown()` says whether this view is the visible one (Space must not start the mic from the other view).
@@ -25,7 +25,7 @@ export function initChat(meds, isShown) {
     sec.append(el("h3", { textContent: title }), ul);
     return [sec];
   };
-  const replyNode = (r) => {
+  const replyNode = (r, answered) => {
     const { tone, title, icon } = replyCard(r.kind);
     const node = el("article", { className: "msg medmate reply" });
     node.dataset.kind = r.kind;
@@ -41,6 +41,7 @@ export function initChat(meds, isShown) {
     node.append(head);
     const tag = r.sources?.length && medicinesTag(r.sources, meds());
     if (tag) node.append(el("p", { className: tag.startsWith("Not") ? "tag not-listed" : "tag", textContent: tag }));
+    if (typeof answered === "string" && answered) node.append(el("p", { className: "answering", textContent: `Answering: ${answered}` }));
     node.append(el(r.kind === "answer" ? "blockquote" : "p", { className: "answer", textContent: r.answer }));
     const cardSections = r.card ? [
       ...section("Summary", r.card.summary, ""),
@@ -57,8 +58,9 @@ export function initChat(meds, isShown) {
     }
     return node;
   };
-  const entryNode = (e) => {
-    if (e.role !== "user") return replyNode(e);
+  // A reply shows the question it answered, which is kept on the user's entry before it.
+  const entryNode = (e, i) => {
+    if (e.role !== "user") return replyNode(e, entries[i - 1]?.answered);
     const bubble = el("div", { className: "msg user" });
     bubble.append(el("p", { className: "user-tag", textContent: "You asked" }), el("p", { className: "user-text", textContent: `“${e.text}”` }));
     return bubble;
@@ -87,7 +89,7 @@ export function initChat(meds, isShown) {
     empty.hidden = !showSuggestions(entries);
     pending?.remove();
     pending = null;
-    place(entryNode(entry));
+    place(entryNode(entry, entries.length - 1));
   };
   // A waiting card has no entry: it is never saved, and the real reply replaces it.
   const wait = (text) => {
@@ -233,7 +235,9 @@ export function initChat(meds, isShown) {
     avatar.setState("thinking");
     input.value = "";
     // A blank question gets the "didn't catch that" reply without a bubble of its own.
-    if (question.trim()) add({ role: "user", text: question });
+    const previous = previousQuestion(entries);
+    const asked = { role: "user", text: question };
+    if (question.trim()) add(asked);
     wait("One moment…");
     let data;
     try {
@@ -241,7 +245,7 @@ export function initChat(meds, isShown) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Only name and dose answer a question; the note and times stay in the browser.
-        body: JSON.stringify({ question, medicines: meds().map(({ name, dose }) => ({ name, dose })) }),
+        body: JSON.stringify({ question, previous, medicines: meds().map(({ name, dose }) => ({ name, dose })) }),
       });
       if (!res.ok) throw new Error(res.status);
       data = await res.json();
@@ -251,6 +255,7 @@ export function initChat(meds, isShown) {
                                         : "Sorry, something went wrong. Please try again.");
       return;
     }
+    if (typeof data.answered === "string") asked.answered = data.answered;
     add({ role: "medmate", kind: data.kind, answer: data.answer, card: data.card, sources: data.sources });
     await speak(data.answer);
   }

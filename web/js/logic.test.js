@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildSchedule, mouthFrame, findInteractions, loadMedicines, saveMedicines,
   replyCard, medicinesTag, loadThread, saveThread, showSuggestions,
-  countLabel, todayLabel, reinsertAt, store, loadTaken, saveTaken,
+  countLabel, todayLabel, reinsertAt, store, loadTaken, saveTaken, previousQuestion,
 } from "./logic.js";
 
 const KEY = "medmate.medicines";
@@ -225,4 +225,31 @@ test("thread keeps the answer but drops a card or sources it cannot draw", () =>
     { role: "medmate", kind: "answer", answer: "b", sources: [] },
     { role: "medmate", kind: "answer", answer: "c", sources: [] },
   ]);
+});
+
+test("the previous question is the last user entry's answered question, else its text, cut to 500", () => {
+  const thread = [
+    { role: "user", text: "Is paracetamol OK with alcohol?", answered: "ignored: not the last" },
+    { role: "medmate", kind: "answer", answer: "No." },
+    { role: "user", text: "what about ibuprofen?", answered: "Is ibuprofen OK with alcohol?" },
+    { role: "medmate", kind: "answer", answer: "Ask first." },
+  ];
+  assert.equal(previousQuestion(thread), "Is ibuprofen OK with alcohol?");
+  assert.equal(previousQuestion([{ role: "user", text: "x".repeat(600) }]).length, 500);
+  assert.equal(previousQuestion([{ role: "user", text: "q", answered: "a".repeat(600) }]).length, 500);
+  assert.equal(previousQuestion([]), null);
+  assert.equal(previousQuestion([{ role: "medmate", kind: "error", answer: "Sorry" }]), null);
+});
+
+for (const answered of [undefined, null, 5, ["a"], { a: 1 }]) {
+  test(`an old entry or a non-string answered (${JSON.stringify(answered)}) falls back to the text`, () => {
+    assert.equal(previousQuestion([{ role: "user", text: "How much paracetamol?", answered }]), "How much paracetamol?");
+  });
+}
+
+test("answered survives a thread round-trip", () => {
+  const s = fakeStorage();
+  const thread = [{ role: "user", text: "what about ibuprofen?", answered: "Is ibuprofen OK with alcohol?" }];
+  saveThread(s, thread);
+  assert.deepEqual(loadThread(s), thread);
 });

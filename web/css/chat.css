@@ -191,6 +191,7 @@
 /* The spoken answer: a serif quote with a left rule. */
 .answer { margin: 0; font-size: 1.15rem; line-height: 1.5; white-space: pre-wrap; }
 blockquote.answer { padding: 1rem 1.2rem; border-left: .3rem solid var(--blue-primary); border-radius: 0 1rem 1rem 0; background: var(--bg-cream); font-family: var(--font-serif); font-size: 1.38rem; font-weight: 600; line-height: 1.45; }
+.answering { margin: 0; font-size: .96rem; color: var(--ink-secondary); }
 
 .reply section h3, .reply .help h3 { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; font-size: 1.12rem; }
 .reply section h3::before { content: ""; width: .65rem; height: .65rem; border-radius: 999px; background: var(--blue-primary); }

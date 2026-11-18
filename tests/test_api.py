@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from backend.app import create_app
 from backend.kb import Interaction
-from backend.llm import TRIAGE_SCHEMA, MedicineEntry
+from backend.llm import REWRITE_SCHEMA, TRIAGE_SCHEMA, MedicineEntry
 from backend.pipeline import known_medicines
 from backend.messages import (ATTRIBUTION, EMERGENCY, FALLBACK, GATE_REFUSAL, NOT_COVERED, NOT_HEARD, OFF_TOPIC,
                               UNCONFIRMED_COMBINATION)
@@ -602,3 +602,94 @@ def test_chat_over_the_in_flight_limit_is_refused_at_once(spies, tiny_index):
         t.join()
     assert codes == [200, 200]
     assert chat(client, "When should I take metformin?").status_code == 200  # slots are freed
+
+
+# --- Follow-ups: rewritten, checked, then answered like a first question ---
+
+TABLE_PAIR = "Can I take metformin with warfarin?"
+
+
+def rewrite_reply(answered, clear=True):
+    return json.dumps({"answered": answered, "clear": clear})
+
+
+@pytest.fixture
+def rewrites():
+    return Counting(lambda m, s: rewrite_reply("Can I take metformin with food?"))
+
+
+@pytest.fixture
+def follow(spies, triage, rewrites, tiny_index):
+    embed, answer = spies
+    spy = {TRIAGE_SCHEMA["title"]: triage, REWRITE_SCHEMA["title"]: rewrites}
+    generate = lambda m, s: spy.get(s.get("title"), answer)(m, s)  # noqa: E731
+    return TestClient(create_app(tiny_index, embed, generate, INTERACTIONS), base_url="http://localhost")
+
+
+def follow_up(client, q, previous, medicines=()):
+    return client.post("/api/chat", json={"question": q, "previous": previous, "medicines": list(medicines)})
+
+
+def test_first_question_makes_no_rewrite_call(follow, rewrites):
+    body = chat(follow, "Can I take warfarin with food?").json()
+    assert rewrites.calls == 0 and body["answered"] is None
+
+
+def test_blank_previous_makes_no_rewrite_call(follow, rewrites):
+    assert follow_up(follow, "Can I take warfarin with food?", "  ").json()["answered"] is None
+    assert rewrites.calls == 0
+
+
+def test_follow_up_is_answered_on_the_answered_question(follow, spies, rewrites):
+    _, answer = spies
+    body = follow_up(follow, "what about metformin?", "Can I take warfarin with food?").json()
+    assert body["kind"] == "answer" and body["answered"] == "Can I take metformin with food?"
+    assert "Question: Can I take metformin with food?" in answer.messages[1]["content"]
+    # The rewrite sees the two questions and nothing else.
+    sent = rewrites.messages[1]["content"]
+    assert "Can I take warfarin with food?" in sent and "what about metformin?" in sent
+
+
+def test_rewrite_naming_a_table_pair_is_answered_from_the_table(follow, spies, rewrites):
+    _, answer = spies
+    rewrites.fn = lambda m, s: rewrite_reply(TABLE_PAIR)
+    body = follow_up(follow, "what about metformin?", "Is warfarin OK with alcohol?").json()
+    assert body["kind"] == "answer" and body["answered"] == TABLE_PAIR and "Ask first." in body["answer"]
+    assert [s["id"] for s in body["sources"]] == ["warfarin#other-medicines"]
+    assert answer.calls == 0
+
+
+@pytest.mark.parametrize("fn", [
+    lambda m, s: rewrite_reply("Can I take metformin with food?", clear=False),
+    lambda m, s: rewrite_reply("Can I take warfarin with food?"),  # drops metformin, which the follow-up named
+    lambda m, s: rewrite_reply("Can I take metformin 500 times?"),  # adds a number
+    lambda m, s: rewrite_reply("x" * 501),
+    lambda m, s: "not json",
+    lambda m, s: (_ for _ in ()).throw(TimeoutError("slow")),
+], ids=["not-clear", "dropped-medicine", "added-number", "too-long", "bad-json", "raises"])
+def test_unusable_rewrite_answers_the_follow_up_as_typed(follow, spies, rewrites, fn):
+    _, answer = spies
+    rewrites.fn = fn
+    body = follow_up(follow, "what about metformin?", "Can I take warfarin with food?").json()
+    assert body["answered"] is None and body["kind"] == "answer"
+    assert "Question: what about metformin?" in answer.messages[1]["content"]
+
+
+def test_previous_over_500_characters_is_refused(follow):
+    assert follow_up(follow, "hi", "a" * 501).status_code == 422
+
+
+def test_emergency_in_the_previous_message_is_still_an_emergency(follow, rewrites):
+    body = follow_up(follow, "what about metformin?", "I have chest pain").json()
+    assert body["kind"] == "emergency" and rewrites.calls == 0
+
+
+def test_rewrite_that_builds_an_emergency_is_an_emergency(follow, rewrites):
+    rewrites.fn = lambda m, s: rewrite_reply("I took 30 paracetamol tablets")
+    body = follow_up(follow, "I took 30 of them", "Is metformin safe?").json()
+    assert body["kind"] == "emergency"
+
+
+def test_rewrite_equal_to_the_follow_up_is_answered_as_typed(follow, rewrites):
+    rewrites.fn = lambda m, s: rewrite_reply("Can I take metformin with food?")
+    assert follow_up(follow, "Can I take metformin with food?", "Is warfarin OK?").json()["answered"] is None
