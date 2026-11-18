@@ -77,6 +77,13 @@ def synthesize(text: str, engines: list[Engine]) -> bytes:
     raise RuntimeError("every TTS engine failed")
 
 
+MAX_AUDIO_SECONDS = 30  # web/js/chat.js stops recording at the same length
+
+
+class AudioTooLong(Exception):
+    pass
+
+
 _whisper = None
 
 
@@ -88,7 +95,9 @@ def transcribe(audio: bytes, prompt: str | None = None) -> str:
         from faster_whisper import WhisperModel
 
         _whisper = WhisperModel("small.en", device="cpu", compute_type="int8")
-    segments, _ = _whisper.transcribe(io.BytesIO(audio), language="en", vad_filter=True, initial_prompt=prompt)
+    segments, info = _whisper.transcribe(io.BytesIO(audio), language="en", vad_filter=True, initial_prompt=prompt)
+    if info.duration > MAX_AUDIO_SECONDS:  # `segments` is lazy: nothing has been transcribed yet
+        raise AudioTooLong
     return " ".join(s.text.strip() for s in segments).strip()
 
 

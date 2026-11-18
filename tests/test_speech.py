@@ -3,8 +3,8 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.app import create_app
-from backend.speech import kokoro_engine, say_engine, spoken, synthesize, transcribe
+from backend.app import MAX_AUDIO_BYTES, create_app
+from backend.speech import AudioTooLong, kokoro_engine, say_engine, spoken, synthesize, transcribe
 from tests.test_api import INTERACTIONS
 
 
@@ -44,7 +44,7 @@ def test_synthesize_all_fail_raises():
 
 def tts(tiny_index, fake_embed, engines, text="Hello."):
     app = create_app(tiny_index, fake_embed, lambda m, s: "", INTERACTIONS, engines=engines)
-    return TestClient(app).post("/api/tts", json={"text": text})
+    return TestClient(app, base_url="http://localhost").post("/api/tts", json={"text": text})
 
 
 def test_tts_route_503_when_all_fail(tiny_index, fake_embed):
@@ -80,7 +80,7 @@ def test_say_produces_wav():
 
 def transcribe_client(tiny_index, fake_embed, fn):
     app = create_app(tiny_index, fake_embed, lambda m, s: "", INTERACTIONS, transcribe=fn)
-    return TestClient(app)
+    return TestClient(app, base_url="http://localhost")
 
 
 def test_transcribe_route_returns_text(tiny_index, fake_embed):
@@ -89,6 +89,32 @@ def test_transcribe_route_returns_text(tiny_index, fake_embed):
     r = client.post("/api/transcribe", files={"audio": ("a.webm", b"bytes", "audio/webm")})
     assert r.json() == {"text": "hello"}
     assert seen == [b"bytes"]
+
+
+def test_transcribe_route_413_on_oversized_upload(tiny_index, fake_embed):
+    seen = []
+    client = transcribe_client(tiny_index, fake_embed, lambda audio: seen.append(audio) or "hello")
+    r = client.post("/api/transcribe", files={"audio": ("a.webm", b"x" * (MAX_AUDIO_BYTES + 1), "audio/webm")})
+    assert r.status_code == 413
+    assert seen == []
+
+
+def test_transcribe_route_413_on_oversized_chunked_upload(tiny_index, fake_embed):
+    seen = []
+    client = transcribe_client(tiny_index, fake_embed, lambda audio: seen.append(audio) or "hello")
+    chunks = (b"x" * 100_000 for _ in range(20))  # a generator body is sent chunked, with no Content-Length
+    r = client.post("/api/transcribe", content=chunks, headers={"content-type": "multipart/form-data; boundary=b"})
+    assert r.status_code == 413
+    assert seen == []
+
+
+def test_transcribe_route_413_when_audio_too_long(tiny_index, fake_embed):
+    def too_long(audio):
+        raise AudioTooLong
+
+    r = transcribe_client(tiny_index, fake_embed, too_long).post(
+        "/api/transcribe", files={"audio": ("a.webm", b"x", "audio/webm")})
+    assert r.status_code == 413
 
 
 def test_transcribe_route_503_on_failure(tiny_index, fake_embed):
@@ -115,6 +141,18 @@ def test_transcribe_empty_audio():
     buf = io.BytesIO()
     soundfile.write(buf, np.zeros(16000, dtype="float32"), 16000, format="WAV")
     assert transcribe(buf.getvalue()) == ""
+
+
+@pytest.mark.slow
+def test_transcribe_rejects_audio_over_the_limit():
+    import io
+    import numpy as np
+    import soundfile
+
+    buf = io.BytesIO()
+    soundfile.write(buf, np.zeros(16000 * 31, dtype="float32"), 16000, format="WAV")
+    with pytest.raises(AudioTooLong):
+        transcribe(buf.getvalue())
 
 
 @pytest.mark.slow

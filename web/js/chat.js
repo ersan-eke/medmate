@@ -155,7 +155,9 @@ export function initChat(meds, isShown) {
   const mics = [...document.querySelectorAll(".talk")];  // the big button and the small one share one recorder
   const bigText = document.querySelector("#mic .talk-text");
   const bigSub = document.querySelector("#mic .talk-sub");
+  const MAX_RECORDING_MS = 28_000;  // under the server's 30 s (MAX_AUDIO_SECONDS) to leave room for recorder start/stop lag
   let stopRecording = null;
+  let limitTimer = null;
   let starting = false;   // waiting for getUserMedia
   const showListening = (on) => {
     for (const m of mics) {
@@ -180,8 +182,10 @@ export function initChat(meds, isShown) {
     }
     showListening(true);
     avatar.setState("listening");
+    limitTimer = setTimeout(stopMic, MAX_RECORDING_MS);
   };
   const stopMic = () => {
+    clearTimeout(limitTimer);
     const stop = stopRecording;
     stopRecording = null;
     showListening(false);
