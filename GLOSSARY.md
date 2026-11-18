@@ -43,6 +43,18 @@ _Avoid_: number guard, dose check
 The checks that run before anything else and reply with the 999 message: fixed phrases for each NHS 999 sign, then the model answering yes or no for each sign. Any one match is enough.
 _Avoid_: urgency check, risk score
 
+**Follow-up**:
+A question that leans on the previous question in the same chat, such as "what about ibuprofen?" or "can I take it at night?".
+_Avoid_: next turn, context question
+
+**Answered question**:
+The follow-up rewritten to stand on its own, which MedMate answers and shows under its reply. It becomes the previous question for the next follow-up.
+_Avoid_: rewrite, condensed question, standalone query
+
+**Rewrite check**:
+The check that refuses an answered question that drops a medicine the follow-up named, or adds a medicine or a number the user never said. MedMate then asks for the whole question.
+_Avoid_: rewrite guard, rewrite validation
+
 **Refusal**:
 A reply that declines to answer: either "not in my leaflets" or "only questions about your medicines".
 _Avoid_: rejection, decline
@@ -68,3 +80,13 @@ _Avoid_: training set, calibration set
 **Held-out question**:
 An evaluation question that was never used to tune anything, kept to test whether a tuned value generalises.
 _Avoid_: test question, paraphrase set
+
+## Evaluation
+
+**Dev set**:
+The questions we may change code and prompts against. Every question in it has been seen, so it shows that nothing broke, not how well MedMate does on new questions.
+_Avoid_: test set, validation set (the similarity gate's own **Tuning set** is a part of it)
+
+**Final set**:
+Questions written by other people and run once on frozen code; the numbers we report come from it. A change made after seeing its results makes it a dev set.
+_Avoid_: test set

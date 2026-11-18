@@ -1,0 +1,30 @@
+item,run_id,claude,friend1,friend2,friend1_note,friend2_note
+1,variety_test:vf04,1,1,1,Claims jumbled speech and drooping mouth are a serious side effect of amlodipine and advises speaking to a pharmacist/doctor and keeping taking it; passage says to call NHS 111 for serious side effects.,"Misses possible stroke symptoms and instead labels them an amlodipine side effect; the cited leaflet says call NHS 111 for suspected serious side effects, not speak to a pharmacist/doctor immediately."
+2,model:sid3,3,3,3,,
+3,variety_test:va30,3,2,2,Adds that you may need more frequent tests if your dose changes based on test results; passage only says dose may change and some people need tests more regularly.,Says dose changes may mean more frequent tests; the passage says some people need them more regularly but does not link this specifically to dose changes.
+4,model:nea1,3,3,3,,
+5,model:sid5,3,3,3,,
+6,variety_test:vr34,3,2,3,"Omits that metformin does not usually affect driving only when taken on its own (without another diabetes medicine), and claims there is no mention of when you can drive again.",
+7,model:dos1,3,3,3,,
+8,variety_test:vr32,1,1,1,"Says you should not drive while taking sertraline in general, misapplying the passage's advice not to drive if told to go to A&E after taking too much.",Says not to drive at all while taking sertraline; the cited passage only says not to drive if dizzy or drowsy.
+9,model:per1,1,1,1,"Advises waiting until your next meal to take metformin if feeling unsettled, which is not in the passages.","Advises waiting until the next meal, which is not in the passage and could alter the person's dosing schedule."
+10,variety_test:vr30,2,2,2,Says you can drink normally and that a glass of wine with tea is likely alright; passage only says you can eat as normal and to limit alcohol.,Says a glass of wine is likely alright; the passage only advises limiting alcohol and gives no safe amount.
+11,variety_test:va23,2,2,3,"Adds advice to talk to a doctor or pharmacist about alternative salt substitutes, which is not in the passages.",
+12,variety_test:va06,3,3,3,,
+13,model:tun6,1,2,2,"States that feeling jittery is a normal side effect for the first few weeks, which is not mentioned in the passages.",Calls feeling jittery normal; the passage lists trouble sleeping but does not list jitteriness or feeling anxious as a sertraline side effect.
+14,variety_test:va25,3,3,3,,
+15,variety_test:va07,2,2,1,Includes unrelated advice from the metformin passage to bring the metformin packet if going to A&E.,Adds irrelevant advice to bring a metformin packet to A&E; this is unrelated to the missed atorvastatin dose and the question.
+16,variety_test:va15,3,3,3,,
+17,model:sid4,3,3,3,,
+18,variety_test:va09,3,3,3,,
+19,variety_test:vr14,3,3,3,,
+20,variety_test:va13,3,3,3,,
+21,model:tun2,3,3,3,,
+22,model:dos4,3,3,3,,
+23,variety_test:va11,2,2,3,"Overstates ""may not be suitable"" as a definite ""No, ibuprofen is not suitable for you"" (and says you currently have an ulcer rather than had one before).",
+24,model:dos3,3,3,3,,
+25,model:dos2,3,3,3,,
+26,variety_test:va22,3,2,2,"Overstates ""Your doctor may suggest that you take your first dose before bedtime"" as a definite rule (""You'll take the first dose before bedtime"").","Says the first dose will be before bedtime; the passage says the doctor may suggest this, not that everyone should take it then."
+27,model:tun5,3,3,3,,
+28,model:sid1,2,1,1,"Advises speaking to a pharmacist/doctor and keeping taking atorvastatin for a serious side effect, which is not in the passages and contradicts the urgent advice to call NHS 111.","Recommends speaking to a pharmacist/doctor and continuing the medicine, but those instructions are not supported by the cited passages for this serious muscle reaction; the passage says call NHS 111 if serious side effects are suspected."
+29,model:nea4,3,3,3,,
