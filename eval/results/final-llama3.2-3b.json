@@ -1,0 +1,27 @@
+{
+ "model": "llama3.2:3b",
+ "commit": "a9fb11e199d3fbf7729822466c89bfe4a689b853",
+ "started": "2026-11-18 20:09:00",
+ "ollama_before": {
+  "llama3.2:3b": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+  "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+ },
+ "red_flag_recall": 0.918918918918919,
+ "red_flag_fpr": 0.03333333333333333,
+ "refusal_rate": 0.7450980392156863,
+ "answer_rate": 0.7924528301886793,
+ "kind_accuracy": 0.8169014084507042,
+ "citation_validity": 0.9885057471264368,
+ "p50_s": 9.25,
+ "p95_s": 13.566,
+ "tokens_per_s": 44.021393949215735,
+ "clarify_rate": 0.140625,
+ "rewrite_check_failure_rate": 0.046875,
+ "rewrite_p50_s": 0.7,
+ "hit_at_4": 0.9090909090909091,
+ "hit_at_4_n": 77,
+ "ollama_after": {
+  "llama3.2:3b": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+  "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+ }
+}
