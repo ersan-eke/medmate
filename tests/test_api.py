@@ -562,3 +562,27 @@ def test_api_docs_are_not_served(client):
 def test_chat_ignores_note_and_times_on_medicines(client):
     r = chat(client, "", [{"name": "Metformin", "dose": "500 mg", "times": ["evening"], "note": "with food"}])
     assert r.status_code == 200
+
+
+def test_chat_over_the_in_flight_limit_is_refused_at_once(spies, tiny_index):
+    release, started = threading.Event(), threading.Semaphore(0)
+
+    def slow(messages, schema):
+        started.release()
+        release.wait(5)
+        return reply()
+
+    client = TestClient(create_app(tiny_index, spies[0], slow, INTERACTIONS), base_url="http://localhost")
+    codes = []
+    busy = [threading.Thread(target=lambda: codes.append(chat(client, "When should I take metformin?").status_code))
+            for _ in range(2)]
+    for t in busy:
+        t.start()
+    for _ in busy:
+        assert started.acquire(timeout=5)
+    assert chat(client, "When should I take metformin?").status_code == 503
+    release.set()
+    for t in busy:
+        t.join()
+    assert codes == [200, 200]
+    assert chat(client, "When should I take metformin?").status_code == 200  # slots are freed

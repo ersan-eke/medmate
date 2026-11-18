@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import threading
 from typing import Callable
 from pathlib import Path
 
@@ -26,6 +27,7 @@ log = logging.getLogger(__name__)
 
 
 MAX_AUDIO_BYTES = 1_000_000  # 30 s of opus is ~120 KB
+MAX_CHATS_IN_FLIGHT = 2  # one running and one waiting; a chat takes up to ~45 s and Ollama runs them one at a time
 
 
 class LimitUpload:
@@ -85,9 +87,17 @@ def create_app(index: Index, embed: Embed, generate: Generate, interactions: lis
         for m, c in sorted(intros.items())
     ]
 
+    chat_slots = threading.BoundedSemaphore(MAX_CHATS_IN_FLIGHT)
+
     @app.post("/api/chat")
     def chat(req: ChatRequest) -> ChatResponse:
-        return answer_question(req, retriever, generate, interactions)
+        # Refuse at once rather than queue: a queued request holds a thread and outlasts the user's patience.
+        if not chat_slots.acquire(blocking=False):
+            raise HTTPException(503, "busy")
+        try:
+            return answer_question(req, retriever, generate, interactions)
+        finally:
+            chat_slots.release()
 
     @app.post("/api/tts")
     def tts(req: TtsRequest) -> Response:

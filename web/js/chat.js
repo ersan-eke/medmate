@@ -240,9 +240,10 @@ export function initChat(meds, isShown) {
       });
       if (!res.ok) throw new Error(res.status);
       data = await res.json();
-    } catch {
+    } catch (e) {
       avatar.setState("idle");
-      show("error", "Sorry, something went wrong. Please try again.");
+      show("error", e.message === "503" ? "MedMate is busy with another question. Please try again in a moment."
+                                        : "Sorry, something went wrong. Please try again.");
       return;
     }
     add({ role: "medmate", kind: data.kind, answer: data.answer, card: data.card, sources: data.sources });
