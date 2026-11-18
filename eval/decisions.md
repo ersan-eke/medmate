@@ -5,12 +5,17 @@ it passed a rule agreed before the run.
 
 ## Sets
 
+Two kinds: dev (tuned on) and final (run once). The plan is in `docs/eval/plan.md`.
+
 | set | questions | use |
 |---|---|---|
-| questions (main) | 47 | model choice and the final numbers |
-| variety_dev | 43 | tuning the prompt and rules |
-| variety_test | 41 | held out; once its failures were seen it counts as dev |
-| emergency_fresh | 12 emergencies, 8 near-misses | written by a separate agent that saw only the NHS 999 signs, after the rules were frozen |
+| questions.jsonl (main) | 47 | model choice; gate tuning |
+| heldout.jsonl | 10 | gate accuracy on rewordings not tuned on (seen, so not a clean test) |
+| dev.jsonl | 104 | tuning the prompt and rules; the old variety_dev (43), variety_test (41, held out until its failures were seen) and emergency_fresh (12 emergencies, 8 near-misses, written by a separate agent that saw only the NHS 999 signs; the per-sign check was chosen on it) merged, `source` says which |
+| dev_chats.jsonl | 20 | two-message chats written by Claude, labels checked against the leaflets, for building the multi-turn feature |
+| final.jsonl | 239 | two friends' questions from three rounds (64 of them chats), labels checked against the leaflets; not run yet, run once after the freeze |
+
+Rows below that name variety_dev, variety_test or emergency_fresh refer to the `source` values in dev.jsonl.
 
 ## Runs
 
@@ -59,3 +64,38 @@ After 5e8e2b3 `dos5` ("What should I do if I miss a dose of warfarin?") gives th
 The model writes "Do not take 2 doses" but cites only `warfarin#how-to-take-warfarin-2`, which has no 2, so the number guard rejects it twice.
 The old guard gives the same result, so the guard change did not cause it; the model's citations changed after the earlier eval run.
 Possible fix, to try at the next eval run: tell the model in the prompt to cite every passage a number comes from. Not widening the guard.
+
+**Table completed, not measured yet (18 Nov).** The interaction table had 14 pairs; a check of all 66 pairs of the 12
+leaflet medicines against their leaflets found 7 more named by a class that plainly contains the other medicine (amlodipine
+with ramipril, aspirin, ibuprofen and metformin; metformin with ramipril; sertraline with ramipril and salbutamol), so
+they were added and the table check now accepts those classes (`CLASS_NAMES`). The check covered every pair, not the
+final items. It exposed `per1` (main set): "take my Metformin before or after dinner, and my stomach..." read "my" as
+"my other medicines" and would have answered with the metformin–amlodipine warning instead of the dinner timing, so
+"my" now counts only before "other", "tablets", "medicines" and the like. Rerun main and dev on llama3.2:3b before the
+freeze; expected: `per1`, `per3`, `vr10` and `not1` gain the amlodipine warning, nothing changes kind.
+
+## Chats as two turns (ticket 66, 18 Nov)
+
+The eval plays a chat like the browser: message 1 alone, then message 2 with message 1's Answered question (its text when
+there is none). Message 1 counts as a row of its own where `expect_kind_first` is set. Dev chats grew from 20 to 27 rows
+(dc21–dc27, Claude-written, dev only). llama3.2:3b alone loaded, rerun on dev and dev_chats; the final set was not run.
+
+| dev chats, llama3.2:3b | clarify share | Rewrite check failures | rewrite p50 s | answer rate | kind accuracy | p95 s |
+|---|---|---|---|---|---|---|
+| first prompt | 0.19 (5 of 26) | 0.00 | 0.64 | 0.85 | 0.81 | 14.7 |
+| after the prompt change | 0.00 | 0.00 | 0.60 | 0.91 | 0.88 | 13.0 |
+
+All 5 first-run `clarify` replies came from the model saying `clear: false`, never from the Rewrite check. Three were
+off-topic or not-covered follow-ups (dc08, dc16, dc25) and two were clear ones (dc01, dc26). **Prompt change**
+(`prompts/rewrite.txt`, tuned on dev chats only): off-topic follow-ups are copied unchanged with `clear: true`, plus three
+examples (a pronoun follow-up, a new-topic follow-up, an off-topic one). The dev set (no chats) has no previous run of
+this model under the same code: red-flag recall 0.88, FPR 0.01, answer rate 0.76, kind accuracy 0.84, p95 14.0 s.
+
+**Answered questions that changed the meaning, for hand grading** (after the change):
+- dc08 "recommend a film" became "Can I take omeprazole before breakfast?" (the previous question; answered, expected off_topic)
+- dc27 "what about that one" became the previous question again (expected `clarify`; the truly unclear case no longer asks back)
+- dc26 "how do I store aspirin?" became "Can I store aspirin?"
+- dc19 "can I take paracetamol for it" became "…for headaches?" (expected not_covered, answered)
+
+dc27 and dc08 show the cost of the fix: `clear: false` is now rarer, so a vague follow-up is answered as the previous question.
+Left for hand grading and the next prompt round; not tuned further to stop chasing the 8 dev rows.

@@ -36,6 +36,20 @@ def kind_accuracy(rows: list[dict], kinds: dict[str, str]) -> float:
     return _share([kinds[r["id"]] == r["expect_kind"] or {kinds[r["id"]], r["expect_kind"]} <= REFUSALS for r in rows])
 
 
+def _unlabelled_chats(rows: list[dict]) -> list[dict]:
+    return [r for r in rows if r["category"] == "chat" and r["expect_kind"] != "clarify"]
+
+
+def clarify_rate(rows: list[dict], kinds: dict[str, str]) -> float:
+    """Share of chat rows not labelled `clarify` whose follow-up still got one."""
+    return _share([kinds[r["id"]] == "clarify" for r in _unlabelled_chats(rows)])
+
+
+def rewrite_check_failure_rate(rows: list[dict], causes: dict[str, str]) -> float:
+    """Share of the same chat rows whose `clarify` came from the Rewrite check (`causes` is `clarified_by`, "" for none)."""
+    return _share([causes[r["id"]] == "rewrite_check" for r in _unlabelled_chats(rows)])
+
+
 def citation_validity(rows: list[dict], sources: dict[str, list[str]]) -> float:
     """Share of answered rows citing only expected chunks or other chunks of an expected medicine.
     Rows with no expected chunks are skipped: there is nothing to check their citations against."""

@@ -6,6 +6,7 @@ from eval.metrics import (
     answer_rate,
     best_threshold,
     citation_validity,
+    clarify_rate,
     cohen_kappa,
     faithfulness_rate,
     gate_accuracy,
@@ -14,6 +15,7 @@ from eval.metrics import (
     percentile,
     red_flag_stats,
     refusal_rate,
+    rewrite_check_failure_rate,
     wilson,
 )
 from eval.run_eval import cached, load_rows
@@ -161,7 +163,7 @@ def test_full_run_keeps_a_hand_grade_only_while_the_answer_is_unchanged(tmp_path
     monkeypatch.setattr(run_eval, "speed", lambda m: 1.0)
     answers = {"a": "same", "b": "new"}
     monkeypatch.setattr(run_eval, "answer_question", lambda req, *a: SimpleNamespace(
-        kind="answer", red_flag=None, llm_called=True, sources=[], answer=answers[req.question], card=None))
+        kind="answer", red_flag=None, llm_called=True, sources=[], answer=answers[req.question], card=None, answered=None, clarified_by=None))
     (tmp_path / "t.csv").write_text("id,answer,faithfulness\na,same,3\nb,old,2\n")
     rows = [{"id": q, "category": "c", "question": q, "medicines": [], "expect_kind": "answer", "expect_chunks": []} for q in "ab"]
     run_eval.full_run(rows, None, [], "m", "t")
@@ -169,13 +171,49 @@ def test_full_run_keeps_a_hand_grade_only_while_the_answer_is_unchanged(tmp_path
     assert graded == {"a": "3", "b": ""}
 
 
-def test_full_run_refuses_chats_until_follow_ups_exist():
-    import pytest
+def test_full_run_plays_a_chat_as_two_turns(tmp_path, monkeypatch):
+    import csv
+    from types import SimpleNamespace
 
     from eval import run_eval
 
-    with pytest.raises(SystemExit, match="follow-up"):
-        run_eval.full_run([{"id": "c", "history": ["q1"], "question": "q2"}], None, [], "m", "t")
+    monkeypatch.setattr(run_eval, "RESULTS", tmp_path)
+    monkeypatch.setattr(run_eval, "ollama_generate", lambda *a, **k: lambda *x: None)
+    monkeypatch.setattr(run_eval, "speed", lambda m: 1.0)
+    asked = []
+
+    def fake(req, *a):
+        asked.append((req.question, req.previous))
+        first = req.question == "q1"
+        return SimpleNamespace(kind="answer" if first else "clarify", red_flag=None, llm_called=True, sources=[], answer="a",
+                               card=None, answered="q1 rewritten" if first else None, clarified_by=None if first else "rewrite_check")
+
+    monkeypatch.setattr(run_eval, "answer_question", fake)
+    rows = [{"id": "c", "category": "chat", "history": ["q1"], "question": "q2", "medicines": [], "expect_kind": "answer",
+             "expect_kind_first": "answer", "expect_chunks": []}]
+    metrics = run_eval.full_run(rows, None, [], "m", "t")
+    assert asked == [("q1", None), ("q2", "q1 rewritten")]  # message 2 follows message 1's Answered question
+    got = next(csv.DictReader((tmp_path / "t.csv").open()))
+    assert (got["first_kind"], got["kind"], got["clarified_by"]) == ("answer", "clarify", "rewrite_check")
+    assert metrics["answer_rate"] == 0.5 and metrics["clarify_rate"] == 1.0 and metrics["rewrite_check_failure_rate"] == 1.0  # both turns scored
+
+
+CHATS = [{"id": i, "category": "chat", "expect_kind": k} for i, k in [("a", "answer"), ("b", "answer"), ("c", "clarify"), ("d", "answer")]]
+
+
+def test_clarify_rate_skips_rows_labelled_clarify_and_other_categories():
+    kinds = {"a": "clarify", "b": "answer", "c": "clarify", "d": "answer", "e": "clarify"}
+    assert clarify_rate(CHATS + [{"id": "e", "category": "dosing", "expect_kind": "answer"}], kinds) == 1 / 3
+
+
+def test_rewrite_check_failure_rate_counts_only_check_failures():
+    causes = {"a": "rewrite_check", "b": "model", "c": "rewrite_check", "d": ""}
+    assert rewrite_check_failure_rate(CHATS, causes) == 1 / 3
+
+
+def test_chat_shares_are_nan_without_chat_rows():
+    assert math.isnan(clarify_rate(ROWS[:1], {"a": "answer"}))
+    assert math.isnan(rewrite_check_failure_rate(ROWS[:1], {"a": ""}))
 
 
 def test_freeze_runs_the_final_set_once_on_committed_code_with_only_its_models(tmp_path, monkeypatch):

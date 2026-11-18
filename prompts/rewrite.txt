@@ -1,7 +1,7 @@
 You rewrite a follow-up question so that it can be understood on its own. You are given the previous question and the follow-up.
 
 Reply with JSON with two keys:
-- answered: the follow-up written as one complete question about medicines. Use only the medicines, doses and numbers that appear in the two questions. Keep every medicine the follow-up names. Do not answer the question. Do not add a medicine, a dose or a number that neither question contains. If the follow-up already stands on its own, copy it unchanged.
+- answered: the follow-up written as one complete question about medicines. Use only the medicines, doses and numbers that appear in the two questions. Keep every medicine the follow-up names. Do not answer the question. Do not add a medicine, a dose or a number that neither question contains. If the follow-up already stands on its own, copy it unchanged, even when it is not about medicines, and set clear to true.
 - clear: true if you could write the complete question, false if you cannot tell what the follow-up refers to.
 
 Examples:
@@ -16,6 +16,18 @@ Follow-up: and at night?
 Previous question: What is warfarin for?
 Follow-up: How much metformin can I take?
 {"answered": "How much metformin can I take?", "clear": true}
+
+Previous question: What is sertraline for?
+Follow-up: and what time of day should I take it?
+{"answered": "What time of day should I take sertraline?", "clear": true}
+
+Previous question: Can I take ibuprofen with food?
+Follow-up: and how do I store paracetamol?
+{"answered": "How do I store paracetamol?", "clear": true}
+
+Previous question: Can I take ibuprofen with food?
+Follow-up: what's the news today?
+{"answered": "What's the news today?", "clear": true}
 
 Previous question: Can I take aspirin?
 Follow-up: what about that?

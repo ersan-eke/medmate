@@ -15,11 +15,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from backend.kb import EMBED_MODEL, Embed, Interaction, load_index, load_interactions, ollama_embed
-from backend.llm import ollama_generate
+from backend.llm import REWRITE_SCHEMA, ollama_generate
 from backend.pipeline import ChatRequest, answer_question
 from backend.retrieval import MIN_SIMILARITY, Retriever
-from eval.metrics import (REFUSALS, answer_rate, best_threshold, citation_validity, kind_accuracy, faithfulness_rate, gate_accuracy, hit_at_k, percentile, red_flag_stats,
-                          refusal_rate)
+from eval.metrics import (REFUSALS, answer_rate, best_threshold, citation_validity, clarify_rate, kind_accuracy, faithfulness_rate, gate_accuracy, hit_at_k, percentile, red_flag_stats,
+                          refusal_rate, rewrite_check_failure_rate)
 
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "eval" / "results"
@@ -94,24 +94,34 @@ def card_text(card) -> str:
                       "Get help if:", *(f"- {x}" for x in card.get_help_if)])
 
 
-def refuse_chats(rows: list[dict]) -> None:
-    if any("history" in r for r in rows):  # sending message 2 alone would score every chat without its context
-        raise SystemExit("chats need the follow-up feature (docs/adr/0001-rewrite-follow-ups-then-check.md)")
-
-
 def full_run(rows: list[dict], retriever: Retriever, interactions: list[Interaction], model: str, tag: str) -> dict:
-    refuse_chats(rows)
-    generate = ollama_generate(model, timeout=120)  # measure the slow models instead of timing them out
-    generate([{"role": "user", "content": "hi"}], {"type": "object"})  # load the model before timing
+    model_generate = ollama_generate(model, timeout=120)  # measure the slow models instead of timing them out
+    model_generate([{"role": "user", "content": "hi"}], {"type": "object"})  # load the model before timing
+    rewrite_times = []
+
+    def generate(messages, schema):
+        start = time.perf_counter()
+        try:
+            return model_generate(messages, schema)
+        finally:
+            if schema is REWRITE_SCHEMA:
+                rewrite_times.append(time.perf_counter() - start)
+
     out = []
     for r in rows:
         meds = [{"name": m} for m in r["medicines"]]
+        first = previous = None
+        if r.get("history"):  # a chat is played like the browser: message 1 alone, then message 2 after its Answered question
+            first = answer_question(ChatRequest(question=r["history"][0], medicines=meds), retriever, generate, interactions)
+            previous = first.answered or r["history"][0]
+        rewrite_times.clear()
         start = time.perf_counter()
-        resp = answer_question(ChatRequest(question=r["question"], medicines=meds), retriever, generate, interactions)
+        resp = answer_question(ChatRequest(question=r["question"], previous=previous, medicines=meds), retriever, generate, interactions)
         out.append({"id": r["id"], "category": r["category"], "question": r["question"], "expect_kind": r["expect_kind"],
                     "kind": resp.kind, "red_flag": resp.red_flag or "", "llm_called": resp.llm_called, "latency_s": round(time.perf_counter() - start, 2),
                     "sources": " ".join(s.id for s in resp.sources), "answer": resp.answer, "card": card_text(resp.card),
-                    "faithfulness": ""})
+                    "first_kind": first.kind if first else "", "answered": resp.answered or "",
+                    "clarified_by": resp.clarified_by or "", "rewrite_s": round(sum(rewrite_times), 2), "faithfulness": ""})
         print(f"{r['id']:8} {resp.kind:12} {out[-1]['latency_s']:5.1f}s")
     path = RESULTS / f"{tag}.csv"
     if path.exists():  # a hand grade belongs to one answer text, so it carries over only while the answer is unchanged
@@ -125,14 +135,21 @@ def full_run(rows: list[dict], retriever: Retriever, interactions: list[Interact
         w.writeheader()
         w.writerows(out)
     kinds = {o["id"]: o["kind"] for o in out}
-    recall, fpr = red_flag_stats(rows, {i: k == "emergency" for i, k in kinds.items()})
+    # Message 1 of a chat is a row of its own where the chat labels it, so the kind metrics count both turns.
+    scored = rows + [{"id": r["id"] + ".1", "category": "chat_first", "expect_kind": r["expect_kind_first"], "expect_chunks": []}
+                     for r in rows if r.get("expect_kind_first")]
+    all_kinds = kinds | {o["id"] + ".1": o["first_kind"] for o in out if o["first_kind"]}
+    recall, fpr = red_flag_stats(scored, {i: k == "emergency" for i, k in all_kinds.items()})
     answered = {o["id"]: o["sources"].split() for o in out if o["kind"] == "answer"}
     # Only rows the answering model saw: gate refusals and table answers skip it, emergencies only triage.
     latencies = [o["latency_s"] for o in out if o["llm_called"] and o["kind"] != "emergency"]
-    return {"red_flag_recall": recall, "red_flag_fpr": fpr, "refusal_rate": refusal_rate(rows, kinds),
-            "answer_rate": answer_rate(rows, kinds), "kind_accuracy": kind_accuracy(rows, kinds),
+    return {"red_flag_recall": recall, "red_flag_fpr": fpr, "refusal_rate": refusal_rate(scored, all_kinds),
+            "answer_rate": answer_rate(scored, all_kinds), "kind_accuracy": kind_accuracy(scored, all_kinds),
             "citation_validity": citation_validity(rows, answered), "p50_s": percentile(latencies, 50),
-            "p95_s": percentile(latencies, 95), "tokens_per_s": speed(model)}
+            "p95_s": percentile(latencies, 95), "tokens_per_s": speed(model),
+            "clarify_rate": clarify_rate(rows, kinds),
+            "rewrite_check_failure_rate": rewrite_check_failure_rate(rows, {o["id"]: o["clarified_by"] for o in out}),
+            "rewrite_p50_s": percentile([o["rewrite_s"] for o in out if o["rewrite_s"]], 50)}
 
 
 def loaded_models() -> dict[str, str]:
@@ -195,7 +212,6 @@ def main() -> None:
         rows = load_rows(ROOT / "eval" / f"{args.set}.jsonl")
         retriever = Retriever(load_index(ROOT / "data" / "index"), ollama_embed())
         tag = f"{args.set}-{model_tag}"
-        refuse_chats(rows)  # before freeze(): a refused run must not use up the one-shot marker
         run = freeze(args.model, RESULTS / f"{tag}.json") if args.set == "final" else {}
         metrics = {"model": args.model, **run, **full_run(rows, retriever, load_interactions(ROOT / "data" / "interactions.csv"), args.model, tag)}
         # Retrieval alone, after the timed run so its embeds don't count; chats wait for the rewritten question.

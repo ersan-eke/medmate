@@ -664,12 +664,13 @@ def test_rewrite_naming_a_table_pair_is_answered_from_the_table(follow, spies, r
     lambda m, s: rewrite_reply("Can I take warfarin with food?"),  # drops metformin, which the follow-up named
     lambda m, s: rewrite_reply("Can I take metformin 500 times?"),  # adds a number
 ], ids=["not-clear", "dropped-medicine", "added-number"])
-def test_unsure_rewrite_asks_back_without_an_answer_call(follow, spies, rewrites, fn):
+def test_unsure_rewrite_asks_back_without_an_answer_call(follow, spies, rewrites, fn, request):
     _, answer = spies
     rewrites.fn = fn
     body = follow_up(follow, "what about metformin?", "Can I take warfarin with food?").json()
     assert body["kind"] == "clarify" and body["answered"] is None and answer.calls == 0
     assert body["answer"] == "Do you mean Metformin on its own, or Metformin with Warfarin?"
+    assert body["clarified_by"] == ("model" if request.node.callspec.id == "not-clear" else "rewrite_check")
 
 
 def test_clarify_without_a_medicine_in_each_question_is_the_fixed_sentence(follow, rewrites):

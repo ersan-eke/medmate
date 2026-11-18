@@ -38,6 +38,7 @@ class ChatResponse(BaseModel):
     red_flag: str | None = None
     llm_called: bool = False
     answered: str | None = None  # the follow-up rewritten to stand alone; null when it was answered as typed
+    clarified_by: Literal["model", "rewrite_check"] | None = None  # why a `clarify` reply: model unsure, or check failed
 
 
 def known_medicines(entries: list[MedicineEntry], names: dict[str, str]) -> list[MedicineEntry]:
@@ -95,7 +96,8 @@ def _answered(previous: str | None, followup: str, retriever: Retriever,
     answered = rw.answered.strip()
     if rw.clear and answered and check_rewrite(followup, previous, answered, retriever.named):
         return None if answered == followup else answered
-    return ChatResponse(kind="clarify", answer=_clarify(previous, followup, retriever), llm_called=True)
+    return ChatResponse(kind="clarify", answer=_clarify(previous, followup, retriever), llm_called=True,
+                        clarified_by="rewrite_check" if rw.clear and answered else "model")
 
 
 def _clarify(previous: str, followup: str, retriever: Retriever) -> str:
