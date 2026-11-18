@@ -552,3 +552,8 @@ def test_same_origin_post_is_allowed(client):
 
 def test_api_docs_are_not_served(client):
     assert [client.get(p).status_code for p in ("/docs", "/redoc", "/openapi.json")] == [404, 404, 404]
+
+
+def test_chat_ignores_note_and_times_on_medicines(client):
+    r = chat(client, "", [{"name": "Metformin", "dose": "500 mg", "times": ["evening"], "note": "with food"}])
+    assert r.status_code == 200

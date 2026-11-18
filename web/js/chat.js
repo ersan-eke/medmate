@@ -235,7 +235,8 @@ export function initChat(meds, isShown) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, medicines: meds() }),
+        // Only name and dose answer a question; the note and times stay in the browser.
+        body: JSON.stringify({ question, medicines: meds().map(({ name, dose }) => ({ name, dose })) }),
       });
       if (!res.ok) throw new Error(res.status);
       data = await res.json();

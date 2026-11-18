@@ -2,7 +2,6 @@ import logging
 import re
 from collections.abc import Callable
 from pathlib import Path
-from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
@@ -33,8 +32,6 @@ NUMBER = re.compile(r"\b(?:" + "|".join(TENS) + r")[ -]+(?:" + "|".join(ONES) + 
 class MedicineEntry(BaseModel):
     name: str = Field(max_length=100)
     dose: str = Field("", max_length=100)
-    times: list[Literal["morning", "midday", "evening", "bedtime"]] = []
-    note: str = Field("", max_length=100)
 
 
 class Card(BaseModel):
