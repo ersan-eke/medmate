@@ -52,3 +52,10 @@ The fresh emergency set on all three models, with the final code:
 
 Both larger models catch every emergency but miss the 15 s latency limit on the laptop used, so llama3.2:3b stays.
 On faster hardware a 7B model would be the next step.
+
+## Open: dos5 falls back (noted 2026-11-18, left as is)
+
+After 5e8e2b3 `dos5` ("What should I do if I miss a dose of warfarin?") gives the fallback, so llama3.2:3b's answer rate is 0.81, not 0.85.
+The model writes "Do not take 2 doses" but cites only `warfarin#how-to-take-warfarin-2`, which has no 2, so the number guard rejects it twice.
+The old guard gives the same result, so the guard change did not cause it; the model's citations changed after the earlier eval run.
+Possible fix, to try at the next eval run: tell the model in the prompt to cite every passage a number comes from. Not widening the guard.
