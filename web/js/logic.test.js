@@ -31,30 +31,36 @@ for (const [label, saved] of [["bad JSON", "{not json"], ["an object", '{"name":
 
 test("save then load round-trips", () => {
   const s = fakeStorage();
-  const list = [{ name: "Metformin", dose: "500 mg", times: ["morning", "evening"], note: "with food" }];
+  const list = [{ id: "m", name: "Metformin", dose: "500 mg", times: ["morning", "evening"], note: "with food" }];
   saveMedicines(s, list);
   assert.deepEqual(loadMedicines(s), list);
 });
 
 test("schedule groups doses by time of day, in list order", () => {
   const list = [
-    { name: "Metformin", dose: "500 mg", times: ["morning", "evening"], note: "" },
-    { name: "Amlodipine", dose: "5 mg", times: ["morning"], note: "" },
-    { name: "Warfarin", dose: "", times: [], note: "" },
+    { id: "m", name: "Metformin", dose: "500 mg", times: ["morning", "evening"], note: "" },
+    { id: "a", name: "Amlodipine", dose: "5 mg", times: ["morning"], note: "" },
+    { id: "w", name: "Warfarin", dose: "", times: [], note: "" },
   ];
   assert.deepEqual(buildSchedule(list), {
-    morning: ["Metformin 500 mg", "Amlodipine 5 mg"],
+    morning: [{ id: "m", text: "Metformin 500 mg" }, { id: "a", text: "Amlodipine 5 mg" }],
     midday: [],
-    evening: ["Metformin 500 mg"],
+    evening: [{ id: "m", text: "Metformin 500 mg" }],
     bedtime: [],
   });
 });
 
 test("malformed entries are dropped or repaired, not passed on", () => {
   const saved = [null, 7, { dose: "5 mg" }, { name: "Metformin", dose: 500, times: ["morning", "noon", 3], note: null }];
-  assert.deepEqual(loadMedicines(fakeStorage({ [KEY]: JSON.stringify(saved) })), [
-    { name: "Metformin", dose: "", times: ["morning"], note: "" },
-  ]);
+  const [m] = loadMedicines(fakeStorage({ [KEY]: JSON.stringify(saved) }));
+  assert.deepEqual({ ...m, id: "x" }, { id: "x", name: "Metformin", dose: "", times: ["morning"], note: "" });
+});
+
+test("entries without an id get one that is saved, so it survives a reload", () => {
+  const s = fakeStorage({ [KEY]: JSON.stringify([{ name: "Metformin", dose: "", times: [], note: "" }]) });
+  const [m] = loadMedicines(s);
+  assert.ok(m.id);
+  assert.equal(loadMedicines(s)[0].id, m.id);
 });
 
 test("interactions match either order, ignoring case", () => {

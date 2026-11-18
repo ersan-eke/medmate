@@ -5,7 +5,13 @@ export const TIMES = ["morning", "midday", "evening", "bedtime"];
 export function loadMedicines(storage) {
   try {
     const list = JSON.parse(storage.getItem(KEY) ?? "[]");
-    if (Array.isArray(list)) return list.filter((m) => typeof m?.name === "string" && m.name).map(clean);
+    if (Array.isArray(list)) {
+      const meds = list.filter((m) => typeof m?.name === "string" && m.name);
+      const cleaned = meds.map(clean);
+      // Ids minted here must be saved, or the next load would mint different ones and lose the ticks.
+      if (meds.some((m) => typeof m.id !== "string" || !m.id)) saveMedicines(storage, cleaned);
+      return cleaned;
+    }
   } catch {}
   storage.removeItem(KEY);
   return [];
@@ -14,6 +20,7 @@ export function loadMedicines(storage) {
 // Hand-edited or stale entries would otherwise break the schedule or get the chat request rejected.
 const text = (v) => (typeof v === "string" ? v : "");
 const clean = (m) => ({
+  id: typeof m.id === "string" && m.id ? m.id : crypto.randomUUID(),
   name: m.name,
   dose: text(m.dose),
   times: Array.isArray(m.times) ? m.times.filter((t) => TIMES.includes(t)) : [],
@@ -26,7 +33,7 @@ export function saveMedicines(storage, list) {
 
 export function buildSchedule(list) {
   return Object.fromEntries(
-    TIMES.map((t) => [t, list.filter((m) => m.times?.includes(t)).map((m) => `${m.name} ${m.dose}`.trim())]),
+    TIMES.map((t) => [t, list.filter((m) => m.times?.includes(t)).map((m) => ({ id: m.id, text: `${m.name} ${m.dose}`.trim() }))]),
   );
 }
 

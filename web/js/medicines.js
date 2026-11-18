@@ -100,15 +100,15 @@ export function initMedicines() {
       const head = el("h4");
       head.append(medForm.querySelector(`label[data-time="${t}"] .when-icon`).cloneNode(true), t[0].toUpperCase() + t.slice(1));
       const items = schedule[t].length ? el("ul") : el("p", { className: "empty", textContent: "No medicines" });
-      items.append(...schedule[t].map((e, n) => {
-        const key = `${t}|${n}|${e}`;
+      items.append(...schedule[t].map(({ id, text }) => {
+        const key = `${t}|${id}|${day}`;
         const box = el("input", { type: "checkbox", checked: taken.has(key) });
         box.addEventListener("change", () => {
           if (box.checked) taken.add(key); else taken.delete(key);
           saveTaken(localStorage, day, taken);
         });
         const label = el("label");
-        label.append(box, e);
+        label.append(box, text);
         const li = el("li");
         li.append(label);
         return li;
@@ -120,6 +120,7 @@ export function initMedicines() {
   medForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const entry = {
+      id: editing >= 0 ? medicines[editing].id : crypto.randomUUID(),
       name: nameSelect.value,
       dose: dose.value.trim(),
       times: timeBoxes.filter((b) => b.checked).map((b) => b.value),
