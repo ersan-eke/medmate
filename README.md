@@ -132,7 +132,7 @@ flowchart TD
     N -- "Verified" --> S["<b>6. Speech & Avatar</b> — Kokoro TTS + Web Audio lip-sync"]
 ```
 
-1. **Emergency check.** Matches fixed phrases for each NHS 999 sign, then asks the model (`yes`/`no`) for each sign. Any match immediately returns the 999 message.
+1. **Emergency check.** Matches fixed phrases for each NHS 999 sign, then asks the model (`yes`/`no`) for each sign. Any match immediately returns the 999 message. The fixed phrases are English only; a question in another language relies on the model check.
 2. **Retrieval.** Hybrid BM25 and vector search select the most relevant leaflet passages.
 3. **Similarity gate.** If no leaflet passage is close enough and the question is not about a leaflet medicine, MedMate refuses before calling the generator.
 4. **Answer.** The model generates a response strictly from those passages and cites them.

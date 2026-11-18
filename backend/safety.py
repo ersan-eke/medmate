@@ -25,19 +25,23 @@ PATTERNS: list[tuple[str, str, re.Pattern]] = [
         # NHS: stroke FAST signs
         ("stroke", "Possible stroke", r"\bface\b.{0,20}\bdroop\w*|\bdroop\w* face\b|\bslurred speech\b|\bspeech\b.{0,15}\bslurred\b|\b(arm|leg)\b.{0,15}\b(weak\w*|numb\w*)|\b(weak|numb) (arm|leg)\b|\b(can ?not|can'?t|cant|unable to|trouble|difficulty) (speak\w*|talk\w*)"
                    r"|\bmouth\b.{0,25}\b(dropped|droop\w*|slipped|gone down)\b|\bone side of (his|her|my|their|the) (face|mouth)\b"
-                   r"|\b(words|speech|talking)\b.{0,25}\b(jumbled|muddled|garbled|not making sense)\b"),
+                   r"|\b(words|speech|talking)\b.{0,25}\b(jumbled|muddled|garbled|not making sense)\b"
+                   r"|\b(am|i'?m|is|'s|are|'re) having a stroke\b"),
         # NHS: severe allergic reaction (anaphylaxis)
         ("anaphylaxis", "Severe allergic reaction", r"\b(lips?|tongue|face|throat)\b.{0,25}\b(swell\w*|swollen|closing)\b|\b(swollen|swelling) (lips?|tongue|face|throat)\b"),
         # NHS: overdose / poisoning. A count of 10 or more is past the daily maximum of the common painkillers; "take 2 tablets" is a dose.
         ("overdose", "Possible overdose", r"\boverdos\w*|\btook (too many|double|too much)\b|\btaken (too many|double|too much)\b|\b(took|taken) \d+ times\b|\bswallowed\b.{0,25}\b(whole|entire|lots of)\b"
                      r"|\b(took|taken|had|swallowed|downed)\b.{0,25}\b(whole|entire|full)\b.{0,10}\b(strip|pack\w*|box|bottle|blister)"
-                     r"|\b(took|taken|swallowed|had)\b.{0,15}\b([1-9]\d+|ten|eleven|twelve|\w+teen|(twenty|thirty|forty|fifty)\w*) (of (my|the|them|those) )?(\w+ )?(tablets|pills|capsules)\b"),
+                     r"|\b(took|taken|swallowed|had)\b.{0,15}\b([1-9]\d+|ten|eleven|twelve|\w+teen|(twenty|thirty|forty|fifty)\w*) ((of (my|the|them|those) )?(\w+ )?(tablets|pills|capsules)"
+                     # A leaflet medicine straight after the count: "took 10 paracetamol", but not "took 10 mg amlodipine".
+                     r"|(of (my|the) )?(amlodipine|aspirin|atorvastatin|ibuprofen|levothyroxine|metformin|omeprazole|paracetamol|ramipril|salbutamol|sertraline|warfarin))\b"),
         # NHS: vomiting or coughing blood
         ("bleeding", "Serious bleeding", r"\b(cough\w*|vomit\w*|throw\w*|threw) (up )?(some )?blood\b|\bblood in (my )?vomit\b|\bbleeding (heavily|badly|a lot)\b|\b(can ?not|can'?t|cant|unable to) stop bleeding\b|\bbleeding (won'?t|will not|wont|doesn'?t|does not) stop\b|\bcoffee grounds?\b"
                      r"|\bbleed\w*\b.{0,30}\b(won'?t|wont|will not|doesn'?t|does not|isn'?t|not) stop\w*|\b(won'?t|wont|will not) stop bleeding\b"
-                     r"|\bblack (poo|stools?|tarry)\b|\b(poo|stools?) (is|are|has been|have been|looks?|went|gone) (all )?black\b"),
+                     r"|\bblack (poo|stools?|tarry)\b|\bblood in (my |the |his |her )?(poo|stools?)\b|\b(poo|stools?) (is|are|has been|have been|looks?|went|gone) (all )?black\b"),
         # NHS: suicidal thoughts and self-harm
-        ("self_harm", "Self-harm", r"\b(end|take) my (own )?life\b|\b(kill|hurt|harm)(ing)? my ?self\b|\bwant to die\b|\bsuicid\w*|\bbetter off dead\b|\b(no|see the|see any) point (in )?(going on|living|carrying on)\b|\b(saving|saved|stockpil\w*) up (my |the |all )?(\w+ )?(tablets|pills)\b|\bend it all\b"),
+        ("self_harm", "Self-harm", r"\b(end|take) my (own )?life\b|\b(kill|hurt|harm)(ing)? my ?self\b|\bwant to die\b|\bsuicid\w*|\bbetter off dead\b|\b(no|see the|see any) point (in )?(going on|living|carrying on)\b|\b(saving|saved|stockpil\w*) up (my |the |all )?(\w+ )?(tablets|pills)\b|\bend it all\b"
+                      r"|\b(feel(ing)? like|thinking (about|of)|want to) end(ing)? it\b(?! with)"),
         # NHS: loss of consciousness
         ("fainting", "Fainting or collapse", r"\bfaint(ed|ing)\b|\bpass(ed|ing)? out\b|\bcollaps\w*|\bblack(ed|ing)? out\b|\bfeel faint\b"),
         # NHS: someone unconscious or having a seizure

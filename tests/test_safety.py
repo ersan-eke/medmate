@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from backend import safety
@@ -12,11 +14,11 @@ from backend.safety import (
 FIRES = {
     "chest_pain": ["Now my chest feels tight.", "I have CHEST PAIN", "is chest pain a side effect of amlodipine?", "my chest hurts", "my chest is really painful", "my chest feels heavy", "There is pressure in my chest.", "chest heaviness", "pain across my chest", "pain in my back and chest", "is this a heart attack?"],
     "breathing": ["I can't breathe", "i cant breathe properly", "I cannot breathe", "struggling to breathe", "trouble breathing", "I'm breathless", "I have difficulty in breathing", "DIFFICULTY IN BREATHING!", "I can't catch my breath", "I couldn't catch my breath"],
-    "stroke": ["my face is drooping on one side", "my arm feels weak and my speech is slurred", "slurred speech", "I have a weak arm", "my arm feels numb", "my left leg is numb", "can't speak properly", "I can’t speak", "trouble speaking", "mum's words are all jumbled", "her mouth has dropped on one side", "one side of his face has gone"],
+    "stroke": ["my face is drooping on one side", "my arm feels weak and my speech is slurred", "slurred speech", "I have a weak arm", "my arm feels numb", "my left leg is numb", "can't speak properly", "I can’t speak", "trouble speaking", "mum's words are all jumbled", "her mouth has dropped on one side", "one side of his face has gone", "I think I'm having a stroke", "she's having a stroke"],
     "anaphylaxis": ["my lips are swelling", "my tongue is swollen", "throat feels like it's closing", "swollen tongue"],
-    "overdose": ["I took too many tablets", "I think I overdosed", "took double my dose by mistake", "I took 3 times the dose", "I swallowed a whole bottle of pills", "took too many tablets", "I swallowed the entire packet", "I've had the whole strip again", "took a full box of them", "I took 10 tablets of paracetamol", "I've swallowed twelve pills", "I took fifteen tablets", "I took 10 of my tablets", "I have had 10 paracetamol tablets"],
-    "bleeding": ["I'm coughing up blood", "vomiting blood", "there is blood in my vomit", "bleeding heavily", "I can't stop bleeding", "the bleeding won't stop", "bleeding will not stop", "I brought up what looks like coffee grounds", "a cut on my leg that won't stop bleeding", "the bleeding isn't stopping", "my poo is black", "I vomited blood", "I threw up blood", "I threw up some blood", "coughed up blood this morning"],
-    "self_harm": ["I want to end my life", "thinking about hurting myself", "I want to kill myself", "I want to die", "I feel suicidal", "there's no point going on", "I've been saving up my tablets", "i don't see the point in going on", "saving up my sertraline tablets", "thinking about suicide", "I want to kill my self", "I'd be better off dead", "does sertraline raise suicide risk?"],  # over-triggers on purpose
+    "overdose": ["I took too many tablets", "I think I overdosed", "took double my dose by mistake", "I took 3 times the dose", "I swallowed a whole bottle of pills", "took too many tablets", "I swallowed the entire packet", "I've had the whole strip again", "took a full box of them", "I took 10 tablets of paracetamol", "I've swallowed twelve pills", "I took fifteen tablets", "I took 10 of my tablets", "I have had 10 paracetamol tablets", "I took 10 paracetamol", "I've swallowed 20 of my ibuprofen"],
+    "bleeding": ["I'm coughing up blood", "vomiting blood", "there is blood in my vomit", "bleeding heavily", "I can't stop bleeding", "the bleeding won't stop", "bleeding will not stop", "I brought up what looks like coffee grounds", "a cut on my leg that won't stop bleeding", "the bleeding isn't stopping", "my poo is black", "I vomited blood", "I threw up blood", "I threw up some blood", "coughed up blood this morning", "there is blood in my stool", "blood in my poo"],
+    "self_harm": ["I want to end my life", "thinking about hurting myself", "I want to kill myself", "I want to die", "I feel suicidal", "there's no point going on", "I've been saving up my tablets", "i don't see the point in going on", "saving up my sertraline tablets", "thinking about suicide", "I want to kill my self", "I'd be better off dead", "does sertraline raise suicide risk?", "I feel like ending it", "I keep thinking about ending it"],  # over-triggers on purpose
     "fainting": ["I fainted this morning", "I keep passing out", "I collapsed", "I feel faint", "I blacked out"],
     "unresponsive": ["he's gone down and isn't answering me", "she's not responding", "my husband is unconscious", "she's having a seizure", "he's having a fit on the floor"],
 }
@@ -34,6 +36,11 @@ NEAR_MISSES = [
     "What pain relief can I take for a chest infection?",
     "pain medication for a chest cold",
     "I need to catch my breath after the stairs",
+    "I take 10 mg amlodipine",
+    "I took 20 mg atorvastatin last night",
+    "I had a stroke last year, can I take aspirin?",
+    "does aspirin lower the chance of having a stroke?",
+    "I am ending it with this inhaler",
 ]
 
 
@@ -125,3 +132,11 @@ WARF_IBU = Interaction("Warfarin", "Ibuprofen", "w2", "c2")
 ])
 def test_check_interactions_splits_asked_from_list_pairs(question, named, listed, asked, also):
     assert check_interactions(question, named, listed, [LEVO_OMEP, WARF_IBU]) == (asked, also)
+
+
+def test_overdose_names_every_leaflet_medicine():
+    from pathlib import Path
+    names = {re.search(r"^medicine: (.+)$", p.read_text(), re.M).group(1).lower()
+             for p in (Path(__file__).parent.parent / "data" / "leaflets").glob("*.md")}
+    overdose = next(rx for id, _, rx in safety.PATTERNS if id == "overdose")
+    assert all(overdose.search(f"i took 10 {n}") for n in names)
