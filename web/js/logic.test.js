@@ -186,14 +186,14 @@ test("stored entries over the server's limits are cut on load, so chat is never 
   assert.equal(loadMedicines(fakeStorage({ [KEY]: JSON.stringify(many) })).length, 50);
 });
 
-test("a blocked browser store is replaced by one that works until the page closes", () => {
+test("a blocked browser store reads empty and refuses writes, so saving medicines reports the failure", () => {
   const blocked = { get localStorage() { throw new DOMException("denied", "SecurityError"); } };
   const s = store("localStorage", blocked);
   assert.equal(s.getItem("k"), null);
-  s.setItem("k", "v");
-  assert.equal(s.getItem("k"), "v");
+  assert.throws(() => s.setItem("k", "v"));
   s.removeItem("k");
-  assert.equal(s.getItem("k"), null);
+  assert.equal(saveMedicines(s, []), false);
+  assert.deepEqual(loadMedicines(s), []);
 });
 
 test("an available browser store is used as it is", () => {

@@ -38,8 +38,8 @@
 #meds-heading { margin-top: .4rem; }
 
 /* Undo banner */
-#undo:empty { display: none; }
-#undo { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .85rem; padding: .85rem 1.15rem; border: .1rem solid var(--amber-border); border-radius: 1rem; background: var(--amber-tint); font-weight: 700; }
+#undo:empty, #save-warning:empty { display: none; }
+#undo, #save-warning { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .85rem; padding: .85rem 1.15rem; border: .1rem solid var(--amber-border); border-radius: 1rem; background: var(--amber-tint); font-weight: 700; }
 
 /* Medicine cards */
 #meds { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }

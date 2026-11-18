@@ -33,8 +33,9 @@ export function initMedicines() {
   let undoTimer;
   const hideUndo = () => { clearTimeout(undoTimer); undo.replaceChildren(); };
   // Saved medicines drive the schedule, so a save the browser refuses is said out loud.
+  const warning = document.getElementById("save-warning");
   const save = () => {
-    if (!saveMedicines(local, medicines)) undo.append(el("p", { textContent: "Couldn't save on this device. Your medicines will be lost when you close this page." }));
+    warning.textContent = saveMedicines(local, medicines) ? "" : "Couldn't save on this device. Your medicines will be lost when you close this page.";
   };
   const showUndo = (removed, index) => {
     clearTimeout(undoTimer);

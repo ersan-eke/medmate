@@ -6,13 +6,13 @@ const MAX_MEDICINES = 50;
 export const TIMES = ["morning", "midday", "evening", "bedtime"];
 
 // `window.localStorage` itself throws when the browser blocks storage, so the read must be guarded where the
-// store is fetched. A blocked store becomes one that lasts until the page closes.
+// store is fetched. A blocked store becomes an empty one that refuses writes, as the browser would, so every save
+// path sees the failure; the page keeps what it loaded in memory.
 export function store(name, win = globalThis) {
   try {
     return win[name];
   } catch {
-    const m = new Map();
-    return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+    return { getItem: () => null, setItem() { throw new DOMException("storage is blocked", "SecurityError"); }, removeItem() {} };
   }
 }
 
