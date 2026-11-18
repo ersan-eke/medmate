@@ -1,7 +1,7 @@
 import { Avatar } from "./avatar.js";
 import { startRecording } from "./voice.js";
 import { el, leafletLink } from "./dom.js";
-import { loadThread, saveThread, clearThread, replyCard, medicinesTag, showSuggestions } from "./logic.js";
+import { store, loadThread, saveThread, clearThread, replyCard, medicinesTag, showSuggestions } from "./logic.js";
 
 // The MedMate view: ask by text or voice, show the reply. `meds()` gives the current medicines list
 // and `isShown()` says whether this view is the visible one (Space must not start the mic from the other view).
@@ -9,7 +9,8 @@ export function initChat(meds, isShown) {
   const thread = document.getElementById("thread");
   const empty = document.getElementById("empty");
   const avatar = new Avatar(document.getElementById("avatar"));
-  let entries = loadThread(sessionStorage);
+  const session = store("sessionStorage");
+  let entries = loadThread(session);
   let pending = null;  // the "One moment…" card while a request is out
 
   // A section with no text shows no heading.
@@ -81,7 +82,7 @@ export function initChat(meds, isShown) {
       draw();
     }
     entries.push(entry);
-    saveThread(sessionStorage, entries);
+    saveThread(session, entries);
     empty.hidden = !showSuggestions(entries);
     pending?.remove();
     pending = null;
@@ -148,7 +149,7 @@ export function initChat(meds, isShown) {
   reset.addEventListener("click", () => {
     stopSpeech();
     entries = [];
-    clearThread(sessionStorage);
+    clearThread(session);
     draw();
   });
 
@@ -192,16 +193,19 @@ export function initChat(meds, isShown) {
     exclusive(async () => {
       avatar.setState("thinking");
       wait("Working out what you said…");
-      const body = new FormData();
-      body.append("audio", await stop(), "question.webm");
-      const res = await fetch("/api/transcribe", { method: "POST", body }).catch(() => null);
-      if (!res?.ok) {
+      let text;
+      try {
+        const body = new FormData();
+        body.append("audio", await stop(), "question.webm");
+        const res = await fetch("/api/transcribe", { method: "POST", body });
+        if (!res.ok) throw new Error(res.status);
+        ({ text } = await res.json());
+      } catch {
         avatar.setState("idle");
         show("type_instead", "Sorry, I couldn't hear that. Please type your question.");
         input.focus();
         return;
       }
-      const { text } = await res.json();
       // #heard is a hidden live region so screen readers still hear it.
       // A blank question gets the "didn't catch that" reply from /api/chat.
       if (text.trim()) {

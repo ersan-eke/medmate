@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildSchedule, mouthFrame, findInteractions, loadMedicines, saveMedicines,
   replyCard, medicinesTag, loadThread, saveThread, showSuggestions,
-  countLabel, todayLabel, reinsertAt,
+  countLabel, todayLabel, reinsertAt, store,
 } from "./logic.js";
 
 const KEY = "medmate.medicines";
@@ -172,4 +172,45 @@ test("stored entries over the server's limits are cut on load, so chat is never 
   const [first] = loadMedicines(fakeStorage({ [KEY]: JSON.stringify([{ id: "a", name: long, dose: long, times: [], note: long }]) }));
   assert.deepEqual([first.name.length, first.dose.length, first.note.length], [100, 100, 100]);
   assert.equal(loadMedicines(fakeStorage({ [KEY]: JSON.stringify(many) })).length, 50);
+});
+
+test("a blocked browser store is replaced by one that works until the page closes", () => {
+  const blocked = { get localStorage() { throw new DOMException("denied", "SecurityError"); } };
+  const s = store("localStorage", blocked);
+  assert.equal(s.getItem("k"), null);
+  s.setItem("k", "v");
+  assert.equal(s.getItem("k"), "v");
+  s.removeItem("k");
+  assert.equal(s.getItem("k"), null);
+});
+
+test("an available browser store is used as it is", () => {
+  const real = fakeStorage();
+  assert.equal(store("localStorage", { localStorage: real }), real);
+});
+
+const full = () => ({ getItem: () => null, setItem() { throw new DOMException("full", "QuotaExceededError"); }, removeItem() { throw new Error("no"); } });
+
+test("saving medicines says whether it worked", () => {
+  assert.equal(saveMedicines(fakeStorage(), []), true);
+  assert.equal(saveMedicines(full(), []), false);
+});
+
+test("loading medicines survives a store that refuses to clean up", () => {
+  const bad = { getItem: () => "{not json", removeItem() { throw new Error("no"); }, setItem() {} };
+  assert.deepEqual(loadMedicines(bad), []);
+});
+
+test("thread keeps the answer but drops a card or sources it cannot draw", () => {
+  const saved = [
+    { role: "medmate", kind: "answer", answer: "a", card: { summary: 5, what_to_do: ["ok", null], get_help_if: "help" }, sources: [null, { medicine: "Metformin" }, { medicine: 3 }] },
+    { role: "medmate", kind: "answer", answer: "b", card: "text" },
+    { role: "medmate", kind: "answer", answer: "c", card: null, sources: "x" },
+  ];
+  const s = fakeStorage({ [THREAD_KEY]: JSON.stringify(saved) });
+  assert.deepEqual(loadThread(s), [
+    { role: "medmate", kind: "answer", answer: "a", card: { summary: "", what_to_do: ["ok"], get_help_if: "help" }, sources: [{ medicine: "Metformin" }] },
+    { role: "medmate", kind: "answer", answer: "b", sources: [] },
+    { role: "medmate", kind: "answer", answer: "c", sources: [] },
+  ]);
 });

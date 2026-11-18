@@ -5,6 +5,17 @@ const MAX_TEXT = 100;
 const MAX_MEDICINES = 50;
 export const TIMES = ["morning", "midday", "evening", "bedtime"];
 
+// `window.localStorage` itself throws when the browser blocks storage, so the read must be guarded where the
+// store is fetched. A blocked store becomes one that lasts until the page closes.
+export function store(name, win = globalThis) {
+  try {
+    return win[name];
+  } catch {
+    const m = new Map();
+    return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+  }
+}
+
 export function loadMedicines(storage) {
   try {
     const list = JSON.parse(storage.getItem(KEY) ?? "[]");
@@ -16,7 +27,7 @@ export function loadMedicines(storage) {
       return cleaned;
     }
   } catch {}
-  storage.removeItem(KEY);
+  try { storage.removeItem(KEY); } catch {}
   return [];
 }
 
@@ -30,8 +41,14 @@ const clean = (m) => ({
   note: text(m.note),
 });
 
+// False when the browser would not keep it, so the page can say so.
 export function saveMedicines(storage, list) {
-  storage.setItem(KEY, JSON.stringify(list));
+  try {
+    storage.setItem(KEY, JSON.stringify(list));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function buildSchedule(list) {
@@ -84,11 +101,24 @@ const THREAD_KEY = "medmate.thread";
 const isEntry = (e) =>
   e?.role === "user" ? typeof e.text === "string" : e?.role === "medmate" && typeof e.kind === "string" && typeof e.answer === "string";
 
+// Only text reaches the page's text handling; a card or source of any other shape is dropped, the answer stays.
+const CARD_FIELDS = ["summary", "what_to_do", "get_help_if"];
+const cleanField = (v) => (Array.isArray(v) ? v.filter((t) => typeof t === "string") : typeof v === "string" ? v : "");
+const cleanEntry = (e) => {
+  if (e.role !== "medmate") return e;
+  const { card, sources, ...rest } = e;
+  const out = { ...rest, sources: Array.isArray(sources) ? sources.filter((s) => typeof s?.medicine === "string") : [] };
+  if (card && typeof card === "object" && !Array.isArray(card)) {
+    out.card = { ...card, ...Object.fromEntries(CARD_FIELDS.filter((k) => k in card).map((k) => [k, cleanField(card[k])])) };
+  }
+  return out;
+};
+
 export function loadThread(storage) {
   try {
     const thread = JSON.parse(storage.getItem(THREAD_KEY) ?? "[]");
     if (Array.isArray(thread)) {
-      return thread.filter(isEntry).map((e) => (e.role === "medmate" ? { ...e, sources: Array.isArray(e.sources) ? e.sources : [] } : e));
+      return thread.filter(isEntry).map(cleanEntry);
     }
     storage.removeItem(THREAD_KEY);
   } catch {

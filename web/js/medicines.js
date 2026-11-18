@@ -1,12 +1,13 @@
-import { TIMES, buildSchedule, countLabel, findInteractions, loadMedicines, loadTaken, reinsertAt, saveMedicines, saveTaken, todayLabel } from "./logic.js";
+import { TIMES, buildSchedule, countLabel, findInteractions, loadMedicines, loadTaken, reinsertAt, saveMedicines, store, saveTaken, todayLabel } from "./logic.js";
 import { el, leafletLink } from "./dom.js";
 
 // The My medicines view: the form, the list, interaction warnings and Today.
 export function initMedicines() {
-  let medicines = loadMedicines(localStorage);
+  const local = store("localStorage");
+  let medicines = loadMedicines(local);
   let interactions = [];
   const day = new Date().toDateString();
-  const taken = loadTaken(localStorage, day);
+  const taken = loadTaken(local, day);
   let editing = -1;  // index being edited, or -1 when adding
   const medForm = document.getElementById("med-form");
   const nameSelect = document.getElementById("med-name");
@@ -31,12 +32,16 @@ export function initMedicines() {
   const undo = document.getElementById("undo");
   let undoTimer;
   const hideUndo = () => { clearTimeout(undoTimer); undo.replaceChildren(); };
+  // Saved medicines drive the schedule, so a save the browser refuses is said out loud.
+  const save = () => {
+    if (!saveMedicines(local, medicines)) undo.append(el("p", { textContent: "Couldn't save on this device. Your medicines will be lost when you close this page." }));
+  };
   const showUndo = (removed, index) => {
     clearTimeout(undoTimer);
     undo.replaceChildren(`Removed ${removed.name}.`, button("Undo", `Undo removing ${removed.name}`, () => {
       hideUndo();
       medicines = reinsertAt(medicines, removed, index);
-      saveMedicines(localStorage, medicines);
+      save();
       render();
     }, "btn-stone undo-btn"));
     undoTimer = setTimeout(hideUndo, 6000);
@@ -83,10 +88,10 @@ export function initMedicines() {
         }),
         button("Remove", `Remove ${m.name}`, () => {
           medicines.splice(i, 1);
-          saveMedicines(localStorage, medicines);
           resetForm();
           render();
           showUndo(m, i);
+          save();
         }),
       );
       li.append(details, actions);
@@ -105,7 +110,7 @@ export function initMedicines() {
         const box = el("input", { type: "checkbox", checked: taken.has(key) });
         box.addEventListener("change", () => {
           if (box.checked) taken.add(key); else taken.delete(key);
-          saveTaken(localStorage, day, taken);
+          saveTaken(local, day, taken);
         });
         const label = el("label");
         label.append(box, text);
@@ -127,7 +132,7 @@ export function initMedicines() {
       note: note.value.trim(),
     };
     if (editing >= 0) medicines[editing] = entry; else medicines.push(entry);
-    saveMedicines(localStorage, medicines);
+    save();
     resetForm();
     render();
   });
