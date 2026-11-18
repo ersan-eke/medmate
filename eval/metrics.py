@@ -75,9 +75,11 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
 def cohen_kappa(a: list[str], b: list[str]) -> float:
     """Agreement of two graders on the same items, corrected for the agreement their grade shares give by chance."""
     n = len(a)
+    if not n:
+        return float("nan")
     observed = sum(x == y for x, y in zip(a, b)) / n
     chance = sum(a.count(g) * b.count(g) for g in set(a) | set(b)) / (n * n)
-    return (observed - chance) / (1 - chance)
+    return (observed - chance) / (1 - chance) if chance < 1 else 1.0  # one shared grade: they agree, nothing to correct
 
 
 def gate_accuracy(sims_in: list[float], sims_out: list[float], threshold: float) -> float:

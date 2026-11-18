@@ -252,3 +252,8 @@ def test_card_text_reads_like_the_page():
 
     assert card_text(None) == ""
     assert card_text(Card(summary="S", what_to_do=["a"], get_help_if=["b", "c"])) == "Summary: S\nWhat to do:\n- a\nGet help if:\n- b\n- c"
+
+
+def test_kappa_with_one_shared_grade_or_no_items_does_not_raise():
+    assert cohen_kappa(["ok", "ok"], ["ok", "ok"]) == 1.0
+    assert cohen_kappa([], []) != cohen_kappa([], [])  # nan
