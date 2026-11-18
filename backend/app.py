@@ -4,8 +4,9 @@ import re
 from typing import Callable
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Response, UploadFile
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, UploadFile
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel, Field
 
 from . import messages
@@ -50,6 +51,13 @@ class LimitUpload:
         await self.app(scope, counted, send)
 
 
+def same_origin(request: Request) -> None:
+    # Multipart uploads skip the CORS preflight, so a foreign page could otherwise POST /api/transcribe.
+    origin = request.headers.get("origin")
+    if origin is not None and origin != f"http://{request.headers['host']}":
+        raise HTTPException(403, "cross-origin request refused")
+
+
 class TtsRequest(BaseModel):
     text: str = Field(max_length=1500)
 
@@ -57,7 +65,10 @@ class TtsRequest(BaseModel):
 def create_app(index: Index, embed: Embed, generate: Generate, interactions: list[Interaction],
                engines: list[Engine] = [], transcribe: Callable[[bytes], str] | None = None) -> FastAPI:
     validate_interactions(interactions, index)
-    app = FastAPI()
+    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, dependencies=[Depends(same_origin)])
+
+    # DNS rebinding keeps the attacker's hostname in Host; we only ever serve the local page.
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
     app.add_middleware(LimitUpload, path="/api/transcribe", limit=MAX_AUDIO_BYTES)
     retriever = Retriever(index, embed)
     warnings = [
