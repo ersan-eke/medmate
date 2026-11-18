@@ -25,6 +25,10 @@ _Avoid_: saved medicines, listed medicines, medicine list
 The checked list of medicine pairs a leaflet warns about. The only thing allowed to answer whether two medicines can be taken together.
 _Avoid_: interaction list, pairs file
 
+**Combination question**:
+A question about taking a medicine together with, or right after, something else. Any question naming two leaflet medicines counts. Only the Interaction table may say yes to one.
+_Avoid_: interaction question, pair question
+
 ## Answering
 
 **Similarity gate**:

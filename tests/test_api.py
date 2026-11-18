@@ -78,8 +78,10 @@ def test_demo_red_flag_skips_llm(client, spies, triage):
 PAIR_ANSWER = "Ask first. Please check with your pharmacist before taking them together."
 
 
-def test_known_pair_answers_from_interactions_table(client, spies):
-    body = chat(client, "Can I take metformin with warfarin?").json()
+@pytest.mark.parametrize("q", ["Can I take metformin with warfarin?", "metformin + warfarin ok?",
+                               "What is warfarin for? What is metformin for?"])  # naming both is enough
+def test_known_pair_answers_from_interactions_table(client, spies, q):
+    body = chat(client, q).json()
     assert body["kind"] == "answer"
     assert body["answer"] == PAIR_ANSWER
     assert [s["id"] for s in body["sources"]] == ["warfarin#other-medicines"]
@@ -113,7 +115,7 @@ def test_list_pair_follows_a_refusal_without_repeating_the_advice(client, spies,
 
 @pytest.mark.parametrize("q, medicines", [
     ("When should I take metformin?", [{"name": "Warfarin"}]),  # not about combining
-    ("What is warfarin for? What is metformin for?", []),  # no combining word
+    ("Should I take metformin before or after dinner?", [{"name": "Warfarin"}]),  # a dosing question
 ])
 def test_non_combination_question_takes_normal_path(client, spies, q, medicines):
     body = chat(client, q, medicines).json()
@@ -237,6 +239,15 @@ def test_model_calling_a_combination_safe_is_referred(client, spies, monkeypatch
     body = chat(client, "Can I take metformin with turmeric?").json()
     assert body["kind"] == "not_covered" and body["answer"] == UNCONFIRMED_COMBINATION
     assert body["sources"] == [] and body["card"] is None
+
+
+def test_safe_claim_in_the_card_is_referred(client, spies, monkeypatch):
+    monkeypatch.setattr("backend.pipeline.MIN_SIMILARITY", 0.1)
+    card = CARD | {"what_to_do": ["It is safe to take turmeric with metformin."]}
+    spies[1].fn = lambda m, s: reply(answer="Ask your pharmacist.", card=card)
+    body = chat(client, "Can I take metformin with turmeric?").json()
+    assert body["kind"] == "not_covered" and body["answer"] == UNCONFIRMED_COMBINATION
+
 
 def test_question_about_a_leaflet_medicine_skips_the_gate(client, spies):
     # Far below the gate with the fake embedder, but about Metformin: the model decides.

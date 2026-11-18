@@ -7,7 +7,7 @@ Held-out gate accuracy at 0.72: 0.80 (10 reworded questions never used for tunin
 | model | red-flag recall | red-flag FPR | refusal | answer rate | citation validity | p50 s | p95 s | tokens/s |
 |---|---|---|---|---|---|---|---|---|
 | llama3.1:8b | 1.00 | 0.00 | 1.00 | 0.85 | 1.00 | 25.0 | 30.9 | 14.4 |
-| llama3.2:3b | 1.00 | 0.05 | 1.00 | 0.81 | 1.00 | 8.2 | 12.5 | 41.3 |
+| llama3.2:3b | 1.00 | 0.05 | 1.00 | 0.85 | 1.00 | 13.1 | 19.5 | 33.5 |
 | qwen2.5:7b | 1.00 | 0.02 | 0.86 | 0.85 | 0.92 | 19.9 | 24.7 | 17.8 |
 
 Faithful answers (graded 3 of 3 by hand, blank until graded; not part of the model choice): llama3.1-8b nan (0 graded), llama3.2-3b 0.82 (22 graded), qwen2.5-7b nan (0 graded)

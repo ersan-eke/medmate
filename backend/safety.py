@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from dataclasses import dataclass
 
 from .kb import Interaction
@@ -16,24 +17,27 @@ PATTERNS: list[tuple[str, str, re.Pattern]] = [
     (id, label, re.compile(rx, re.IGNORECASE))
     for id, label, rx in [
         # NHS: chest pain / tightness, call 999
-        ("chest_pain", "Chest pain", r"\bchest\b.{0,20}\b(pain\w*|tight\w*|pressure|heav\w*|crushing|hurt\w*)\b|\b(pain|tightness|pressure) in (my |the )?chest\b"),
+        ("chest_pain", "Chest pain", r"\bchest\b.{0,20}\b(pain\w*|tight\w*|pressure|heav\w*|crushing|hurt\w*)\b|\b(pain|tightness|pressure) in (my |the )?chest\b"
+                       r"|\bpain\b.{0,20}\bchest\b(?! (infection|cold|cough))|\bheart attack\b"),
         # NHS: difficulty breathing
-        ("breathing", "Difficulty breathing", r"\b(can ?not|can'?t|cant|unable to|struggling to|hard to|difficulty( in)?) breath\w*|\bshort(ness)? of breath\b|\btrouble breathing\b|\bbreathless\w*"),
+        ("breathing", "Difficulty breathing", r"\b(can ?not|can'?t|cant|unable to|struggling to|hard to|difficulty( in)?) breath\w*|\bshort(ness)? of breath\b|\btrouble breathing\b|\bbreathless\w*"
+                      r"|\b(can ?not|can'?t|cant|could ?not|couldn'?t|unable to) catch (my )?breath\b"),
         # NHS: stroke FAST signs
         ("stroke", "Possible stroke", r"\bface\b.{0,20}\bdroop\w*|\bdroop\w* face\b|\bslurred speech\b|\bspeech\b.{0,15}\bslurred\b|\b(arm|leg)\b.{0,15}\b(weak\w*|numb\w*)|\b(weak|numb) (arm|leg)\b|\b(can ?not|can'?t|cant|unable to|trouble|difficulty) (speak\w*|talk\w*)"
                    r"|\bmouth\b.{0,25}\b(dropped|droop\w*|slipped|gone down)\b|\bone side of (his|her|my|their|the) (face|mouth)\b"
                    r"|\b(words|speech|talking)\b.{0,25}\b(jumbled|muddled|garbled|not making sense)\b"),
         # NHS: severe allergic reaction (anaphylaxis)
         ("anaphylaxis", "Severe allergic reaction", r"\b(lips?|tongue|face|throat)\b.{0,25}\b(swell\w*|swollen|closing)\b|\b(swollen|swelling) (lips?|tongue|face|throat)\b"),
-        # NHS: overdose / poisoning
+        # NHS: overdose / poisoning. A count of 10 or more is past the daily maximum of the common painkillers; "take 2 tablets" is a dose.
         ("overdose", "Possible overdose", r"\boverdos\w*|\btook (too many|double|too much)\b|\btaken (too many|double|too much)\b|\b(took|taken) \d+ times\b|\bswallowed\b.{0,25}\b(whole|entire|lots of)\b"
-                     r"|\b(took|taken|had|swallowed|downed)\b.{0,25}\b(whole|entire|full)\b.{0,10}\b(strip|pack\w*|box|bottle|blister)"),
+                     r"|\b(took|taken|had|swallowed|downed)\b.{0,25}\b(whole|entire|full)\b.{0,10}\b(strip|pack\w*|box|bottle|blister)"
+                     r"|\b(took|taken|swallowed|had)\b.{0,15}\b([1-9]\d+|ten|eleven|twelve|\w+teen|(twenty|thirty|forty|fifty)\w*) (of (my|the|them|those) )?(\w+ )?(tablets|pills|capsules)\b"),
         # NHS: vomiting or coughing blood
-        ("bleeding", "Serious bleeding", r"\b(coughing|vomiting|throwing) (up )?blood\b|\bblood in (my )?vomit\b|\bbleeding (heavily|badly|a lot)\b|\b(can ?not|can'?t|cant|unable to) stop bleeding\b|\bbleeding (won'?t|will not|wont|doesn'?t|does not) stop\b|\bcoffee grounds?\b"
+        ("bleeding", "Serious bleeding", r"\b(cough\w*|vomit\w*|throw\w*|threw) (up )?(some )?blood\b|\bblood in (my )?vomit\b|\bbleeding (heavily|badly|a lot)\b|\b(can ?not|can'?t|cant|unable to) stop bleeding\b|\bbleeding (won'?t|will not|wont|doesn'?t|does not) stop\b|\bcoffee grounds?\b"
                      r"|\bbleed\w*\b.{0,30}\b(won'?t|wont|will not|doesn'?t|does not|isn'?t|not) stop\w*|\b(won'?t|wont|will not) stop bleeding\b"
                      r"|\bblack (poo|stools?|tarry)\b|\b(poo|stools?) (is|are|has been|have been|looks?|went|gone) (all )?black\b"),
         # NHS: suicidal thoughts and self-harm
-        ("self_harm", "Self-harm", r"\b(end|take) my (own )?life\b|\b(kill|hurt|harm)(ing)? myself\b|\bwant to die\b|\bsuicidal\b|\b(no|see the|see any) point (in )?(going on|living|carrying on)\b|\b(saving|saved|stockpil\w*) up (my |the |all )?(\w+ )?(tablets|pills)\b|\bend it all\b"),
+        ("self_harm", "Self-harm", r"\b(end|take) my (own )?life\b|\b(kill|hurt|harm)(ing)? my ?self\b|\bwant to die\b|\bsuicid\w*|\bbetter off dead\b|\b(no|see the|see any) point (in )?(going on|living|carrying on)\b|\b(saving|saved|stockpil\w*) up (my |the |all )?(\w+ )?(tablets|pills)\b|\bend it all\b"),
         # NHS: loss of consciousness
         ("fainting", "Fainting or collapse", r"\bfaint(ed|ing)\b|\bpass(ed|ing)? out\b|\bcollaps\w*|\bblack(ed|ing)? out\b|\bfeel faint\b"),
         # NHS: someone unconscious or having a seizure
@@ -42,7 +46,13 @@ PATTERNS: list[tuple[str, str, re.Pattern]] = [
 ]
 
 
+# Zero-width characters become spaces: deleting them would glue "chest\u200bpain" into one word.
+ZERO_WIDTH = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u2060\ufeff"), " ")
+
+
 def check_red_flags(text: str) -> RedFlag | None:
+    # NFKC: a Chinese keyboard in full-width mode types "ＣＨＥＳＴ ＰＡＩＮ".
+    text = unicodedata.normalize("NFKC", text).translate(ZERO_WIDTH)
     text = " ".join(text.lower().replace("’", "'").split())
     for id, label, rx in PATTERNS:
         if rx.search(text):
@@ -50,9 +60,12 @@ def check_red_flags(text: str) -> RedFlag | None:
     return None
 
 
-COMBINING = re.compile(r"\b(with|together|and|mix\w*|alongside|same time|other)\b", re.IGNORECASE)
+COMBINING = re.compile(r"\b(with|together|and|plus|both|combin\w*|mix\w*|alongside|same time|other)\b|[+&]", re.IGNORECASE)
 # Over-triggers on purpose: a false match turns an answer into a pharmacist referral, never into harm.
-SAFE_CLAIM = re.compile(r"\b(safe|fine|okay|ok|no problem|no issues?)\b|\b(take|have|use) (them|it|these|both) together\b",
+# Not a bare "harm": "may harm your kidneys" is a warning.
+SAFE_CLAIM = re.compile(r"\b(safe|fine|okay|ok|no problem|no issues?|no harm|harmless|not harmful|compatible|alright|all right"
+                        r"|go ahead|won'?t (cause|affect|interact)|(do|does)n'?t interact|no (known )?interactions?)\b"
+                        r"|\b(take|have|use) (them|it|these|both) together\b",
                         re.IGNORECASE)
 # "You can take omeprazole with salbutamol." Not for a drink or food: "you can have a drink" would refuse the leaflet's alcohol advice.
 CAN_CLAIM = re.compile(r"\b(can|could|may) (safely )?(take|have|use|be taken)\b", re.IGNORECASE)
@@ -60,13 +73,10 @@ NOT_A_MEDICINE = re.compile(r"\b(alcohol|drinks?|drinking|wine|beer|pints?|lager
                             re.IGNORECASE)
 
 
-SEQUENCE = re.compile(r"\b(before|after|then)\b", re.IGNORECASE)
-
-
 def is_combination(question: str, named: set[str]) -> bool:
-    """A question about taking things together, or one leaflet medicine after another ("metformin after ibuprofen").
-    Before/after count only with two named medicines: "before or after dinner" is a dosing question."""
-    return bool(COMBINING.search(question) or len(named) >= 2 and SEQUENCE.search(question))
+    """A question about taking things together, or any question naming two leaflet medicines ("ibuprofen, warfarin",
+    "metformin after ibuprofen"): only the table may answer for a pair."""
+    return bool(COMBINING.search(question) or len(named) >= 2)
 
 
 def claims_safe_combination(question: str, answer: str, named: set[str] = frozenset()) -> bool:

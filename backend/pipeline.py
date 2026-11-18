@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from . import messages
 from .kb import Chunk, Interaction
-from .llm import Card, Generate, MedicineEntry, ask_llm, triage
+from .llm import Card, Generate, MedicineEntry, ask_llm, shown_text, triage
 from .retrieval import MIN_SIMILARITY, Retriever
 from .safety import check_interactions, check_red_flags, claims_safe_combination
 
@@ -114,7 +114,7 @@ def _from_leaflets(question: str, medicines: list[MedicineEntry], retriever: Ret
     if not llm.covered or not llm.in_scope:
         log.info("model refused: not_covered")
         return ChatResponse(kind="not_covered", answer=messages.NOT_COVERED, llm_called=True)
-    if claims_safe_combination(question, llm.answer, retriever.named(question)):
+    if claims_safe_combination(question, shown_text(llm), retriever.named(question)):
         log.info("model called a combination safe: referred")
         return ChatResponse(kind="not_covered", answer=messages.UNCONFIRMED_COMBINATION, llm_called=True)
     by_id = {h.chunk.id: h.chunk for h in result.hits}
