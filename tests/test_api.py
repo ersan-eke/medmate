@@ -52,7 +52,7 @@ def triage(spies):
 def client(spies, triage, tiny_index):
     embed, answer = spies
     generate = lambda m, s: (triage if s == TRIAGE_SCHEMA else answer)(m, s)  # noqa: E731
-    return TestClient(create_app(tiny_index, embed, generate, INTERACTIONS))
+    return TestClient(create_app(tiny_index, embed, generate, INTERACTIONS), base_url="http://localhost")
 
 
 def chat(client, q, medicines=()):
@@ -423,7 +423,7 @@ def test_meta_leaflets_list_every_leaflet_with_its_first_sentence(spies, triage)
 
     index = build_index(Path(__file__).parent.parent / "data" / "leaflets", fake_embed_fn)
     app = create_app(index, fake_embed_fn, lambda m, s: None, [])
-    body = TestClient(app).get("/api/meta").json()
+    body = TestClient(app, base_url="http://localhost").get("/api/meta").json()
     leaflets = body["leaflets"]
     assert len(leaflets) == 12
     assert [l["medicine"] for l in leaflets] == sorted(l["medicine"] for l in leaflets)
@@ -532,3 +532,23 @@ def test_default_app_stops_on_a_bad_index_before_warming(startup, monkeypatch):
 def test_bad_interaction_row_stops_startup(tiny_index, fake_embed, rows, message):
     with pytest.raises(ValueError, match=message):
         create_app(tiny_index, fake_embed, lambda m, s: "", rows)
+
+
+def test_foreign_host_is_rejected(client):
+    # DNS rebinding: the browser still sends the attacker's hostname.
+    assert client.get("/api/meta", headers={"host": "evil.example:8000"}).status_code == 400
+
+
+def test_cross_origin_post_is_rejected(client):
+    # multipart uploads skip the CORS preflight, so the server must check Origin itself.
+    r = client.post("/api/transcribe", files={"audio": b"x"}, headers={"origin": "http://evil.example"})
+    assert r.status_code == 403
+
+
+def test_same_origin_post_is_allowed(client):
+    r = client.post("/api/chat", json={"question": "hi", "medicines": []}, headers={"origin": "http://localhost"})
+    assert r.status_code == 200
+
+
+def test_api_docs_are_not_served(client):
+    assert [client.get(p).status_code for p in ("/docs", "/redoc", "/openapi.json")] == [404, 404, 404]

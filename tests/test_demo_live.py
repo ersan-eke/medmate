@@ -30,7 +30,7 @@ def client():
             pytest.skip(f"Ollama model missing: ollama pull {model}")
     from backend.app import default_app
 
-    return TestClient(default_app())  # warms every model, as at startup
+    return TestClient(default_app(), base_url="http://localhost")  # warms every model, as at startup
 
 
 def chat(client, question):

@@ -13,7 +13,7 @@ from .kb import Embed, Index, Interaction, load_index, load_interactions, ollama
 from .llm import ANSWER_SCHEMA, SYSTEM_PROMPT, WARMUP_TIMEOUT_SECONDS, Generate, ollama_generate
 from .pipeline import ChatRequest, ChatResponse, Source, answer_question
 from .retrieval import Retriever
-from .speech import Engine, kokoro_engine, say_engine, synthesize, transcribe, warm_speech
+from .speech import AudioTooLong, Engine, kokoro_engine, say_engine, synthesize, transcribe, warm_speech
 
 # Weights come from `scripts/fetch_models.py`; never reach for the network at the venue.
 # Set before anything imports huggingface_hub (all such imports are lazy).
@@ -24,6 +24,32 @@ CHAT_MODEL = os.environ.get("MEDMATE_CHAT_MODEL", "llama3.2:3b")
 log = logging.getLogger(__name__)
 
 
+MAX_AUDIO_BYTES = 1_000_000  # 30 s of opus is ~120 KB
+
+
+class LimitUpload:
+    """Counts request-body bytes for `path` as they arrive and answers 413 past `limit`.
+    Starlette spools multipart files to disk before the handler runs, so only a limit on the stream stops a huge upload."""
+
+    def __init__(self, app, path: str, limit: int):
+        self.app, self.path, self.limit = app, path, limit
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope["path"] != self.path:
+            return await self.app(scope, receive, send)
+        received = 0
+
+        async def counted():
+            nonlocal received
+            message = await receive()
+            received += len(message.get("body", b""))
+            if received > self.limit:
+                raise HTTPException(413, "audio too large")  # ExceptionMiddleware, inside this one, turns it into the response
+            return message
+
+        await self.app(scope, counted, send)
+
+
 class TtsRequest(BaseModel):
     text: str = Field(max_length=1500)
 
@@ -32,6 +58,7 @@ def create_app(index: Index, embed: Embed, generate: Generate, interactions: lis
                engines: list[Engine] = [], transcribe: Callable[[bytes], str] | None = None) -> FastAPI:
     validate_interactions(interactions, index)
     app = FastAPI()
+    app.add_middleware(LimitUpload, path="/api/transcribe", limit=MAX_AUDIO_BYTES)
     retriever = Retriever(index, embed)
     warnings = [
         {"a": i.medicine_a, "b": i.medicine_b, "warning": i.warning, "source": Source.of(retriever.chunks[i.source_chunk])}
@@ -65,6 +92,8 @@ def create_app(index: Index, embed: Embed, generate: Generate, interactions: lis
             raise HTTPException(503, "transcription unavailable")
         try:
             return {"text": transcribe(audio.file.read())}
+        except AudioTooLong:
+            raise HTTPException(413, "audio too long")
         except Exception:
             raise HTTPException(503, "transcription failed")
 

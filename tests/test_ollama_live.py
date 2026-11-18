@@ -17,7 +17,7 @@ def test_metformin_dinner_question_answers_with_metformin_source():
 
     from backend.app import default_app
 
-    body = TestClient(default_app()).post(
+    body = TestClient(default_app(), base_url="http://localhost").post(
         "/api/chat", json={"question": "Should I take metformin before or after dinner?"}
     ).json()
     assert body["kind"] == "answer"
