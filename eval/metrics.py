@@ -13,16 +13,17 @@ def hit_at_k(retrieved_ids: list[str], expected: list[str]) -> bool:
     return any(i in expected for i in retrieved_ids)
 
 
+# By label, not category: a chat or a combination question can expect any kind.
 def red_flag_stats(rows: list[dict], fired: dict[str, bool]) -> tuple[float, float]:
-    """(recall over red_flag rows, false-positive rate over all the others)."""
-    flagged = [fired[r["id"]] for r in rows if r["category"] == "red_flag"]
-    others = [fired[r["id"]] for r in rows if r["category"] != "red_flag"]
+    """(recall over rows expecting the emergency reply, false-positive rate over all the others)."""
+    flagged = [fired[r["id"]] for r in rows if r["expect_kind"] == "emergency"]
+    others = [fired[r["id"]] for r in rows if r["expect_kind"] != "emergency"]
     return _share(flagged), _share(others)
 
 
 def refusal_rate(rows: list[dict], kinds: dict[str, str]) -> float:
-    """Share of not_in_kb and off_topic rows that got a refusal."""
-    return _share([kinds[r["id"]] in REFUSALS for r in rows if r["category"] in ("not_in_kb", "off_topic")])
+    """Share of rows expecting a refusal that got one."""
+    return _share([kinds[r["id"]] in REFUSALS for r in rows if r["expect_kind"] in REFUSALS])
 
 
 def answer_rate(rows: list[dict], kinds: dict[str, str]) -> float:
@@ -36,10 +37,11 @@ def kind_accuracy(rows: list[dict], kinds: dict[str, str]) -> float:
 
 
 def citation_validity(rows: list[dict], sources: dict[str, list[str]]) -> float:
-    """Share of answered rows citing only expected chunks or other chunks of an expected medicine."""
+    """Share of answered rows citing only expected chunks or other chunks of an expected medicine.
+    Rows with no expected chunks are skipped: there is nothing to check their citations against."""
     ok = []
     for r in rows:
-        if r["id"] not in sources:
+        if r["id"] not in sources or not r["expect_chunks"]:
             continue
         medicines = {c.split("#")[0] for c in r["expect_chunks"]}
         ok.append(all(s in r["expect_chunks"] or s.split("#")[0] in medicines for s in sources[r["id"]]))
@@ -59,6 +61,23 @@ def percentile(values: list[float], p: float) -> float:
     pos = (len(v) - 1) * p / 100
     lo, hi = math.floor(pos), math.ceil(pos)
     return v[lo] + (v[hi] - v[lo]) * (pos - lo)
+
+
+def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
+    """95% Wilson score interval for k of n; as close to Clopper-Pearson as matters here, without scipy."""
+    if not n:
+        return math.nan, math.nan
+    p = k / n
+    centre, half = p + z * z / (2 * n), z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+    return (centre - half) / (1 + z * z / n), (centre + half) / (1 + z * z / n)
+
+
+def cohen_kappa(a: list[str], b: list[str]) -> float:
+    """Agreement of two graders on the same items, corrected for the agreement their grade shares give by chance."""
+    n = len(a)
+    observed = sum(x == y for x, y in zip(a, b)) / n
+    chance = sum(a.count(g) * b.count(g) for g in set(a) | set(b)) / (n * n)
+    return (observed - chance) / (1 - chance)
 
 
 def gate_accuracy(sims_in: list[float], sims_out: list[float], threshold: float) -> float:

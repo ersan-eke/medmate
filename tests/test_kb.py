@@ -144,3 +144,19 @@ def test_same_chunk_id_in_two_leaflets_raises(tmp_path, fake_embed):
         (tmp_path / name).write_text(f"{HEADER}\n## Dose\nTake one.\n", encoding="utf-8")
     with pytest.raises(ValueError, match=r"aspirin#dose.*a\.md.*b\.md"):
         build_index(tmp_path, fake_embed)
+
+
+@pytest.mark.parametrize("text, ok", [
+    ("These include:\n- other blood pressure medicines", True),
+    ("- medicines for high blood pressure or heart disease, such as diltiazem or verapamil", False),  # other examples
+])
+def test_a_class_plainly_containing_the_medicine_counts_as_naming_it(text, ok):
+    chunks = [Chunk("amlodipine#other", "Amlodipine", "Other", "Amlodipine — Other\n" + text, "u"),
+              Chunk("ramipril#what", "Ramipril", "What", "Ramipril — What", "u")]
+    index = Index(chunks, np.zeros((2, 1)))
+    row = Interaction("Amlodipine", "Ramipril", "w", "amlodipine#other")
+    if ok:
+        validate_interactions([row], index)
+    else:
+        with pytest.raises(ValueError, match="does not name"):
+            validate_interactions([row], index)

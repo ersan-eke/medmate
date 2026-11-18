@@ -142,6 +142,16 @@ def load_interactions(path: Path) -> list[Interaction]:
         return [Interaction(**row) for row in csv.DictReader(f)]
 
 
+# Leaflet classes that plainly contain a leaflet medicine ("other blood pressure medicines" holds ramipril). A class
+# whose examples are other medicines ("such as diltiazem or verapamil") does not count, so it is not a table pair.
+CLASS_NAMES = {
+    "Amlodipine": [r"(lower|treat high|other) blood pressure"],
+    "Ramipril": [r"(lower|treat high|other) blood pressure"],
+    "Metformin": [r"medicines for diabetes"],
+    "Sertraline": [r"antidepressants", r"medicines to treat depression"],
+}
+
+
 def validate_interactions(interactions: list[Interaction], index: Index) -> None:
     chunks = {c.id: c for c in index.chunks}
     medicines = {c.medicine for c in index.chunks}
@@ -156,9 +166,10 @@ def validate_interactions(interactions: list[Interaction], index: Index) -> None
         chunk = chunks.get(row.source_chunk)
         if chunk is None:
             raise ValueError(f"interaction source '{row.source_chunk}' is not a chunk")
-        # The cited passage must name both medicines; the warning wording itself is checked by hand.
+        # The cited passage must name both medicines, or a class plainly containing one; the wording is checked by hand.
         if chunk.medicine not in (row.medicine_a, row.medicine_b) or not all(
-            re.search(rf"\b{re.escape(n)}\b", chunk.text, re.IGNORECASE) for n in (row.medicine_a, row.medicine_b)
+            re.search(rf"\b({'|'.join([re.escape(n), *CLASS_NAMES.get(n, [])])})\b", chunk.text, re.IGNORECASE)
+            for n in (row.medicine_a, row.medicine_b)
         ):
             raise ValueError(f"'{row.source_chunk}' does not name both {row.medicine_a} and {row.medicine_b}")
 

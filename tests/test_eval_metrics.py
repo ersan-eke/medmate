@@ -6,6 +6,7 @@ from eval.metrics import (
     answer_rate,
     best_threshold,
     citation_validity,
+    cohen_kappa,
     faithfulness_rate,
     gate_accuracy,
     hit_at_k,
@@ -13,17 +14,18 @@ from eval.metrics import (
     percentile,
     red_flag_stats,
     refusal_rate,
+    wilson,
 )
 from eval.run_eval import cached, load_rows
 
 ROOT = Path(__file__).resolve().parents[1]
 
 ROWS = [
-    {"id": "a", "category": "red_flag"},
-    {"id": "b", "category": "red_flag"},
-    {"id": "c", "category": "dosing"},
-    {"id": "d", "category": "not_in_kb"},
-    {"id": "e", "category": "off_topic"},
+    {"id": "a", "category": "red_flag", "expect_kind": "emergency"},
+    {"id": "b", "category": "chat", "expect_kind": "emergency"},  # scored by label, whatever the category
+    {"id": "c", "category": "dosing", "expect_kind": "answer"},
+    {"id": "d", "category": "combination", "expect_kind": "not_covered"},
+    {"id": "e", "category": "off_topic", "expect_kind": "off_topic"},
 ]
 
 
@@ -74,6 +76,21 @@ def test_percentile():
     assert percentile([1, 2, 3, 4, 5], 100) == 5
 
 
+def test_wilson_matches_the_ranges_in_the_plan():
+    assert round(wilson(75, 75)[0], 3) == 0.951 and round(wilson(74, 75)[0], 3) == 0.928
+    assert wilson(75, 75)[1] == 1.0 and all(math.isnan(x) for x in wilson(0, 0))
+
+
+def test_cohen_kappa_reproduces_round_one():
+    import csv
+
+    rows = list(csv.DictReader((ROOT / "eval/grading/round1-grades.csv").open(encoding="utf-8")))
+    col = {g: [r[g].strip() for r in rows] for g in ("claude", "friend1", "friend2")}
+    assert round(cohen_kappa(col["friend1"], col["friend2"]), 2) == 0.74
+    assert round(cohen_kappa(col["claude"], col["friend1"]), 2) == 0.67
+    assert round(cohen_kappa(col["claude"], col["friend2"]), 2) == 0.49
+
+
 def test_gate_accuracy():
     assert gate_accuracy([0.8, 0.6], [0.5, 0.75], 0.7) == 0.5
 
@@ -88,8 +105,9 @@ def test_best_threshold_tie_prefers_answering():
 
 
 def test_citation_validity():
-    rows = [{"id": "a", "expect_chunks": ["metformin#how"]}, {"id": "b", "expect_chunks": ["warfarin#how"]}]
-    sources = {"a": ["metformin#side-effects"], "b": ["aspirin#what"]}
+    rows = [{"id": "a", "expect_chunks": ["metformin#how"]}, {"id": "b", "expect_chunks": ["warfarin#how"]},
+            {"id": "c", "expect_chunks": []}]  # nothing to check c against, so it is skipped
+    sources = {"a": ["metformin#side-effects"], "b": ["aspirin#what"], "c": ["aspirin#what"]}
     assert citation_validity(rows, sources) == 0.5
 
 
@@ -120,8 +138,9 @@ def test_expected_chunks_exist():
     if not path.exists():
         pytest.skip("no built index")
     ids = {c["id"] for c in json.loads(path.read_text())}
-    for row in load_rows(ROOT / "eval/questions.jsonl") + load_rows(ROOT / "eval/heldout.jsonl"):
-        assert set(row["expect_chunks"]) <= ids, row["id"]
+    for name in ("questions", "heldout", "dev", "dev_chats", "final"):
+        for row in load_rows(ROOT / f"eval/{name}.jsonl"):
+            assert set(row["expect_chunks"]) <= ids, row["id"]
 
 
 def test_kind_accuracy_treats_both_refusal_kinds_alike():
@@ -142,9 +161,94 @@ def test_full_run_keeps_a_hand_grade_only_while_the_answer_is_unchanged(tmp_path
     monkeypatch.setattr(run_eval, "speed", lambda m: 1.0)
     answers = {"a": "same", "b": "new"}
     monkeypatch.setattr(run_eval, "answer_question", lambda req, *a: SimpleNamespace(
-        kind="answer", llm_called=True, sources=[], answer=answers[req.question]))
+        kind="answer", red_flag=None, llm_called=True, sources=[], answer=answers[req.question], card=None))
     (tmp_path / "t.csv").write_text("id,answer,faithfulness\na,same,3\nb,old,2\n")
     rows = [{"id": q, "category": "c", "question": q, "medicines": [], "expect_kind": "answer", "expect_chunks": []} for q in "ab"]
     run_eval.full_run(rows, None, [], "m", "t")
     graded = {r["id"]: r["faithfulness"] for r in csv.DictReader((tmp_path / "t.csv").open())}
     assert graded == {"a": "3", "b": ""}
+
+
+def test_full_run_refuses_chats_until_follow_ups_exist():
+    import pytest
+
+    from eval import run_eval
+
+    with pytest.raises(SystemExit, match="follow-up"):
+        run_eval.full_run([{"id": "c", "history": ["q1"], "question": "q2"}], None, [], "m", "t")
+
+
+def test_freeze_runs_the_final_set_once_on_committed_code_with_only_its_models(tmp_path, monkeypatch):
+    import json
+    from types import SimpleNamespace
+
+    import pytest
+
+    from eval import run_eval
+
+    status = SimpleNamespace(stdout="")
+    monkeypatch.setattr(run_eval.subprocess, "run", lambda cmd, **k: SimpleNamespace(
+        stdout="abc123\n" if "rev-parse" in cmd else status.stdout))
+    loaded = {"llama3.2:3b": "d1", "nomic-embed-text:latest": "d2"}
+    monkeypatch.setattr(run_eval, "loaded_models", lambda: dict(loaded))
+    marker = tmp_path / "final-m.json"
+
+    status.stdout = " M eval/run_eval.py\n"
+    with pytest.raises(SystemExit, match="commit"):
+        run_eval.freeze("llama3.2:3b", marker)
+    status.stdout = ""
+    loaded["qwen2.5:7b"] = "d3"
+    with pytest.raises(SystemExit, match="qwen2.5:7b"):
+        run_eval.freeze("llama3.2:3b", marker)
+    del loaded["qwen2.5:7b"]
+    assert not marker.exists()
+
+    run = run_eval.freeze("llama3.2:3b", marker)
+    assert run["commit"] == "abc123" and json.loads(marker.read_text())["ollama_before"] == loaded
+    with pytest.raises(SystemExit, match="has been run"):
+        run_eval.freeze("llama3.2:3b", marker)
+
+
+def test_grader_sheet_has_one_blind_row_per_written_answer_with_its_passages():
+    from backend.kb import Chunk, Interaction
+    from eval.grader_sheet import sheet_rows
+
+    chunks = {"w#how": Chunk("w#how", "Warfarin", "How", "Warfarin — How\ntake it daily", "u")}
+    pair = Interaction("Warfarin", "Ibuprofen", "Ask a pharmacist first.", "w#how")
+    rows = [{"id": i, "question": f"q{i}"} for i in "abc"] + [{"id": "d", "question": "q2", "history": ["q1"]}]
+    run = [{"id": "a", "kind": "answer", "llm_called": "True", "sources": "w#how", "answer": "Daily. Ask a pharmacist first.",
+            "card": "Summary: daily"},
+           {"id": "b", "kind": "answer", "llm_called": "False", "sources": "w#how", "answer": "Ask a pharmacist first."},
+           {"id": "c", "kind": "not_covered", "llm_called": "True", "sources": "", "answer": "Not in my leaflets."},
+           {"id": "d", "kind": "answer", "llm_called": "True", "sources": "", "answer": "Yes."}]
+    out = {o["run_id"]: o for o in sheet_rows(rows, run, chunks, [pair])}
+    assert set(out) == {"a", "d"}  # the table-only answer and the refusal are not graded
+    assert out["a"]["cited_passages"] == "Warfarin — How\ntake it daily\n\n---\n\nInteraction table — Warfarin and Ibuprofen\nAsk a pharmacist first."
+    assert out["a"]["answer_to_grade"] == "Daily. Ask a pharmacist first.\n\nSummary: daily"  # the card is graded too
+    assert out["d"]["earlier_message"] == "q1" and sorted(o["item"] for o in out.values()) == [1, 2]
+
+
+def test_report_counts_by_expected_reply_and_lists_every_miss():
+    from eval.report import report
+
+    rows = [{"id": "a", "expect_kind": "emergency", "question": "qa", "source": "friend_a"},
+            {"id": "b", "expect_kind": "not_covered", "question": "qb", "source": "friend_b", "history": ["x"]},
+            {"id": "c", "expect_kind": "answer", "question": "qc", "source": "friend_b"}]
+    run = [{"id": "a", "kind": "emergency", "red_flag": "model_triage", "llm_called": "True"},
+           {"id": "b", "kind": "off_topic", "red_flag": "", "llm_called": "True"},
+           {"id": "c", "kind": "emergency", "red_flag": "chest_pain", "llm_called": "False"}]
+    grades = [{"claude": "3", "friend1": "3", "friend2": "2"}, {"claude": "2", "friend1": "2", "friend2": ""}]
+    text = report(rows, run, {"model": "m"}, grades)
+    assert "| emergency | 1 of 1 " in text and "| not_covered | – | 1 of 1 " in text  # either refusal passes
+    assert "Over-triggering (the 999 reply on a row that does not expect it): 1 of 2" in text
+    assert "only by the model's yes/no step: 1" in text and "| c | answer | emergency | qc |" in text
+    assert "claude and friend1: same grade on 2 of 2" in text and "claude and friend2: same grade on 0 of 1" in text
+
+
+def test_card_text_reads_like_the_page():
+    from eval.run_eval import card_text
+
+    from backend.llm import Card
+
+    assert card_text(None) == ""
+    assert card_text(Card(summary="S", what_to_do=["a"], get_help_if=["b", "c"])) == "Summary: S\nWhat to do:\n- a\nGet help if:\n- b\n- c"
