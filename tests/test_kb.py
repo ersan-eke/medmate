@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from backend.kb import (
+    Chunk,
     Index,
     MAX_CHUNK_CHARS,
     Interaction,
@@ -104,6 +105,13 @@ def test_empty_section_raises():
 def test_empty_index_is_rejected_at_load(tmp_path):
     save_index(Index([], np.zeros((0, 4), dtype=np.float32)), tmp_path)
     with pytest.raises(ValueError, match="empty"):
+        load_index(tmp_path)
+
+
+def test_stale_index_is_rejected_at_load(tmp_path):
+    chunks = [Chunk(f"a#{n}", "Aspirin", "Use", "text", "u") for n in (1, 2)]
+    save_index(Index(chunks, np.zeros((1, 4), dtype=np.float32)), tmp_path)
+    with pytest.raises(ValueError, match=r"stale.*uv run python -m scripts\.ingest"):
         load_index(tmp_path)
 
 

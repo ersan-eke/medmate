@@ -122,7 +122,12 @@ def load_index(out_dir: Path) -> Index:
     chunks = [Chunk(**c) for c in json.loads((out_dir / "chunks.json").read_text())]
     if not chunks:
         raise ValueError(f"The index in {out_dir} is empty. {BUILD_INDEX}")
-    return Index(chunks, np.load(out_dir / "vectors.npy"))
+    vectors = np.load(out_dir / "vectors.npy")
+    # With chunks and vectors out of step, every search would raise and every answer fall back, so stop at load instead.
+    if vectors.ndim != 2 or len(vectors) != len(chunks):
+        raise ValueError(f"The index in {out_dir} is stale: {len(chunks)} chunks but vectors of shape "
+                         f"{vectors.shape}. {BUILD_INDEX}")
+    return Index(chunks, vectors)
 
 
 def load_interactions(path: Path) -> list[Interaction]:
