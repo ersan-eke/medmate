@@ -60,8 +60,15 @@ def parse_leaflet(text: str) -> tuple[dict[str, str], list[tuple[str, str]]]:
 
 def _split(body: str) -> list[str]:
     # shortcut: a single paragraph over the limit stays whole, split it if leaflets ever need that.
-    parts: list[str] = []
+    # A ### heading travels with the paragraph under it, so a chunk never ends on a bare heading.
+    blocks: list[str] = []
     for paragraph in re.split(r"\n\s*\n", body):
+        if blocks and blocks[-1].rsplit("\n\n", 1)[-1].startswith("#"):
+            blocks[-1] += "\n\n" + paragraph
+        else:
+            blocks.append(paragraph)
+    parts: list[str] = []
+    for paragraph in blocks:
         if parts and len(parts[-1]) + len(paragraph) + 2 <= MAX_CHUNK_CHARS:
             parts[-1] += "\n\n" + paragraph
         else:

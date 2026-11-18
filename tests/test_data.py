@@ -30,6 +30,12 @@ def test_every_leaflet_parses_with_full_header(path):
     assert "Open Government Licence" in header["licence"]
 
 
+@pytest.mark.parametrize("path", LEAFLETS, ids=lambda p: p.stem)
+def test_no_chunk_ends_on_a_bare_heading(path):
+    for chunk in chunk_leaflet(path.read_text(encoding="utf-8")):
+        assert not chunk.text.rstrip().split("\n\n")[-1].startswith("#"), chunk.id
+
+
 def test_demo_sections_exist(index):
     ids = {c.id for c in index.chunks}
     assert "metformin#how-to-take-metformin" in ids
