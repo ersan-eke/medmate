@@ -8,6 +8,7 @@ import { store, loadThread, saveThread, clearThread, replyCard, medicinesTag, sh
 export function initChat(meds, isShown) {
   const thread = document.getElementById("thread");
   const empty = document.getElementById("empty");
+  const notice = document.getElementById("notice");
   const avatar = new Avatar(document.getElementById("avatar"));
   const session = store("sessionStorage");
   let entries = loadThread(session);
@@ -64,13 +65,13 @@ export function initChat(meds, isShown) {
   };
   // Puts a node at the end of the thread and brings it into view; the new reply "prints out".
   const place = (node) => {
-    thread.append(node);
+    notice.before(node);
     node.classList.add("print");
     thread.scrollTop = thread.scrollHeight;
   };
   const draw = () => {
     pending = null;
-    thread.replaceChildren(empty, ...entries.map(entryNode));
+    thread.replaceChildren(empty, ...entries.map(entryNode), notice);
     empty.hidden = !showSuggestions(entries);
     thread.scrollTop = thread.scrollHeight;
   };

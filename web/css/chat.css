@@ -120,9 +120,12 @@
 
 /* The chat: the thread scrolls on its own and the question box stays at the bottom.
    Messages never shrink to fit the thread's height (flex: none), so a long reply is never clipped. */
-.chat { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: .6rem; height: 100%; min-height: 0; }
-.thread { display: flex; flex-direction: column; gap: 1.2rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .2rem .4rem .6rem .2rem; }
+.chat { display: grid; grid-template-rows: minmax(0, 1fr); height: 100%; min-height: 0; }
+.thread { display: flex; flex-direction: column; gap: 1.2rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .2rem .4rem 0 .2rem; }
 .thread > * { flex: none; }
+/* The thread's gap is wide for cards; pull the notice up to the last one. */
+.thread > :nth-last-child(2) { margin-bottom: -.8rem; }
+#notice { margin-top: auto; text-align: center; font-size: .8rem; color: #6b645c; }
 .msg { max-width: 40em; }
 
 /* A question: the prototype's light "YOU ASKED" bubble. */
