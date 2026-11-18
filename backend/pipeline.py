@@ -1,7 +1,7 @@
 import logging
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from . import messages
 from .kb import Chunk, Interaction
@@ -15,16 +15,7 @@ MAX_MEDICINES = 20
 
 class ChatRequest(BaseModel):
     question: str = Field(max_length=500)
-    medicines: list[MedicineEntry] = []
-
-    # A stale browser list must not make every chat fail, so extra entries and long text are cut, not refused.
-    @field_validator("medicines", mode="before")
-    @classmethod
-    def clip(cls, v):
-        if not isinstance(v, list):
-            return v
-        return [{k: x[:100] if isinstance(x, str) else x for k, x in m.items()} if isinstance(m, dict) else m
-                for m in v[:50]]
+    medicines: list[MedicineEntry] = Field([], max_length=50)
 
 
 class Source(BaseModel):

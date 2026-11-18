@@ -1,12 +1,15 @@
 // Pure page logic, kept free of the DOM so `node --test web/logic.test.js` can run it.
 const KEY = "medmate.medicines";
+// The server refuses longer text and longer lists (backend/llm.py MedicineEntry, pipeline.py ChatRequest).
+const MAX_TEXT = 100;
+const MAX_MEDICINES = 50;
 export const TIMES = ["morning", "midday", "evening", "bedtime"];
 
 export function loadMedicines(storage) {
   try {
     const list = JSON.parse(storage.getItem(KEY) ?? "[]");
     if (Array.isArray(list)) {
-      const meds = list.filter((m) => typeof m?.name === "string" && m.name);
+      const meds = list.filter((m) => typeof m?.name === "string" && m.name).slice(0, MAX_MEDICINES);
       const cleaned = meds.map(clean);
       // Ids minted here must be saved, or the next load would mint different ones and lose the ticks.
       if (meds.some((m) => typeof m.id !== "string" || !m.id)) saveMedicines(storage, cleaned);
@@ -18,10 +21,10 @@ export function loadMedicines(storage) {
 }
 
 // Hand-edited or stale entries would otherwise break the schedule or get the chat request rejected.
-const text = (v) => (typeof v === "string" ? v : "");
+const text = (v) => (typeof v === "string" ? v.slice(0, MAX_TEXT) : "");
 const clean = (m) => ({
   id: typeof m.id === "string" && m.id ? m.id : crypto.randomUUID(),
-  name: m.name,
+  name: text(m.name),
   dose: text(m.dose),
   times: Array.isArray(m.times) ? m.times.filter((t) => TIMES.includes(t)) : [],
   note: text(m.note),

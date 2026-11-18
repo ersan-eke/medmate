@@ -165,3 +165,11 @@ test("an undone medicine goes back to its old position, clamped to the list", ()
   assert.deepEqual(reinsertAt(["a"], "b", 5), ["a", "b"]);
   assert.deepEqual(reinsertAt([], "b", 0), ["b"]);
 });
+
+test("stored entries over the server's limits are cut on load, so chat is never refused", () => {
+  const long = "x".repeat(101);
+  const many = Array.from({ length: 51 }, (_, i) => ({ id: `m${i}`, name: "Metformin", dose: "", times: [], note: "" }));
+  const [first] = loadMedicines(fakeStorage({ [KEY]: JSON.stringify([{ id: "a", name: long, dose: long, times: [], note: long }]) }));
+  assert.deepEqual([first.name.length, first.dose.length, first.note.length], [100, 100, 100]);
+  assert.equal(loadMedicines(fakeStorage({ [KEY]: JSON.stringify(many) })).length, 50);
+});

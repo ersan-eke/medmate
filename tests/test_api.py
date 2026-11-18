@@ -59,9 +59,10 @@ def chat(client, q, medicines=()):
     return client.post("/api/chat", json={"question": q, "medicines": list(medicines)})
 
 
-def test_oversized_medicines_list_is_clipped_not_refused(client):
-    meds = [{"name": "ibuprofen", "note": "x" * 101}] * 51
-    assert chat(client, "hi", meds).status_code == 200
+@pytest.mark.parametrize("meds", [[{"name": "ibuprofen"}] * 51, [{"name": "ibuprofen", "dose": "x" * 101}]])
+def test_oversized_medicines_are_refused_not_clipped(client, meds):
+    # The browser trims what it sends (web/js/logic.js); the server stays strict.
+    assert chat(client, "hi", meds).status_code == 422
 
 
 def test_demo_red_flag_skips_llm(client, spies, triage):
