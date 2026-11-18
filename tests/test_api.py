@@ -706,6 +706,15 @@ def test_emergency_in_the_previous_message_is_still_an_emergency(follow, rewrite
     assert body["kind"] == "emergency" and rewrites.calls == 0
 
 
+def test_triage_sees_the_previous_question_and_the_follow_up_together(follow, rewrites, triage):
+    urgent = '{"chest_pain": false, "breathing": false, "stroke": true, "allergy": false, "overdose": false, "bleeding": false, "collapse": false, "self_harm": false}'
+    triage_reply = triage.fn(None, None)
+    triage.fn = lambda m, s: urgent if ELEPHANT in m[1]["content"] and "my tablets" in m[1]["content"] else triage_reply
+    body = follow_up(follow, "ok what about my tablets", ELEPHANT).json()
+    assert body["kind"] == "emergency" and body["red_flag"] == "model_triage" and rewrites.calls == 0
+    assert follow_up(follow, "ok what about my tablets", "Is metformin safe?").json()["kind"] != "emergency"
+
+
 def test_rewrite_that_builds_an_emergency_is_an_emergency(follow, rewrites):
     rewrites.fn = lambda m, s: rewrite_reply("I took 30 paracetamol tablets")
     body = follow_up(follow, "I took 30 of them", "Is metformin safe?").json()

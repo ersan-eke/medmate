@@ -57,7 +57,8 @@ def answer_question(req: ChatRequest, retriever: Retriever, generate: Generate,
     # The previous message too, so a rewrite can never hide an emergency.
     if flag := check_red_flags(typed) or check_red_flags(req.previous or ""):
         return ChatResponse(kind="emergency", answer=messages.EMERGENCY, red_flag=flag.id)
-    if triage(typed, generate):  # before retrieval: a novel wording matches no leaflet and would stop at the gate
+    # Triage reads the previous question with the follow-up, as typed, so "my tablets" after "she's slurring" is still urgent.
+    if triage(f"{(req.previous or '').strip()} {typed}".strip(), generate):  # before retrieval: a novel wording matches no leaflet and would stop at the gate
         return ChatResponse(kind="emergency", answer=messages.EMERGENCY, red_flag="model_triage", llm_called=True)
     answered = _answered(req.previous, typed, retriever, generate)
     if isinstance(answered, ChatResponse):
